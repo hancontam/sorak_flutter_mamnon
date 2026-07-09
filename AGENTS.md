@@ -119,6 +119,54 @@ Can lam cac module:
 
 - Khong lam Excel import/export trong Flutter app nay.
 
+## Functional Test Context
+
+- Test theo muc chuc nang, khong viet unit test qua chi tiet cho tung ham nho.
+- Uu tien automated test bang `flutter test` voi mock API de test UI flow, provider state, navigation, CRUD co ban, va archive behavior.
+- Live API/DB that chi dung cho manual smoke test vi phu thuoc backend, session, role, va du lieu that.
+- Backend live hien tai:
+
+```text
+http://103.69.191.210:8082/api
+```
+
+- Tai khoan test can bo:
+
+```text
+Email: phanthihoa@edu.vn
+Password: Hoa@12345
+```
+
+- Cac module can co functional test:
+  - Authentication
+  - Home navigation
+  - Accounts Management
+  - Academic Year Management
+  - Classes Management
+  - Teachers Management
+  - Students Management
+  - Class Transfer
+  - Outgoing School Transfer
+  - Incoming School Transfer
+- Test Archive rule: UI hien thi Delete, nhung code/backend flow phai la archive/soft delete.
+- Manual test quan trong: login live API, list/detail/create/update/archive tung module, va transfer flow tren du lieu test.
+- Lenh regression gate sau khi them/sua test:
+
+```powershell
+dart run build_runner build
+flutter analyze
+flutter test
+```
+
+- Nen thuc hien test theo tung goal nho:
+  1. Tao nen automated functional test.
+  2. Test Authentication.
+  3. Test Home va Navigation.
+  4. Test CRUD module co ban.
+  5. Test Transfer module.
+  6. Manual Live API checklist.
+  7. Regression gate va ghi nhan ket qua.
+
 ## Project Goal
 
 Hoan thanh Sorak Mam Non Flutter Mobile theo context trong file nay.
