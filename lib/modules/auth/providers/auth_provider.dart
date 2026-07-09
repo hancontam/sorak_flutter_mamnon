@@ -28,7 +28,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> login({
-    required String username,
+    required String email,
     required String password,
   }) async {
     _isLoading = true;
@@ -37,7 +37,7 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       _user = await _authRepository.login(
-        username: username,
+        email: email,
         password: password,
       );
       return true;

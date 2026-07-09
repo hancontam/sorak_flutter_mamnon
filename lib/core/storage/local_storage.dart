@@ -15,16 +15,39 @@ class LocalStorage {
     return _preferences.getString(StorageKeys.token);
   }
 
-  Future<void> saveUsername(String username) {
-    return _preferences.setString(StorageKeys.username, username);
+  Future<void> saveUser({
+    required int id,
+    required String fullName,
+    required String email,
+    required String role,
+  }) async {
+    await _preferences.setInt(StorageKeys.userId, id);
+    await _preferences.setString(StorageKeys.fullName, fullName);
+    await _preferences.setString(StorageKeys.email, email);
+    await _preferences.setString(StorageKeys.role, role);
   }
 
-  String? getUsername() {
-    return _preferences.getString(StorageKeys.username);
+  int? getUserId() {
+    return _preferences.getInt(StorageKeys.userId);
+  }
+
+  String? getFullName() {
+    return _preferences.getString(StorageKeys.fullName);
+  }
+
+  String? getEmail() {
+    return _preferences.getString(StorageKeys.email);
+  }
+
+  String? getRole() {
+    return _preferences.getString(StorageKeys.role);
   }
 
   Future<void> clearAuth() async {
     await _preferences.remove(StorageKeys.token);
-    await _preferences.remove(StorageKeys.username);
+    await _preferences.remove(StorageKeys.userId);
+    await _preferences.remove(StorageKeys.fullName);
+    await _preferences.remove(StorageKeys.email);
+    await _preferences.remove(StorageKeys.role);
   }
 }

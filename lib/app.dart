@@ -3,10 +3,34 @@ import 'package:provider/provider.dart';
 
 import 'core/network/api_client.dart';
 import 'core/storage/local_storage.dart';
+import 'modules/academic_years/providers/academic_year_provider.dart';
+import 'modules/academic_years/repositories/academic_year_repository.dart';
+import 'modules/academic_years/screens/academic_year_list_screen.dart';
+import 'modules/accounts/providers/account_provider.dart';
+import 'modules/accounts/repositories/account_repository.dart';
+import 'modules/accounts/screens/account_list_screen.dart';
 import 'modules/auth/providers/auth_provider.dart';
 import 'modules/auth/repositories/auth_repository.dart';
 import 'modules/auth/screens/login_screen.dart';
+import 'modules/class_transfers/providers/class_transfer_provider.dart';
+import 'modules/class_transfers/repositories/class_transfer_repository.dart';
+import 'modules/class_transfers/screens/class_transfer_list_screen.dart';
+import 'modules/classes/providers/class_provider.dart';
+import 'modules/classes/repositories/class_repository.dart';
+import 'modules/classes/screens/class_list_screen.dart';
 import 'modules/home/screens/home_screen.dart';
+import 'modules/incoming_transfers/providers/incoming_transfer_provider.dart';
+import 'modules/incoming_transfers/repositories/incoming_transfer_repository.dart';
+import 'modules/incoming_transfers/screens/incoming_transfer_list_screen.dart';
+import 'modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
+import 'modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
+import 'modules/outgoing_transfers/screens/outgoing_transfer_list_screen.dart';
+import 'modules/students/providers/student_provider.dart';
+import 'modules/students/repositories/student_repository.dart';
+import 'modules/students/screens/student_list_screen.dart';
+import 'modules/teachers/providers/teacher_provider.dart';
+import 'modules/teachers/repositories/teacher_repository.dart';
+import 'modules/teachers/screens/teacher_list_screen.dart';
 
 class SorakApp extends StatelessWidget {
   const SorakApp({
@@ -21,7 +45,9 @@ class SorakApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<LocalStorage>.value(value: localStorage),
-        Provider<ApiClient>(create: (_) => ApiClient()),
+        Provider<ApiClient>(
+          create: (_) => ApiClient(localStorage: localStorage),
+        ),
         ProxyProvider2<ApiClient, LocalStorage, AuthRepository>(
           update: (_, apiClient, localStorage, previous) {
             return AuthRepository(
@@ -34,6 +60,62 @@ class SorakApp extends StatelessWidget {
           create: (context) => AuthProvider(
             authRepository: context.read<AuthRepository>(),
           )..loadCurrentUser(),
+        ),
+        ChangeNotifierProvider<AcademicYearProvider>(
+          create: (context) => AcademicYearProvider(
+            academicYearRepository: AcademicYearRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<ClassProvider>(
+          create: (context) => ClassProvider(
+            classRepository: ClassRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<TeacherProvider>(
+          create: (context) => TeacherProvider(
+            teacherRepository: TeacherRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<StudentProvider>(
+          create: (context) => StudentProvider(
+            studentRepository: StudentRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<AccountProvider>(
+          create: (context) => AccountProvider(
+            accountRepository: AccountRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<ClassTransferProvider>(
+          create: (context) => ClassTransferProvider(
+            classTransferRepository: ClassTransferRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<OutgoingTransferProvider>(
+          create: (context) => OutgoingTransferProvider(
+            outgoingTransferRepository: OutgoingTransferRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<IncomingTransferProvider>(
+          create: (context) => IncomingTransferProvider(
+            incomingTransferRepository: IncomingTransferRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
         ),
       ],
       child: MaterialApp(
@@ -61,6 +143,14 @@ class SorakApp extends StatelessWidget {
         routes: {
           '/login': (_) => const LoginScreen(),
           '/home': (_) => const HomeScreen(),
+          '/academic-years': (_) => const AcademicYearListScreen(),
+          '/classes': (_) => const ClassListScreen(),
+          '/teachers': (_) => const TeacherListScreen(),
+          '/students': (_) => const StudentListScreen(),
+          '/accounts': (_) => const AccountListScreen(),
+          '/class-transfers': (_) => const ClassTransferListScreen(),
+          '/outgoing-transfers': (_) => const OutgoingTransferListScreen(),
+          '/incoming-transfers': (_) => const IncomingTransferListScreen(),
         },
       ),
     );

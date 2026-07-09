@@ -1,4 +1,7 @@
+import '../../../core/constants/api_endpoints.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 import '../../../core/storage/local_storage.dart';
 import '../models/auth_user.dart';
 
@@ -14,39 +17,78 @@ class AuthRepository {
 
   Future<AuthUser?> getSavedUser() async {
     final token = _localStorage.getToken();
-    final username = _localStorage.getUsername();
+    final id = _localStorage.getUserId();
+    final fullName = _localStorage.getFullName();
+    final email = _localStorage.getEmail();
+    final role = _localStorage.getRole();
 
-    if (token == null || username == null) {
+    if (id == null || fullName == null || email == null || role == null) {
       return null;
     }
 
-    return AuthUser(username: username, token: token);
+    return AuthUser(
+      id: id,
+      fullName: fullName,
+      email: email,
+      role: role,
+      token: token ?? '',
+    );
   }
 
   Future<AuthUser> login({
-    required String username,
+    required String email,
     required String password,
   }) async {
-    // TODO: Replace this demo login with Dio API when backend is ready.
-    // Example:
-    // final response = await _apiClient.dio.post('/auth/login', data: {...});
-    // final token = response.data['token'] as String;
-    _apiClient.dio.options.headers['Demo-Mode'] = 'true';
+    if (!AppConfig.useMockApi) {
+      final response = await _apiClient.dio.post(
+        ApiEndpoints.authLogin,
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
+      final data = ApiResponse.object(response.data);
+      final userJson = data['user'] as Map<String, dynamic>? ?? data;
+      final user = AuthUser.fromJson({
+        ...userJson,
+        'token': userJson['token'] ?? '',
+      });
+      await _saveUser(user);
+      return user;
+    }
 
     await Future<void>.delayed(const Duration(milliseconds: 500));
 
-    if (username != 'admin' || password != '123') {
+    if (email != 'admin@sorak.edu.vn' || password != '123456') {
       throw Exception('Incorrect username or password');
     }
 
-    const token = 'demo-token-admin';
-    await _localStorage.saveToken(token);
-    await _localStorage.saveUsername(username);
+    const user = AuthUser(
+      id: 1,
+      fullName: 'Principal Admin',
+      email: 'admin@sorak.edu.vn',
+      role: 'PRINCIPAL',
+      token: 'demo-token-admin',
+    );
 
-    return AuthUser(username: username, token: token);
+    await _saveUser(user);
+    return user;
   }
 
-  Future<void> logout() {
-    return _localStorage.clearAuth();
+  Future<void> logout() async {
+    if (!AppConfig.useMockApi) {
+      await _apiClient.dio.post(ApiEndpoints.authLogout);
+    }
+    await _localStorage.clearAuth();
+  }
+
+  Future<void> _saveUser(AuthUser user) async {
+    await _localStorage.saveToken(user.token);
+    await _localStorage.saveUser(
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+    );
   }
 }
