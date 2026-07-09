@@ -15,13 +15,18 @@ class Teacher {
     this.isDeleted = false,
   });
 
+  @JsonKey(name: 'teacher_id')
   final int id;
   final String fullName;
   final String email;
   final String position;
+  @JsonKey(defaultValue: '')
   final String phone;
+  @JsonKey(defaultValue: '')
   final String gender;
+  @JsonKey(defaultValue: 'Dang lam viec')
   final String workStatus;
+  @JsonKey(readValue: _readIsDeleted)
   final bool isDeleted;
 
   factory Teacher.fromJson(Map<String, dynamic> json) {
@@ -52,5 +57,9 @@ class Teacher {
       workStatus: workStatus ?? this.workStatus,
       isDeleted: isDeleted ?? this.isDeleted,
     );
+  }
+
+  static Object? _readIsDeleted(Map<dynamic, dynamic> json, String key) {
+    return json['is_deleted'] == true || json['deleted_at'] != null;
   }
 }

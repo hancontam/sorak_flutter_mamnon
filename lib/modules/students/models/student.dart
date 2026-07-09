@@ -17,15 +17,22 @@ class Student {
     this.isDeleted = false,
   });
 
+  @JsonKey(name: 'student_id')
   final int id;
   final String fullName;
   final String dateOfBirth;
   final String gender;
+  @JsonKey(readValue: _readClassId)
   final int classId;
+  @JsonKey(readValue: _readClassName)
   final String className;
+  @JsonKey(defaultValue: 'Dang hoc')
   final String studentStatus;
+  @JsonKey(defaultValue: '')
   final String contactPhone;
+  @JsonKey(readValue: _readIsActive)
   final bool isActive;
+  @JsonKey(readValue: _readIsDeleted)
   final bool isDeleted;
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -60,5 +67,39 @@ class Student {
       isActive: isActive ?? this.isActive,
       isDeleted: isDeleted ?? this.isDeleted,
     );
+  }
+
+  static Object? _readClassId(Map<dynamic, dynamic> json, String key) {
+    final enrollments = json['enrollments'];
+    if (enrollments is List && enrollments.isNotEmpty) {
+      final first = enrollments.first;
+      if (first is Map) {
+        return first['class_id'] ?? 0;
+      }
+    }
+    return json[key] ?? 0;
+  }
+
+  static Object? _readClassName(Map<dynamic, dynamic> json, String key) {
+    final enrollments = json['enrollments'];
+    if (enrollments is List && enrollments.isNotEmpty) {
+      final first = enrollments.first;
+      if (first is Map && first['class'] is Map) {
+        return (first['class'] as Map)['class_name'] ?? '';
+      }
+    }
+    return json[key] ?? '';
+  }
+
+  static Object? _readIsActive(Map<dynamic, dynamic> json, String key) {
+    final account = json['account'];
+    if (account is Map && account['is_active'] is bool) {
+      return account['is_active'];
+    }
+    return json[key] ?? true;
+  }
+
+  static Object? _readIsDeleted(Map<dynamic, dynamic> json, String key) {
+    return json['is_deleted'] == true || json['deleted_at'] != null;
   }
 }

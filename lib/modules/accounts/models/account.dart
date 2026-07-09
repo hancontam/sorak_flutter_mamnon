@@ -15,13 +15,19 @@ class Account {
     this.isDeleted = false,
   });
 
+  @JsonKey(readValue: _readId)
   final int id;
   final String fullName;
   final String email;
+  @JsonKey(readValue: _readRole)
   final String role;
+  @JsonKey(defaultValue: '')
   final String phone;
+  @JsonKey(defaultValue: '')
   final String gender;
+  @JsonKey(readValue: _readIsActive)
   final bool isActive;
+  @JsonKey(readValue: _readIsDeleted)
   final bool isDeleted;
 
   factory Account.fromJson(Map<String, dynamic> json) {
@@ -52,5 +58,29 @@ class Account {
       isActive: isActive ?? this.isActive,
       isDeleted: isDeleted ?? this.isDeleted,
     );
+  }
+
+  static Object? _readId(Map<dynamic, dynamic> json, String key) {
+    return json['account_id'] ?? json['teacher_id'] ?? json[key] ?? 0;
+  }
+
+  static Object? _readRole(Map<dynamic, dynamic> json, String key) {
+    final account = json['account'];
+    if (account is Map) {
+      return account['role'] ?? 'none';
+    }
+    return json[key] ?? 'none';
+  }
+
+  static Object? _readIsActive(Map<dynamic, dynamic> json, String key) {
+    final account = json['account'];
+    if (account is Map && account['is_active'] is bool) {
+      return account['is_active'];
+    }
+    return json[key] ?? true;
+  }
+
+  static Object? _readIsDeleted(Map<dynamic, dynamic> json, String key) {
+    return json['is_deleted'] == true || json['deleted_at'] != null;
   }
 }

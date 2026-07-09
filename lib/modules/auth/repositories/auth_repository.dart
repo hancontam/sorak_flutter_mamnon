@@ -49,9 +49,10 @@ class AuthRepository {
       );
       final data = ApiResponse.object(response.data);
       final userJson = data['user'] as Map<String, dynamic>? ?? data;
+      final token = _readAccessToken(response.headers.map['set-cookie']);
       final user = AuthUser.fromJson({
         ...userJson,
-        'token': userJson['token'] ?? '',
+        'token': token,
       });
       await _saveUser(user);
       return user;
@@ -90,5 +91,23 @@ class AuthRepository {
       email: user.email,
       role: user.role,
     );
+  }
+
+  String _readAccessToken(List<String>? cookies) {
+    if (cookies == null) {
+      return '';
+    }
+
+    for (final cookie in cookies) {
+      final parts = cookie.split(';');
+      for (final part in parts) {
+        final trimmed = part.trim();
+        if (trimmed.startsWith('sorak_access=')) {
+          return trimmed.replaceFirst('sorak_access=', '');
+        }
+      }
+    }
+
+    return '';
   }
 }

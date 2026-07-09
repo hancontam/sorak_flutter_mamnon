@@ -12,10 +12,13 @@ class AuthUser {
     this.token = '',
   });
 
+  @JsonKey(name: 'account_id')
   final int id;
   final String fullName;
   final String email;
+  @JsonKey(defaultValue: 'TEACHER')
   final String role;
+  @JsonKey(defaultValue: '')
   final String token;
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {

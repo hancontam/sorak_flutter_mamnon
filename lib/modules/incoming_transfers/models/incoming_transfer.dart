@@ -16,14 +16,20 @@ class IncomingTransfer {
     this.isDeleted = false,
   });
 
+  @JsonKey(name: 'transfer_id')
   final int id;
   final int studentId;
+  @JsonKey(readValue: _readStudentName)
   final String studentName;
   final String previousSchool;
   final String transferDate;
+  @JsonKey(defaultValue: '')
   final String reason;
+  @JsonKey(defaultValue: '')
   final String note;
+  @JsonKey(defaultValue: 'Recorded')
   final String status;
+  @JsonKey(readValue: _readIsDeleted)
   final bool isDeleted;
 
   factory IncomingTransfer.fromJson(Map<String, dynamic> json) {
@@ -56,5 +62,17 @@ class IncomingTransfer {
       status: status ?? this.status,
       isDeleted: isDeleted ?? this.isDeleted,
     );
+  }
+
+  static Object? _readStudentName(Map<dynamic, dynamic> json, String key) {
+    final student = json['student'];
+    if (student is Map) {
+      return student['full_name'] ?? '';
+    }
+    return json[key] ?? '';
+  }
+
+  static Object? _readIsDeleted(Map<dynamic, dynamic> json, String key) {
+    return json['is_deleted'] == true || json['deleted_at'] != null;
   }
 }

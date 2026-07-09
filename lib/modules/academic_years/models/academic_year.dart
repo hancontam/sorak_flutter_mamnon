@@ -13,11 +13,16 @@ class AcademicYear {
     this.isDeleted = false,
   });
 
+  @JsonKey(name: 'school_year_id')
   final int id;
   final String name;
+  @JsonKey(defaultValue: '')
   final String startDate;
+  @JsonKey(defaultValue: '')
   final String endDate;
+  @JsonKey(defaultValue: 'inactive')
   final String status;
+  @JsonKey(readValue: _readIsDeleted)
   final bool isDeleted;
 
   factory AcademicYear.fromJson(Map<String, dynamic> json) {
@@ -44,5 +49,9 @@ class AcademicYear {
       status: status ?? this.status,
       isDeleted: isDeleted ?? this.isDeleted,
     );
+  }
+
+  static Object? _readIsDeleted(Map<dynamic, dynamic> json, String key) {
+    return json['is_deleted'] == true || json['deleted_at'] != null;
   }
 }
