@@ -20,6 +20,7 @@ class ModuleListScreen<T> extends StatelessWidget {
     required this.onDelete,
     this.onDetail,
     this.extraActions,
+    this.showDelete = true,
   });
 
   final String title;
@@ -34,6 +35,7 @@ class ModuleListScreen<T> extends StatelessWidget {
   final Future<void> Function(T item) onDelete;
   final void Function(T item)? onDetail;
   final List<Widget> Function(T item)? extraActions;
+  final bool showDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -68,11 +70,12 @@ class ModuleListScreen<T> extends StatelessWidget {
                       icon: const Icon(Icons.edit),
                       onPressed: () => onEdit(item),
                     ),
-                    IconButton(
-                      tooltip: 'Delete',
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _confirmDelete(context, item),
-                    ),
+                    if (showDelete)
+                      IconButton(
+                        tooltip: 'Delete',
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => _confirmDelete(context, item),
+                      ),
                   ],
                 ),
               ),

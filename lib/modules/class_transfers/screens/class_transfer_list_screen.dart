@@ -45,6 +45,7 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
           itemSubtitle: (item) => '${item.fromClassName} -> ${item.toClassName} | ${item.status}',
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
+          showDelete: false,
           onDetail: (item) {
             Navigator.push(
               context,
@@ -61,6 +62,11 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
               tooltip: 'Reject',
               onPressed: () => provider.updateStatus(item.id, 'reject'),
               icon: const Icon(Icons.thumb_down_alt_outlined),
+            ),
+            IconButton(
+              tooltip: 'Cancel',
+              onPressed: () => provider.updateStatus(item.id, 'cancel'),
+              icon: const Icon(Icons.cancel_outlined),
             ),
           ],
         );
