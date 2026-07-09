@@ -4,10 +4,7 @@ import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/academic_year.dart';
 
 class AcademicYearDetailScreen extends StatelessWidget {
-  const AcademicYearDetailScreen({
-    super.key,
-    required this.academicYear,
-  });
+  const AcademicYearDetailScreen({super.key, required this.academicYear});
 
   final AcademicYear academicYear;
 

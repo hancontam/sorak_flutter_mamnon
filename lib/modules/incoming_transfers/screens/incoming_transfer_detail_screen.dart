@@ -17,7 +17,10 @@ class IncomingTransferDetailScreen extends StatelessWidget {
       title: incomingTransfer.studentName,
       rows: [
         DetailRow(label: 'ID', value: '${incomingTransfer.id}'),
-        DetailRow(label: 'Previous school', value: incomingTransfer.previousSchool),
+        DetailRow(
+          label: 'Previous school',
+          value: incomingTransfer.previousSchool,
+        ),
         DetailRow(label: 'Transfer date', value: incomingTransfer.transferDate),
         DetailRow(label: 'Reason', value: incomingTransfer.reason),
         DetailRow(label: 'Note', value: incomingTransfer.note),

@@ -4,10 +4,7 @@ import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/student.dart';
 
 class StudentDetailScreen extends StatelessWidget {
-  const StudentDetailScreen({
-    super.key,
-    required this.student,
-  });
+  const StudentDetailScreen({super.key, required this.student});
 
   final Student student;
 

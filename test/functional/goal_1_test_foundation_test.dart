@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/providers/crud_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/academic_years/models/academic_year.dart';
@@ -11,8 +13,10 @@ void main() {
     testWidgets('can pump Sorak app without saved user', (tester) async {
       await tester.pumpSorakApp();
 
-      expect(find.text('Login'), findsWidgets);
-      expect(find.text('Email'), findsOneWidget);
+      expect(find.text('Sorak Mam Non'), findsOneWidget);
+      expect(find.text('Phụ huynh'), findsOneWidget);
+      expect(find.text('Cán bộ'), findsOneWidget);
+      expect(find.text('Mã thẻ học sinh'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
     });
 
@@ -21,7 +25,22 @@ void main() {
 
       expect(find.text('Sorak Mam Non'), findsOneWidget);
       expect(find.text('Welcome, Principal Admin'), findsOneWidget);
-      expect(find.text('Academic Years'), findsOneWidget);
+      expect(find.byKey(const ValueKey('open_drawer_button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
+    });
+
+    test('lottie state assets are bundled', () async {
+      const assetPaths = [
+        'assets/lottie/loading.json',
+        'assets/lottie/empty.json',
+        'assets/lottie/success.json',
+      ];
+
+      for (final path in assetPaths) {
+        final content = await rootBundle.loadString(path);
+        expect(content, contains('"v"'));
+        expect(content, contains('"layers"'));
+      }
     });
 
     test('fake CRUD repository supports provider flow', () async {

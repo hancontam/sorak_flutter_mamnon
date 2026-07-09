@@ -67,7 +67,10 @@ class ClassRepository implements CrudRepository<SchoolClass> {
       return item;
     }
 
-    final response = await _apiClient.dio.post(ApiEndpoints.classes, data: data);
+    final response = await _apiClient.dio.post(
+      ApiEndpoints.classes,
+      data: data,
+    );
     return SchoolClass.fromJson(ApiResponse.object(response.data));
   }
 
@@ -87,7 +90,10 @@ class ClassRepository implements CrudRepository<SchoolClass> {
       return item;
     }
 
-    final response = await _apiClient.dio.patch('${ApiEndpoints.classes}/$id', data: data);
+    final response = await _apiClient.dio.patch(
+      '${ApiEndpoints.classes}/$id',
+      data: data,
+    );
     return SchoolClass.fromJson(ApiResponse.object(response.data));
   }
 
@@ -114,6 +120,7 @@ class ClassRepository implements CrudRepository<SchoolClass> {
   }
 
   int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) + 1;
+    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
+        1;
   }
 }

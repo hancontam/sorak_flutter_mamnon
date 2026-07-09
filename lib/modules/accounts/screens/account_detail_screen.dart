@@ -4,10 +4,7 @@ import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/account.dart';
 
 class AccountDetailScreen extends StatelessWidget {
-  const AccountDetailScreen({
-    super.key,
-    required this.account,
-  });
+  const AccountDetailScreen({super.key, required this.account});
 
   final Account account;
 

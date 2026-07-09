@@ -6,7 +6,8 @@ import '../../../core/repositories/crud_repository.dart';
 import '../models/class_transfer.dart';
 
 class ClassTransferRepository implements CrudRepository<ClassTransfer> {
-  ClassTransferRepository({required ApiClient apiClient}) : _apiClient = apiClient;
+  ClassTransferRepository({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -42,7 +43,9 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
       return matches.isEmpty ? null : matches.first;
     }
 
-    final response = await _apiClient.dio.get('${ApiEndpoints.classTransfers}/$id');
+    final response = await _apiClient.dio.get(
+      '${ApiEndpoints.classTransfers}/$id',
+    );
     return ClassTransfer.fromJson(ApiResponse.object(response.data));
   }
 
@@ -63,7 +66,10 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
       return item;
     }
 
-    final response = await _apiClient.dio.post(ApiEndpoints.classTransfers, data: data);
+    final response = await _apiClient.dio.post(
+      ApiEndpoints.classTransfers,
+      data: data,
+    );
     return ClassTransfer.fromJson(ApiResponse.object(response.data));
   }
 
@@ -112,6 +118,7 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
   }
 
   int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) + 1;
+    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
+        1;
   }
 }

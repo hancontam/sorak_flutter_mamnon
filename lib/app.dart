@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 
 import 'core/network/api_client.dart';
 import 'core/storage/local_storage.dart';
+import 'core/theme/app_theme.dart';
+import 'core/widgets/app_shell.dart';
+import 'core/widgets/role_guard.dart';
 import 'modules/academic_years/providers/academic_year_provider.dart';
 import 'modules/academic_years/repositories/academic_year_repository.dart';
 import 'modules/academic_years/screens/academic_year_list_screen.dart';
@@ -18,27 +21,41 @@ import 'modules/class_transfers/screens/class_transfer_list_screen.dart';
 import 'modules/classes/providers/class_provider.dart';
 import 'modules/classes/repositories/class_repository.dart';
 import 'modules/classes/screens/class_list_screen.dart';
-import 'modules/home/screens/home_screen.dart';
+import 'modules/health/providers/growth_who_provider.dart';
+import 'modules/health/screens/health_screen.dart';
+import 'modules/health/providers/health_assessment_provider.dart';
+import 'modules/health/providers/nutrition_assessment_provider.dart';
+import 'modules/health/repositories/growth_who_repository.dart';
+import 'modules/health/repositories/health_assessment_repository.dart';
+import 'modules/health/repositories/nutrition_assessment_repository.dart';
+import 'modules/health/screens/growth_who_screen.dart';
+import 'modules/health/screens/health_assessment_list_screen.dart';
+import 'modules/health/screens/nutrition_assessment_list_screen.dart';
 import 'modules/incoming_transfers/providers/incoming_transfer_provider.dart';
 import 'modules/incoming_transfers/repositories/incoming_transfer_repository.dart';
 import 'modules/incoming_transfers/screens/incoming_transfer_list_screen.dart';
 import 'modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import 'modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
 import 'modules/outgoing_transfers/screens/outgoing_transfer_list_screen.dart';
+import 'modules/parent/screens/parent_portal_screen.dart';
+import 'modules/profile/screens/profile_screen.dart';
+import 'modules/profile/screens/settings_screen.dart';
 import 'modules/students/providers/student_provider.dart';
 import 'modules/students/repositories/student_repository.dart';
 import 'modules/students/screens/student_list_screen.dart';
 import 'modules/teachers/providers/teacher_provider.dart';
 import 'modules/teachers/repositories/teacher_repository.dart';
 import 'modules/teachers/screens/teacher_list_screen.dart';
+import 'modules/transfers/screens/transfers_screen.dart';
 
 class SorakApp extends StatelessWidget {
-  const SorakApp({
-    super.key,
-    required this.localStorage,
-  });
+  const SorakApp({super.key, required this.localStorage});
 
   final LocalStorage localStorage;
+  static const Set<String> _allRoles = {'PRINCIPAL', 'TEACHER', 'PARENT'};
+  static const Set<String> _staffRoles = {'PRINCIPAL', 'TEACHER'};
+  static const Set<String> _principalOnly = {'PRINCIPAL'};
+  static const Set<String> _parentOnly = {'PARENT'};
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +74,9 @@ class SorakApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider<AuthProvider>(
-          create: (context) => AuthProvider(
-            authRepository: context.read<AuthRepository>(),
-          )..loadCurrentUser(),
+          create: (context) =>
+              AuthProvider(authRepository: context.read<AuthRepository>())
+                ..loadCurrentUser(),
         ),
         ChangeNotifierProvider<AcademicYearProvider>(
           create: (context) => AcademicYearProvider(
@@ -117,14 +134,32 @@ class SorakApp extends StatelessWidget {
             ),
           ),
         ),
+        ChangeNotifierProvider<HealthAssessmentProvider>(
+          create: (context) => HealthAssessmentProvider(
+            healthAssessmentRepository: HealthAssessmentRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<NutritionAssessmentProvider>(
+          create: (context) => NutritionAssessmentProvider(
+            nutritionAssessmentRepository: NutritionAssessmentRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<GrowthWhoProvider>(
+          create: (context) => GrowthWhoProvider(
+            growthWhoRepository: GrowthWhoRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'Sorak Mam Non',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorSchemeSeed: Colors.green,
-          useMaterial3: true,
-        ),
+        theme: AppTheme.lightTheme,
         home: Consumer<AuthProvider>(
           builder: (context, authProvider, _) {
             if (authProvider.isLoading) {
@@ -134,7 +169,7 @@ class SorakApp extends StatelessWidget {
             }
 
             if (authProvider.isLoggedIn) {
-              return const HomeScreen();
+              return const AppShell();
             }
 
             return const LoginScreen();
@@ -142,15 +177,66 @@ class SorakApp extends StatelessWidget {
         ),
         routes: {
           '/login': (_) => const LoginScreen(),
-          '/home': (_) => const HomeScreen(),
-          '/academic-years': (_) => const AcademicYearListScreen(),
-          '/classes': (_) => const ClassListScreen(),
-          '/teachers': (_) => const TeacherListScreen(),
-          '/students': (_) => const StudentListScreen(),
-          '/accounts': (_) => const AccountListScreen(),
-          '/class-transfers': (_) => const ClassTransferListScreen(),
-          '/outgoing-transfers': (_) => const OutgoingTransferListScreen(),
-          '/incoming-transfers': (_) => const IncomingTransferListScreen(),
+          '/home': (_) =>
+              const RoleGuard(allowedRoles: _allRoles, child: AppShell()),
+          '/academic-years': (_) => const RoleGuard(
+            allowedRoles: _principalOnly,
+            child: AcademicYearListScreen(),
+          ),
+          '/classes': (_) => const RoleGuard(
+            allowedRoles: _staffRoles,
+            child: ClassListScreen(),
+          ),
+          '/teachers': (_) => const RoleGuard(
+            allowedRoles: _principalOnly,
+            child: TeacherListScreen(),
+          ),
+          '/students': (_) => const RoleGuard(
+            allowedRoles: _staffRoles,
+            child: StudentListScreen(),
+          ),
+          '/accounts': (_) => const RoleGuard(
+            allowedRoles: _principalOnly,
+            child: AccountListScreen(),
+          ),
+          '/transfers': (_) => const RoleGuard(
+            allowedRoles: _staffRoles,
+            child: TransfersScreen(),
+          ),
+          '/health': (_) =>
+              const RoleGuard(allowedRoles: _staffRoles, child: HealthScreen()),
+          '/health-assessments': (_) => const RoleGuard(
+            allowedRoles: _staffRoles,
+            child: HealthAssessmentListScreen(),
+          ),
+          '/nutrition': (_) => const RoleGuard(
+            allowedRoles: _staffRoles,
+            child: NutritionAssessmentListScreen(),
+          ),
+          '/growth': (_) => const RoleGuard(
+            allowedRoles: _allRoles,
+            child: GrowthWhoScreen(),
+          ),
+          '/parent-portal': (_) => const RoleGuard(
+            allowedRoles: _parentOnly,
+            child: ParentPortalScreen(),
+          ),
+          '/profile': (_) =>
+              const RoleGuard(allowedRoles: _allRoles, child: ProfileScreen()),
+          '/settings': (_) =>
+              const RoleGuard(allowedRoles: _allRoles, child: SettingsScreen()),
+          '/class-transfers': (_) => const RoleGuard(
+            allowedRoles: _staffRoles,
+            child: ClassTransferListScreen(),
+          ),
+          '/outgoing-transfers': (_) => const RoleGuard(
+            allowedRoles: _staffRoles,
+            child: OutgoingTransferListScreen(),
+          ),
+          '/incoming-transfers': (_) => const RoleGuard(
+            allowedRoles: _staffRoles,
+            child: IncomingTransferListScreen(),
+          ),
         },
       ),
     );

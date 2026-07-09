@@ -4,7 +4,7 @@ import '../repositories/crud_repository.dart';
 
 class CrudProvider<T> extends ChangeNotifier {
   CrudProvider({required CrudRepository<T> repository})
-      : _repository = repository;
+    : _repository = repository;
 
   final CrudRepository<T> _repository;
 

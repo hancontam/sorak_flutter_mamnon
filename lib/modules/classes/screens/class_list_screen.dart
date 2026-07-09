@@ -42,13 +42,17 @@ class _ClassListScreenState extends State<ClassListScreen> {
           onRefresh: provider.loadItems,
           onAdd: () => _openForm(),
           itemTitle: (item) => item.className,
-          itemSubtitle: (item) => 'Room ${item.room} | ${item.ageGroup} | ${item.teacherName}',
+          itemSubtitle: (item) =>
+              'Room ${item.room} | ${item.ageGroup} | ${item.teacherName}',
+          itemFilterValue: (item) => item.ageGroup,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
           onDetail: (item) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => ClassDetailScreen(schoolClass: item)),
+              MaterialPageRoute(
+                builder: (_) => ClassDetailScreen(schoolClass: item),
+              ),
             );
           },
         );

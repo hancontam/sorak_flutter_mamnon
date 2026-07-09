@@ -6,10 +6,7 @@ import '../models/teacher.dart';
 import '../providers/teacher_provider.dart';
 
 class TeacherFormScreen extends StatelessWidget {
-  const TeacherFormScreen({
-    super.key,
-    this.teacher,
-  });
+  const TeacherFormScreen({super.key, this.teacher});
 
   final Teacher? teacher;
 
@@ -19,9 +16,17 @@ class TeacherFormScreen extends StatelessWidget {
       title: teacher == null ? 'Create Teacher' : 'Update Teacher',
       fields: const [
         FormFieldConfig(name: 'full_name', label: 'Full name'),
-        FormFieldConfig(name: 'email', label: 'Email', keyboardType: TextInputType.emailAddress),
+        FormFieldConfig(
+          name: 'email',
+          label: 'Email',
+          keyboardType: TextInputType.emailAddress,
+        ),
         FormFieldConfig(name: 'position', label: 'Position'),
-        FormFieldConfig(name: 'phone', label: 'Phone', keyboardType: TextInputType.phone),
+        FormFieldConfig(
+          name: 'phone',
+          label: 'Phone',
+          keyboardType: TextInputType.phone,
+        ),
         FormFieldConfig(name: 'gender', label: 'Gender'),
         FormFieldConfig(name: 'work_status', label: 'Work status'),
       ],

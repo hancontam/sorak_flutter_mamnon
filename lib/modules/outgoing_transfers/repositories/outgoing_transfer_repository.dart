@@ -6,7 +6,8 @@ import '../../../core/repositories/crud_repository.dart';
 import '../models/outgoing_transfer.dart';
 
 class OutgoingTransferRepository implements CrudRepository<OutgoingTransfer> {
-  OutgoingTransferRepository({required ApiClient apiClient}) : _apiClient = apiClient;
+  OutgoingTransferRepository({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -40,7 +41,9 @@ class OutgoingTransferRepository implements CrudRepository<OutgoingTransfer> {
       return matches.isEmpty ? null : matches.first;
     }
 
-    final response = await _apiClient.dio.get('${ApiEndpoints.outgoingTransfers}/$id');
+    final response = await _apiClient.dio.get(
+      '${ApiEndpoints.outgoingTransfers}/$id',
+    );
     return OutgoingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
@@ -60,7 +63,10 @@ class OutgoingTransferRepository implements CrudRepository<OutgoingTransfer> {
       return item;
     }
 
-    final response = await _apiClient.dio.post(ApiEndpoints.outgoingTransfers, data: data);
+    final response = await _apiClient.dio.post(
+      ApiEndpoints.outgoingTransfers,
+      data: data,
+    );
     return OutgoingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
@@ -79,7 +85,10 @@ class OutgoingTransferRepository implements CrudRepository<OutgoingTransfer> {
       return item;
     }
 
-    final response = await _apiClient.dio.patch('${ApiEndpoints.outgoingTransfers}/$id', data: data);
+    final response = await _apiClient.dio.patch(
+      '${ApiEndpoints.outgoingTransfers}/$id',
+      data: data,
+    );
     return OutgoingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
@@ -113,6 +122,7 @@ class OutgoingTransferRepository implements CrudRepository<OutgoingTransfer> {
   }
 
   int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) + 1;
+    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
+        1;
   }
 }

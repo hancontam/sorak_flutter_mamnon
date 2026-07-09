@@ -6,10 +6,7 @@ import '../models/school_class.dart';
 import '../providers/class_provider.dart';
 
 class ClassFormScreen extends StatelessWidget {
-  const ClassFormScreen({
-    super.key,
-    this.schoolClass,
-  });
+  const ClassFormScreen({super.key, this.schoolClass});
 
   final SchoolClass? schoolClass;
 
@@ -19,7 +16,11 @@ class ClassFormScreen extends StatelessWidget {
       title: schoolClass == null ? 'Create Class' : 'Update Class',
       fields: const [
         FormFieldConfig(name: 'class_name', label: 'Class name'),
-        FormFieldConfig(name: 'school_year_id', label: 'Academic year ID', keyboardType: TextInputType.number),
+        FormFieldConfig(
+          name: 'school_year_id',
+          label: 'Academic year ID',
+          keyboardType: TextInputType.number,
+        ),
         FormFieldConfig(name: 'age_group', label: 'Age group'),
         FormFieldConfig(name: 'room', label: 'Room'),
         FormFieldConfig(name: 'teacher_name', label: 'Teacher name'),

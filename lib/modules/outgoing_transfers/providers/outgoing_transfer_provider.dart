@@ -5,8 +5,8 @@ import '../repositories/outgoing_transfer_repository.dart';
 class OutgoingTransferProvider extends CrudProvider<OutgoingTransfer> {
   OutgoingTransferProvider({
     required OutgoingTransferRepository outgoingTransferRepository,
-  })  : _outgoingTransferRepository = outgoingTransferRepository,
-        super(repository: outgoingTransferRepository);
+  }) : _outgoingTransferRepository = outgoingTransferRepository,
+       super(repository: outgoingTransferRepository);
 
   final OutgoingTransferRepository _outgoingTransferRepository;
 

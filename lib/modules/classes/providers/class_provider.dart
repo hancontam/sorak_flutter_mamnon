@@ -4,5 +4,5 @@ import '../repositories/class_repository.dart';
 
 class ClassProvider extends CrudProvider<SchoolClass> {
   ClassProvider({required ClassRepository classRepository})
-      : super(repository: classRepository);
+    : super(repository: classRepository);
 }

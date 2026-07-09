@@ -6,22 +6,28 @@ import '../models/incoming_transfer.dart';
 import '../providers/incoming_transfer_provider.dart';
 
 class IncomingTransferFormScreen extends StatelessWidget {
-  const IncomingTransferFormScreen({
-    super.key,
-    this.incomingTransfer,
-  });
+  const IncomingTransferFormScreen({super.key, this.incomingTransfer});
 
   final IncomingTransfer? incomingTransfer;
 
   @override
   Widget build(BuildContext context) {
     return SimpleFormScreen(
-      title: incomingTransfer == null ? 'Create Incoming Transfer' : 'Update Incoming Transfer',
+      title: incomingTransfer == null
+          ? 'Create Incoming Transfer'
+          : 'Update Incoming Transfer',
       fields: const [
-        FormFieldConfig(name: 'student_id', label: 'Student ID', keyboardType: TextInputType.number),
+        FormFieldConfig(
+          name: 'student_id',
+          label: 'Student ID',
+          keyboardType: TextInputType.number,
+        ),
         FormFieldConfig(name: 'student_name', label: 'Student name'),
         FormFieldConfig(name: 'previous_school', label: 'Previous school'),
-        FormFieldConfig(name: 'transfer_date', label: 'Transfer date (YYYY-MM-DD)'),
+        FormFieldConfig(
+          name: 'transfer_date',
+          label: 'Transfer date (YYYY-MM-DD)',
+        ),
         FormFieldConfig(name: 'reason', label: 'Reason', maxLines: 2),
         FormFieldConfig(name: 'note', label: 'Note', maxLines: 2),
       ],

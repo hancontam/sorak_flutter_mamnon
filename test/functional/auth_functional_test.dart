@@ -12,15 +12,22 @@ void main() {
     testWidgets('shows login form when no session is saved', (tester) async {
       await tester.pumpSorakApp();
 
-      expect(find.text('Login'), findsWidgets);
-      expect(find.text('Email'), findsOneWidget);
+      expect(find.text('Sorak Mam Non'), findsOneWidget);
+      expect(find.text('Phụ huynh'), findsOneWidget);
+      expect(find.text('Cán bộ'), findsOneWidget);
+      expect(find.text('Mã thẻ học sinh'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
     });
 
-    testWidgets('login success opens home and saves session', (tester) async {
+    testWidgets('staff login success opens home and saves session', (
+      tester,
+    ) async {
       final localStorage = await tester.pumpSorakApp();
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+      await tester.tap(find.text('Cán bộ'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const ValueKey('login_button')));
+      await tester.tap(find.byKey(const ValueKey('login_button')));
       await tester.pumpAndSettle();
 
       expect(find.text('Sorak Mam Non'), findsOneWidget);
@@ -30,15 +37,39 @@ void main() {
       expect(localStorage.getRole(), 'PRINCIPAL');
     });
 
-    testWidgets('login fail stays on login and stores error', (tester) async {
+    testWidgets('parent login success opens parent portal and saves session', (
+      tester,
+    ) async {
+      final localStorage = await tester.pumpSorakApp();
+
+      await tester.ensureVisible(find.byKey(const ValueKey('login_button')));
+      await tester.tap(find.byKey(const ValueKey('login_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Parent Portal'), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_child')), findsOneWidget);
+      expect(localStorage.getToken(), 'demo-token-parent');
+      expect(localStorage.getEmail(), 'parent@sorak.edu.vn');
+      expect(localStorage.getRole(), 'PARENT');
+    });
+
+    testWidgets('staff login fail stays on login and stores error', (
+      tester,
+    ) async {
       await tester.pumpSorakApp();
 
+      await tester.tap(find.text('Cán bộ'));
+      await tester.pumpAndSettle();
       await tester.enterText(
-        find.byType(TextField).at(0),
+        find.byKey(const ValueKey('staff_email_field')),
         'wrong@sorak.edu.vn',
       );
-      await tester.enterText(find.byType(TextField).at(1), 'wrong-password');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+      await tester.enterText(
+        find.byKey(const ValueKey('staff_password_field')),
+        'wrong-password',
+      );
+      await tester.ensureVisible(find.byKey(const ValueKey('login_button')));
+      await tester.tap(find.byKey(const ValueKey('login_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
       await tester.pump(const Duration(milliseconds: 100));
@@ -47,11 +78,41 @@ void main() {
           .element(find.byType(LoginScreen))
           .read<AuthProvider>();
 
-      expect(find.text('Login'), findsWidgets);
+      expect(find.text('Cán bộ'), findsOneWidget);
       expect(find.text('Welcome, Principal Admin'), findsNothing);
       expect(authProvider.isLoggedIn, isFalse);
       expect(authProvider.isLoading, isFalse);
       expect(authProvider.errorMessage, 'Incorrect username or password');
+    });
+
+    testWidgets('parent login fail stays on login and stores error', (
+      tester,
+    ) async {
+      await tester.pumpSorakApp();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('parent_card_field')),
+        'wrong-card',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('parent_password_field')),
+        'wrong-password',
+      );
+      await tester.ensureVisible(find.byKey(const ValueKey('login_button')));
+      await tester.tap(find.byKey(const ValueKey('login_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final authProvider = tester
+          .element(find.byType(LoginScreen))
+          .read<AuthProvider>();
+
+      expect(find.text('Phụ huynh'), findsOneWidget);
+      expect(find.text('Child overview'), findsNothing);
+      expect(authProvider.isLoggedIn, isFalse);
+      expect(authProvider.isLoading, isFalse);
+      expect(authProvider.errorMessage, 'Incorrect student card or password');
     });
 
     testWidgets('saved session opens home directly', (tester) async {
@@ -68,8 +129,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.power_settings_new));
       await tester.pumpAndSettle();
 
-      expect(find.text('Login'), findsWidgets);
-      expect(find.text('Email'), findsOneWidget);
+      expect(find.text('Phụ huynh'), findsOneWidget);
+      expect(find.text('Mã thẻ học sinh'), findsOneWidget);
       _expectSessionCleared(localStorage);
     });
   });

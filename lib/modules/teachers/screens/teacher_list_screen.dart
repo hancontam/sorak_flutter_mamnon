@@ -43,12 +43,16 @@ class _TeacherListScreenState extends State<TeacherListScreen> {
           onAdd: () => _openForm(),
           itemTitle: (item) => item.fullName,
           itemSubtitle: (item) => '${item.position} | ${item.email}',
+          itemStatus: (item) => item.workStatus,
+          itemFilterValue: (item) => item.workStatus,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
           onDetail: (item) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => TeacherDetailScreen(teacher: item)),
+              MaterialPageRoute(
+                builder: (_) => TeacherDetailScreen(teacher: item),
+              ),
             );
           },
         );

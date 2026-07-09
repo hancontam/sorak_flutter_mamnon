@@ -7,23 +7,23 @@ class AppTextField extends StatelessWidget {
     required this.label,
     this.keyboardType,
     this.maxLines = 1,
+    this.validator,
   });
 
   final TextEditingController controller;
   final String label;
   final TextInputType? keyboardType;
   final int maxLines;
+  final FormFieldValidator<String>? validator;
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
+      validator: validator,
+      decoration: InputDecoration(labelText: label),
     );
   }
 }

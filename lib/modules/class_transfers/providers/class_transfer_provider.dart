@@ -5,8 +5,8 @@ import '../repositories/class_transfer_repository.dart';
 class ClassTransferProvider extends CrudProvider<ClassTransfer> {
   ClassTransferProvider({
     required ClassTransferRepository classTransferRepository,
-  })  : _classTransferRepository = classTransferRepository,
-        super(repository: classTransferRepository);
+  }) : _classTransferRepository = classTransferRepository,
+       super(repository: classTransferRepository);
 
   final ClassTransferRepository _classTransferRepository;
 

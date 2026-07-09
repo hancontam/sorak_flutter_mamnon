@@ -6,7 +6,8 @@ import '../../../core/repositories/crud_repository.dart';
 import '../models/incoming_transfer.dart';
 
 class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
-  IncomingTransferRepository({required ApiClient apiClient}) : _apiClient = apiClient;
+  IncomingTransferRepository({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -40,7 +41,9 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
       return matches.isEmpty ? null : matches.first;
     }
 
-    final response = await _apiClient.dio.get('${ApiEndpoints.incomingTransfers}/$id');
+    final response = await _apiClient.dio.get(
+      '${ApiEndpoints.incomingTransfers}/$id',
+    );
     return IncomingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
@@ -60,7 +63,10 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
       return item;
     }
 
-    final response = await _apiClient.dio.post(ApiEndpoints.incomingTransfers, data: data);
+    final response = await _apiClient.dio.post(
+      ApiEndpoints.incomingTransfers,
+      data: data,
+    );
     return IncomingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
@@ -79,7 +85,10 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
       return item;
     }
 
-    final response = await _apiClient.dio.patch('${ApiEndpoints.incomingTransfers}/$id', data: data);
+    final response = await _apiClient.dio.patch(
+      '${ApiEndpoints.incomingTransfers}/$id',
+      data: data,
+    );
     return IncomingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
@@ -113,6 +122,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
   }
 
   int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) + 1;
+    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
+        1;
   }
 }

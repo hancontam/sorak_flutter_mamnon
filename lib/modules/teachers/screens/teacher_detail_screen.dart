@@ -4,10 +4,7 @@ import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/teacher.dart';
 
 class TeacherDetailScreen extends StatelessWidget {
-  const TeacherDetailScreen({
-    super.key,
-    required this.teacher,
-  });
+  const TeacherDetailScreen({super.key, required this.teacher});
 
   final Teacher teacher;
 

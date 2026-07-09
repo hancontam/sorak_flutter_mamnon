@@ -44,7 +44,9 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
           onRefresh: provider.loadItems,
           onAdd: () => _openForm(),
           itemTitle: (item) => item.name,
-          itemSubtitle: (item) => '${item.startDate} - ${item.endDate} | ${item.status}',
+          itemSubtitle: (item) =>
+              '${item.startDate} - ${item.endDate} | ${item.status}',
+          itemStatus: (item) => item.status,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
           onDetail: (item) {
@@ -56,10 +58,10 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
             );
           },
           extraActions: (item) => [
-            IconButton(
-              tooltip: 'Activate',
-              onPressed: () => provider.activateYear(item.id),
-              icon: const Icon(Icons.check_circle_outline),
+            ModuleListAction(
+              label: 'Activate',
+              icon: Icons.check_circle_outline,
+              onSelected: () => provider.activateYear(item.id),
             ),
           ],
         );

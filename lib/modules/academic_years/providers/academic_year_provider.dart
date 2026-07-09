@@ -4,8 +4,8 @@ import '../repositories/academic_year_repository.dart';
 
 class AcademicYearProvider extends CrudProvider<AcademicYear> {
   AcademicYearProvider({required AcademicYearRepository academicYearRepository})
-      : _academicYearRepository = academicYearRepository,
-        super(repository: academicYearRepository);
+    : _academicYearRepository = academicYearRepository,
+      super(repository: academicYearRepository);
 
   final AcademicYearRepository _academicYearRepository;
 

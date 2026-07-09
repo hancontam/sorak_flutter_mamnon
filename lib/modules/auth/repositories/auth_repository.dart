@@ -9,8 +9,8 @@ class AuthRepository {
   const AuthRepository({
     required ApiClient apiClient,
     required LocalStorage localStorage,
-  })  : _apiClient = apiClient,
-        _localStorage = localStorage;
+  }) : _apiClient = apiClient,
+       _localStorage = localStorage;
 
   final ApiClient _apiClient;
   final LocalStorage _localStorage;
@@ -35,25 +35,85 @@ class AuthRepository {
     );
   }
 
-  Future<AuthUser> login({
+  Future<AuthUser> login({required String email, required String password}) {
+    return loginStaff(email: email, password: password);
+  }
+
+  Future<Map<String, dynamic>> getProfile() async {
+    if (!AppConfig.useMockApi) {
+      final response = await _apiClient.dio.get(ApiEndpoints.authMe);
+      return ApiResponse.object(response.data);
+    }
+
+    final user = await getSavedUser();
+    if (user == null) {
+      return <String, dynamic>{};
+    }
+
+    if (user.role.toUpperCase() == 'PARENT') {
+      return {
+        'account_id': user.id,
+        'full_name': 'Nguyen Minh An',
+        'role': 'PARENT',
+        'student_id': 1,
+        'student_id_card_number': 'NBA2024.001',
+        'student_status': 'Dang hoc',
+        'enrollments': [
+          {
+            'class': {
+              'class_name': 'Mam 1A',
+              'school_year': {'name': '2025-2026'},
+            },
+          },
+        ],
+      };
+    }
+
+    return {
+      'account_id': user.id,
+      'full_name': user.fullName,
+      'email': user.email,
+      'role': user.role,
+      'phone': '0900000000',
+      'gender': 'Female',
+      'position': user.role.toUpperCase() == 'PRINCIPAL'
+          ? 'Principal'
+          : 'Teacher',
+      'work_status': 'Dang lam viec',
+    };
+  }
+
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    if (!AppConfig.useMockApi) {
+      await _apiClient.dio.post(
+        ApiEndpoints.authChangePassword,
+        data: {'old_password': oldPassword, 'new_password': newPassword},
+      );
+      return;
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (oldPassword.trim().isEmpty) {
+      throw Exception('Old password is required');
+    }
+  }
+
+  Future<AuthUser> loginStaff({
     required String email,
     required String password,
   }) async {
     if (!AppConfig.useMockApi) {
       final response = await _apiClient.dio.post(
         ApiEndpoints.authLogin,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
       final data = ApiResponse.object(response.data);
       final userJson = data['user'] as Map<String, dynamic>? ?? data;
       final token = _readAccessToken(response.headers.map['set-cookie']);
-      final user = AuthUser.fromJson({
-        ...userJson,
-        'token': token,
-      });
+      final user = AuthUser.fromJson({...userJson, 'token': token});
       await _saveUser(user);
       return user;
     }
@@ -70,6 +130,44 @@ class AuthRepository {
       email: 'admin@sorak.edu.vn',
       role: 'PRINCIPAL',
       token: 'demo-token-admin',
+    );
+
+    await _saveUser(user);
+    return user;
+  }
+
+  Future<AuthUser> loginParent({
+    required String studentCardNumber,
+    required String password,
+  }) async {
+    if (!AppConfig.useMockApi) {
+      final response = await _apiClient.dio.post(
+        ApiEndpoints.authParentLogin,
+        data: {
+          'student_id_card_number': studentCardNumber,
+          'password': password,
+        },
+      );
+      final data = ApiResponse.object(response.data);
+      final userJson = data['user'] as Map<String, dynamic>? ?? data;
+      final token = _readAccessToken(response.headers.map['set-cookie']);
+      final user = AuthUser.fromJson({...userJson, 'token': token});
+      await _saveUser(user);
+      return user;
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+
+    if (studentCardNumber != 'NBA2024.001' || password != '123456') {
+      throw Exception('Incorrect student card or password');
+    }
+
+    const user = AuthUser(
+      id: 10,
+      fullName: 'Parent Demo',
+      email: 'parent@sorak.edu.vn',
+      role: 'PARENT',
+      token: 'demo-token-parent',
     );
 
     await _saveUser(user);

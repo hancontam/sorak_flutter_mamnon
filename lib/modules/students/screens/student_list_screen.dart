@@ -43,12 +43,15 @@ class _StudentListScreenState extends State<StudentListScreen> {
           onAdd: () => _openForm(),
           itemTitle: (item) => item.fullName,
           itemSubtitle: (item) => '${item.className} | ${item.studentStatus}',
+          itemStatus: (item) => item.studentStatus,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
           onDetail: (item) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => StudentDetailScreen(student: item)),
+              MaterialPageRoute(
+                builder: (_) => StudentDetailScreen(student: item),
+              ),
             );
           },
         );

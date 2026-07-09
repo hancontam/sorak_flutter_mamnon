@@ -6,8 +6,10 @@ void main() {
   testWidgets('shows login screen', (tester) async {
     await tester.pumpSorakApp();
 
-    expect(find.text('Login'), findsWidgets);
-    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Sorak Mam Non'), findsOneWidget);
+    expect(find.text('Phụ huynh'), findsOneWidget);
+    expect(find.text('Cán bộ'), findsOneWidget);
+    expect(find.text('Mã thẻ học sinh'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
   });
 }

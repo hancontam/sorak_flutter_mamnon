@@ -7,7 +7,7 @@ import '../models/academic_year.dart';
 
 class AcademicYearRepository implements CrudRepository<AcademicYear> {
   AcademicYearRepository({required ApiClient apiClient})
-      : _apiClient = apiClient;
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -46,7 +46,9 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
       return matches.isEmpty ? null : matches.first;
     }
 
-    final response = await _apiClient.dio.get('${ApiEndpoints.academicYears}/$id');
+    final response = await _apiClient.dio.get(
+      '${ApiEndpoints.academicYears}/$id',
+    );
     return AcademicYear.fromJson(ApiResponse.object(response.data));
   }
 
@@ -63,7 +65,10 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
       return item;
     }
 
-    final response = await _apiClient.dio.post(ApiEndpoints.academicYears, data: data);
+    final response = await _apiClient.dio.post(
+      ApiEndpoints.academicYears,
+      data: data,
+    );
     return AcademicYear.fromJson(ApiResponse.object(response.data));
   }
 
@@ -81,7 +86,10 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
       return item;
     }
 
-    final response = await _apiClient.dio.patch('${ApiEndpoints.academicYears}/$id', data: data);
+    final response = await _apiClient.dio.patch(
+      '${ApiEndpoints.academicYears}/$id',
+      data: data,
+    );
     return AcademicYear.fromJson(ApiResponse.object(response.data));
   }
 
@@ -89,7 +97,9 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
     if (AppConfig.useMockApi) {
       for (var i = 0; i < _mockItems.length; i++) {
         final item = _mockItems[i];
-        _mockItems[i] = item.copyWith(status: item.id == id ? 'active' : 'inactive');
+        _mockItems[i] = item.copyWith(
+          status: item.id == id ? 'active' : 'inactive',
+        );
       }
       return;
     }
@@ -120,6 +130,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
   }
 
   int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) + 1;
+    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
+        1;
   }
 }

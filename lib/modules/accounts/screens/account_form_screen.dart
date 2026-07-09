@@ -6,10 +6,7 @@ import '../models/account.dart';
 import '../providers/account_provider.dart';
 
 class AccountFormScreen extends StatelessWidget {
-  const AccountFormScreen({
-    super.key,
-    this.account,
-  });
+  const AccountFormScreen({super.key, this.account});
 
   final Account? account;
 
@@ -19,9 +16,17 @@ class AccountFormScreen extends StatelessWidget {
       title: account == null ? 'Create Account' : 'Update Account',
       fields: const [
         FormFieldConfig(name: 'full_name', label: 'Full name'),
-        FormFieldConfig(name: 'email', label: 'Email', keyboardType: TextInputType.emailAddress),
+        FormFieldConfig(
+          name: 'email',
+          label: 'Email',
+          keyboardType: TextInputType.emailAddress,
+        ),
         FormFieldConfig(name: 'role', label: 'Role (PRINCIPAL/TEACHER)'),
-        FormFieldConfig(name: 'phone', label: 'Phone', keyboardType: TextInputType.phone),
+        FormFieldConfig(
+          name: 'phone',
+          label: 'Phone',
+          keyboardType: TextInputType.phone,
+        ),
         FormFieldConfig(name: 'gender', label: 'Gender'),
       ],
       initialValues: {

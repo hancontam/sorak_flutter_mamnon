@@ -5,8 +5,8 @@ import '../repositories/incoming_transfer_repository.dart';
 class IncomingTransferProvider extends CrudProvider<IncomingTransfer> {
   IncomingTransferProvider({
     required IncomingTransferRepository incomingTransferRepository,
-  })  : _incomingTransferRepository = incomingTransferRepository,
-        super(repository: incomingTransferRepository);
+  }) : _incomingTransferRepository = incomingTransferRepository,
+       super(repository: incomingTransferRepository);
 
   final IncomingTransferRepository _incomingTransferRepository;
 

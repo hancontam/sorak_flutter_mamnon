@@ -43,12 +43,15 @@ class _AccountListScreenState extends State<AccountListScreen> {
           onAdd: () => _openForm(),
           itemTitle: (item) => item.fullName,
           itemSubtitle: (item) => '${item.role} | ${item.email}',
+          itemFilterValue: (item) => item.role,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
           onDetail: (item) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => AccountDetailScreen(account: item)),
+              MaterialPageRoute(
+                builder: (_) => AccountDetailScreen(account: item),
+              ),
             );
           },
         );

@@ -36,9 +36,9 @@ class TeacherRepository implements CrudRepository<Teacher> {
     }
 
     final response = await _apiClient.dio.get(ApiEndpoints.teachers);
-    return ApiResponse.list(response.data)
-        .map((json) => Teacher.fromJson(json as Map<String, dynamic>))
-        .toList();
+    return ApiResponse.list(
+      response.data,
+    ).map((json) => Teacher.fromJson(json as Map<String, dynamic>)).toList();
   }
 
   @override
@@ -68,7 +68,10 @@ class TeacherRepository implements CrudRepository<Teacher> {
       return item;
     }
 
-    final response = await _apiClient.dio.post(ApiEndpoints.teachers, data: data);
+    final response = await _apiClient.dio.post(
+      ApiEndpoints.teachers,
+      data: data,
+    );
     return Teacher.fromJson(ApiResponse.object(response.data));
   }
 
@@ -89,7 +92,10 @@ class TeacherRepository implements CrudRepository<Teacher> {
       return item;
     }
 
-    final response = await _apiClient.dio.patch('${ApiEndpoints.teachers}/$id', data: data);
+    final response = await _apiClient.dio.patch(
+      '${ApiEndpoints.teachers}/$id',
+      data: data,
+    );
     return Teacher.fromJson(ApiResponse.object(response.data));
   }
 
@@ -116,6 +122,7 @@ class TeacherRepository implements CrudRepository<Teacher> {
   }
 
   int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) + 1;
+    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
+        1;
   }
 }

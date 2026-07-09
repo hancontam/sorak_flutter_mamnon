@@ -11,7 +11,8 @@ class ClassTransferListScreen extends StatefulWidget {
   const ClassTransferListScreen({super.key});
 
   @override
-  State<ClassTransferListScreen> createState() => _ClassTransferListScreenState();
+  State<ClassTransferListScreen> createState() =>
+      _ClassTransferListScreenState();
 }
 
 class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
@@ -26,7 +27,9 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
   void _openForm([ClassTransfer? item]) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ClassTransferFormScreen(classTransfer: item)),
+      MaterialPageRoute(
+        builder: (_) => ClassTransferFormScreen(classTransfer: item),
+      ),
     );
   }
 
@@ -42,31 +45,36 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
           onRefresh: provider.loadItems,
           onAdd: () => _openForm(),
           itemTitle: (item) => item.studentName,
-          itemSubtitle: (item) => '${item.fromClassName} -> ${item.toClassName} | ${item.status}',
+          itemSubtitle: (item) =>
+              '${item.fromClassName} -> ${item.toClassName} | ${item.status}',
+          itemStatus: (item) => item.status,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
           showDelete: false,
           onDetail: (item) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => ClassTransferDetailScreen(classTransfer: item)),
+              MaterialPageRoute(
+                builder: (_) => ClassTransferDetailScreen(classTransfer: item),
+              ),
             );
           },
           extraActions: (item) => [
-            IconButton(
-              tooltip: 'Approve',
-              onPressed: () => provider.updateStatus(item.id, 'approve'),
-              icon: const Icon(Icons.thumb_up_alt_outlined),
+            ModuleListAction(
+              label: 'Approve',
+              icon: Icons.thumb_up_alt_outlined,
+              onSelected: () => provider.updateStatus(item.id, 'approve'),
             ),
-            IconButton(
-              tooltip: 'Reject',
-              onPressed: () => provider.updateStatus(item.id, 'reject'),
-              icon: const Icon(Icons.thumb_down_alt_outlined),
+            ModuleListAction(
+              label: 'Reject',
+              icon: Icons.thumb_down_alt_outlined,
+              onSelected: () => provider.updateStatus(item.id, 'reject'),
             ),
-            IconButton(
-              tooltip: 'Cancel',
-              onPressed: () => provider.updateStatus(item.id, 'cancel'),
-              icon: const Icon(Icons.cancel_outlined),
+            ModuleListAction(
+              label: 'Cancel',
+              icon: Icons.cancel_outlined,
+              onSelected: () => provider.updateStatus(item.id, 'cancel'),
+              isDestructive: true,
             ),
           ],
         );

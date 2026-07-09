@@ -5,17 +5,15 @@ import '../storage/local_storage.dart';
 
 class ApiClient {
   ApiClient({LocalStorage? localStorage})
-      : _localStorage = localStorage,
-        dio = Dio(
-          BaseOptions(
-            baseUrl: AppConfig.apiBaseUrl,
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          ),
-        ) {
+    : _localStorage = localStorage,
+      dio = Dio(
+        BaseOptions(
+          baseUrl: AppConfig.apiBaseUrl,
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+          headers: {'Content-Type': 'application/json'},
+        ),
+      ) {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {

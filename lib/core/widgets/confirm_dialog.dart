@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 Future<bool> showConfirmDialog({
   required BuildContext context,
   required String title,
@@ -18,6 +20,10 @@ Future<bool> showConfirmDialog({
             child: const Text('Cancel'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: Text(confirmText),
           ),

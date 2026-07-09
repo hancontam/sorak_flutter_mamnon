@@ -167,6 +167,215 @@ flutter test
   6. Manual Live API checklist.
   7. Regression gate va ghi nhan ket qua.
 
+## UI Design System Context
+
+Design system Sorak Mam Non Flutter da lock:
+
+- Material 3.
+- Font toan app: `Poppins` bang `google_fonts`.
+- Primary: `#1a2845`.
+- Accent: `#f5a623`.
+- Background: `#ffffff`.
+- Text dark: `#111827`.
+- Text gray: `#64748b`.
+- Success: `#4ade80`.
+- Error: `#ef4444`.
+- Card radius: `16`.
+- Padding chung: `16`.
+- Padding nho ben trong: `8` hoac `12`.
+- Button chinh: `FilledButton`.
+- Button phu: `OutlinedButton` hoac `TextButton`.
+- Card: flat, elevation `0` hoac rat nhe.
+- List don gian: `ListTile`.
+- Nhom noi dung: `ListTile` nam trong `Card`.
+- Khong lam UI loe loet; uu tien sach se, than thien, de bam tren mobile.
+
+Nen tao shared theme/widgets:
+
+```text
+lib/core/theme/app_colors.dart
+lib/core/theme/app_spacing.dart
+lib/core/theme/app_theme.dart
+lib/core/widgets/app_shell.dart
+lib/core/widgets/app_search_bar.dart
+lib/core/widgets/filter_chip_row.dart
+lib/core/widgets/status_chip.dart
+lib/core/widgets/module_list_card.dart
+lib/core/widgets/loading_state.dart
+lib/core/widgets/empty_state.dart
+lib/core/widgets/error_state.dart
+lib/core/widgets/confirm_archive_dialog.dart
+```
+
+## Navigation And Screen Flow Context
+
+App shell sau login dung:
+
+- `NavigationBar` Material 3 o bottom, toi da 5 tab.
+- `NavigationDrawer` Material 3 cho menu phu/admin.
+- Bottom navigation chi chua cac viec dung hang ngay.
+- Drawer chua cac muc phu/admin, settings, profile, logout.
+- Navigation phai role-based theo web `sorak-web`:
+  - `PRINCIPAL`: web co Dashboard, Accounts, Teachers, Classes, Students, Transfers, Health, Growth. Mobile uu tien tab hay dung, dua muc admin/phu vao Drawer.
+  - `TEACHER`: web co Dashboard, Classes, Students, Transfers, Health, Growth; khong co Accounts/Teachers management.
+  - `PARENT`: web di vao `/portal` rieng, view-only thong tin hoc sinh/phu huynh. Mobile dung portal gon, view-only, tap trung Child, Growth, Health.
+- `Manual Tests` khong duoc hien trong Drawer nguoi dung.
+
+Bottom `NavigationBar` role-based da chot:
+
+Principal/Admin:
+
+1. `Home`
+2. `Students`
+3. `Classes`
+4. `Transfers`
+5. `Health`
+
+Teacher:
+
+1. `Home`
+2. `Classes`
+3. `Students`
+4. `Transfers`
+5. `Health`
+
+Parent:
+
+1. `Child`
+2. `Growth`
+3. `Health`
+
+Drawer role-based da chot:
+
+- Header: avatar chu cai dau, full name, role.
+- Principal/Admin: `Academic Years`, `Accounts`, `Teachers`, `Growth`, `Profile`, `Settings`, `Logout`.
+- Teacher: `Growth`, `Profile`, `Settings`, `Logout`.
+- Parent: `Profile`, `Settings`, `Logout`.
+- Khong hien `Manual Tests`.
+
+Flow tong quat:
+
+```text
+Splash / Session Check
+ -> Login
+ -> AppShell
+    -> PRINCIPAL: Home, Students, Classes, Transfers, Health
+       -> Drawer: Academic Years, Accounts, Teachers, Growth, Profile, Settings, Logout
+    -> TEACHER: Home, Classes, Students, Transfers, Health
+       -> Drawer: Growth, Profile, Settings, Logout
+    -> PARENT: Child, Growth, Health
+       -> Drawer: Profile, Settings, Logout
+```
+
+Module screen flow:
+
+```text
+AcademicYearListScreen
+ -> AcademicYearDetailScreen
+ -> AcademicYearFormScreen(create/update)
+ -> Confirm Delete -> archive
+ -> Activate action
+
+StudentListScreen
+ -> StudentDetailScreen
+ -> StudentFormScreen(create/update)
+ -> Confirm Delete -> archive
+
+TeacherListScreen
+ -> TeacherDetailScreen
+ -> TeacherFormScreen(create/update)
+ -> Confirm Delete -> archive
+
+ClassListScreen
+ -> ClassDetailScreen
+ -> ClassFormScreen(create/update)
+ -> Confirm Delete -> archive
+
+AccountListScreen
+ -> AccountDetailScreen
+ -> AccountFormScreen(create/update)
+ -> Confirm Delete -> archive
+
+TransfersScreen
+ -> SegmentedButton or TabBar: Class / Outgoing / Incoming
+ -> ClassTransferListScreen
+ -> OutgoingTransferListScreen
+ -> IncomingTransferListScreen
+
+HealthScreen
+ -> SegmentedButton or TabBar: Health / Nutrition / Growth
+ -> Health quick entry / list
+ -> Nutrition quick entry / list
+ -> Growth WHO summary/chart placeholder until module is implemented
+
+ParentPortalScreen
+ -> Child overview
+ -> Health status
+ -> Growth WHO view-only
+```
+
+Transfer flow:
+
+```text
+ClassTransferListScreen
+ -> ClassTransferDetailScreen
+ -> ClassTransferFormScreen(create/update)
+ -> Approve / Reject / Cancel
+
+OutgoingTransferListScreen
+ -> OutgoingTransferDetailScreen
+ -> OutgoingTransferFormScreen(create/update)
+ -> Cancel / Delete archive
+
+IncomingTransferListScreen
+ -> IncomingTransferDetailScreen
+ -> IncomingTransferFormScreen(create/update)
+ -> Cancel / Delete archive
+```
+
+## List, State, And Animation UX Context
+
+List UI tren mobile:
+
+- Mac dinh dung `Card + ListTile`.
+- Moi item co title, subtitle 1-2 dong, status chip/trailing action.
+- Khong dung `DataTable` cho mobile nho neu khong that su can.
+- Chi dung `DataTable` cho tablet/web/landscape hoac khi admin can so sanh nhieu cot.
+
+Moi list screen nen co:
+
+- `SearchBar` hoac search field o dau list.
+- `FilterChip` row cho status/role/class/academic year neu phu hop.
+- `FloatingActionButton` icon add de tao moi.
+- `Refresh` action tren AppBar neu can.
+- Empty state ro rang va CTA tao moi neu co quyen.
+- Loading state ro rang.
+- Error state co nut Retry.
+
+UX buttons:
+
+- Save/Create: `FilledButton`.
+- Cancel/Back: `OutlinedButton`.
+- Delete tren UI: nut/icon Delete, nhung goi archive/soft delete.
+- Destructive confirm dung mau error `#ef4444`.
+- Success sau create/update/archive: uu tien `SnackBar`.
+
+Lottie:
+
+- Chi dung Lottie cho loading, success, empty state.
+- Khong dung Lottie cho moi transition man hinh.
+- Asset goi y:
+
+```text
+assets/lottie/loading.json
+assets/lottie/empty.json
+assets/lottie/success.json
+```
+
+- Them dependency `lottie`.
+- Khi can tai animation mien phi, dung LottieFiles free animation va giu style nhe nhang.
+- Khong loe loet, khong animation qua lon; kich thuoc khoang 120-160px la du.
+
 ## Project Goal
 
 Hoan thanh Sorak Mam Non Flutter Mobile theo context trong file nay.

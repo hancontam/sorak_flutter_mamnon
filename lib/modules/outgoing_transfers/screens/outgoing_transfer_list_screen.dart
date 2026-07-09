@@ -11,10 +11,12 @@ class OutgoingTransferListScreen extends StatefulWidget {
   const OutgoingTransferListScreen({super.key});
 
   @override
-  State<OutgoingTransferListScreen> createState() => _OutgoingTransferListScreenState();
+  State<OutgoingTransferListScreen> createState() =>
+      _OutgoingTransferListScreenState();
 }
 
-class _OutgoingTransferListScreenState extends State<OutgoingTransferListScreen> {
+class _OutgoingTransferListScreenState
+    extends State<OutgoingTransferListScreen> {
   @override
   void initState() {
     super.initState();
@@ -26,7 +28,9 @@ class _OutgoingTransferListScreenState extends State<OutgoingTransferListScreen>
   void _openForm([OutgoingTransfer? item]) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => OutgoingTransferFormScreen(outgoingTransfer: item)),
+      MaterialPageRoute(
+        builder: (_) => OutgoingTransferFormScreen(outgoingTransfer: item),
+      ),
     );
   }
 
@@ -43,19 +47,24 @@ class _OutgoingTransferListScreenState extends State<OutgoingTransferListScreen>
           onAdd: () => _openForm(),
           itemTitle: (item) => item.studentName,
           itemSubtitle: (item) => '${item.destinationSchool} | ${item.status}',
+          itemStatus: (item) => item.status,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
           onDetail: (item) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => OutgoingTransferDetailScreen(outgoingTransfer: item)),
+              MaterialPageRoute(
+                builder: (_) =>
+                    OutgoingTransferDetailScreen(outgoingTransfer: item),
+              ),
             );
           },
           extraActions: (item) => [
-            IconButton(
-              tooltip: 'Cancel',
-              onPressed: () => provider.cancelTransfer(item.id),
-              icon: const Icon(Icons.cancel_outlined),
+            ModuleListAction(
+              label: 'Cancel',
+              icon: Icons.cancel_outlined,
+              onSelected: () => provider.cancelTransfer(item.id),
+              isDestructive: true,
             ),
           ],
         );

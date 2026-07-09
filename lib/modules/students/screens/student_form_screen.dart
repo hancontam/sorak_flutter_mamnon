@@ -6,10 +6,7 @@ import '../models/student.dart';
 import '../providers/student_provider.dart';
 
 class StudentFormScreen extends StatelessWidget {
-  const StudentFormScreen({
-    super.key,
-    this.student,
-  });
+  const StudentFormScreen({super.key, this.student});
 
   final Student? student;
 
@@ -19,11 +16,22 @@ class StudentFormScreen extends StatelessWidget {
       title: student == null ? 'Create Student' : 'Update Student',
       fields: const [
         FormFieldConfig(name: 'full_name', label: 'Full name'),
-        FormFieldConfig(name: 'date_of_birth', label: 'Date of birth (YYYY-MM-DD)'),
+        FormFieldConfig(
+          name: 'date_of_birth',
+          label: 'Date of birth (YYYY-MM-DD)',
+        ),
         FormFieldConfig(name: 'gender', label: 'Gender'),
-        FormFieldConfig(name: 'class_id', label: 'Class ID', keyboardType: TextInputType.number),
+        FormFieldConfig(
+          name: 'class_id',
+          label: 'Class ID',
+          keyboardType: TextInputType.number,
+        ),
         FormFieldConfig(name: 'class_name', label: 'Class name'),
-        FormFieldConfig(name: 'contact_phone', label: 'Contact phone', keyboardType: TextInputType.phone),
+        FormFieldConfig(
+          name: 'contact_phone',
+          label: 'Contact phone',
+          keyboardType: TextInputType.phone,
+        ),
         FormFieldConfig(name: 'student_status', label: 'Student status'),
       ],
       initialValues: {

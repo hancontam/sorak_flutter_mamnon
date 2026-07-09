@@ -6,17 +6,16 @@ import '../models/academic_year.dart';
 import '../providers/academic_year_provider.dart';
 
 class AcademicYearFormScreen extends StatelessWidget {
-  const AcademicYearFormScreen({
-    super.key,
-    this.academicYear,
-  });
+  const AcademicYearFormScreen({super.key, this.academicYear});
 
   final AcademicYear? academicYear;
 
   @override
   Widget build(BuildContext context) {
     return SimpleFormScreen(
-      title: academicYear == null ? 'Create Academic Year' : 'Update Academic Year',
+      title: academicYear == null
+          ? 'Create Academic Year'
+          : 'Update Academic Year',
       fields: const [
         FormFieldConfig(name: 'name', label: 'Name (YYYY-YYYY)'),
         FormFieldConfig(name: 'start_date', label: 'Start date (YYYY-MM-DD)'),

@@ -4,10 +4,7 @@ import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/class_transfer.dart';
 
 class ClassTransferDetailScreen extends StatelessWidget {
-  const ClassTransferDetailScreen({
-    super.key,
-    required this.classTransfer,
-  });
+  const ClassTransferDetailScreen({super.key, required this.classTransfer});
 
   final ClassTransfer classTransfer;
 
