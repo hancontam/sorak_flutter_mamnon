@@ -10,12 +10,17 @@ import '../../../core/widgets/empty_view.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/filter_chip_row.dart';
 import '../../../core/widgets/loading_view.dart';
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/health_assessment.dart';
+import '../models/who_curve_point.dart';
 import '../providers/growth_who_provider.dart';
 
 class GrowthWhoScreen extends StatefulWidget {
-  const GrowthWhoScreen({super.key});
+  const GrowthWhoScreen({super.key, this.embedded = false});
+
+  /// When true, content is a shrink-wrapped column for nesting inside Health tab ListView.
+  final bool embedded;
 
   @override
   State<GrowthWhoScreen> createState() => _GrowthWhoScreenState();
@@ -31,7 +36,12 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final role = _role(context);
-      context.read<GrowthWhoProvider>().load(role: role);
+      context.read<GrowthWhoProvider>().load(
+        role: role,
+        academicYearId: context
+            .read<ActiveAcademicYearProvider>()
+            .selectedYearId,
+      );
     });
   }
 
@@ -52,6 +62,13 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
         context.watch<AuthProvider>().currentUser?.role.toUpperCase() ??
         'TEACHER';
     final isParent = role == 'PARENT';
+    final academicYearId = context
+        .watch<ActiveAcademicYearProvider>()
+        .selectedYearId;
+    final media = MediaQuery.of(context);
+    final bottomPadding = widget.embedded
+        ? 0.0
+        : AppSpacing.md + media.padding.bottom + kBottomNavigationBarHeight;
 
     return Consumer<GrowthWhoProvider>(
       builder: (context, provider, _) {
@@ -61,7 +78,8 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
         if (provider.errorMessage != null && provider.students.isEmpty) {
           return ErrorView(
             message: provider.errorMessage!,
-            onRetry: () => provider.load(role: role),
+            onRetry: () =>
+                provider.load(role: role, academicYearId: academicYearId),
           );
         }
         if (provider.students.isEmpty) {
@@ -75,61 +93,81 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
         final filteredStudents = _filteredStudents(provider.students, isParent);
         final selected = provider.selectedStudent ?? filteredStudents.first;
 
+        final body = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _GrowthHeader(isParent: isParent),
+            if (!isParent) ...[
+              const SizedBox(height: AppSpacing.sm),
+              AppSearchBar(
+                controller: _searchController,
+                hintText: 'Tìm trẻ, lớp hoặc mã trẻ',
+                onChanged: (value) {
+                  setState(() {
+                    _query = value;
+                  });
+                },
+                onClear: () {
+                  _searchController.clear();
+                  setState(() {
+                    _query = '';
+                  });
+                },
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              FilterChipRow(
+                options: _classOptions(provider.students),
+                selectedOption: _selectedClass,
+                onSelected: (value) {
+                  setState(() {
+                    _selectedClass = value;
+                  });
+                },
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            _SummaryGrid(
+              selected: selected,
+              historyCount: provider.history.length,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _WhoCurvesSummary(
+              curves: provider.whoCurves,
+              isLoading: provider.isLoadingCurves,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _GrowthChartCard(history: provider.history),
+            const SizedBox(height: AppSpacing.md),
+            if (!isParent)
+              _StudentPicker(
+                students: filteredStudents,
+                selectedStudentId: selected.studentId,
+                onSelected: (student) {
+                  provider.selectStudent(
+                    student.studentId,
+                    role: role,
+                    academicYearId: academicYearId,
+                  );
+                },
+              ),
+            const SizedBox(height: AppSpacing.md),
+            _HistoryList(history: provider.history),
+          ],
+        );
+
+        if (widget.embedded) {
+          return Material(color: AppColors.background, child: body);
+        }
+
         return Material(
           color: AppColors.background,
           child: RefreshIndicator(
-            onRefresh: () => provider.load(role: role),
+            onRefresh: () =>
+                provider.load(role: role, academicYearId: academicYearId),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(0, 0, 0, 88),
-              children: [
-                _GrowthHeader(isParent: isParent),
-                if (!isParent) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  AppSearchBar(
-                    controller: _searchController,
-                    hintText: 'Tìm trẻ, lớp hoặc mã trẻ',
-                    onChanged: (value) {
-                      setState(() {
-                        _query = value;
-                      });
-                    },
-                    onClear: () {
-                      _searchController.clear();
-                      setState(() {
-                        _query = '';
-                      });
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  FilterChipRow(
-                    options: _classOptions(provider.students),
-                    selectedOption: _selectedClass,
-                    onSelected: (value) {
-                      setState(() {
-                        _selectedClass = value;
-                      });
-                    },
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.md),
-                _SummaryGrid(
-                  selected: selected,
-                  historyCount: provider.history.length,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _GrowthChartCard(history: provider.history),
-                const SizedBox(height: AppSpacing.md),
-                if (!isParent)
-                  _StudentPicker(
-                    students: filteredStudents,
-                    selectedStudentId: selected.studentId,
-                    onSelected: (student) {
-                      provider.selectStudent(student.studentId, role: role);
-                    },
-                  ),
-                const SizedBox(height: AppSpacing.md),
-                _HistoryList(history: provider.history),
-              ],
+              padding: EdgeInsets.fromLTRB(0, 0, 0, bottomPadding),
+              children: [body],
             ),
           ),
         );
@@ -216,6 +254,50 @@ class _GrowthHeader extends StatelessWidget {
               const Chip(
                 label: Text('Chỉ xem'),
                 avatar: Icon(Icons.visibility_outlined, size: 18),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WhoCurvesSummary extends StatelessWidget {
+  const _WhoCurvesSummary({required this.curves, required this.isLoading});
+
+  final List<WhoCurvePoint> curves;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Đường cong WHO (tham chiếu)',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            if (isLoading)
+              const LinearProgressIndicator()
+            else if (curves.isEmpty)
+              Text(
+                'Chưa tải được đường cong WHO.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
+              )
+            else
+              Text(
+                '${curves.length} mốc tuổi · median tháng ${curves.first.month}: '
+                '${curves.first.median.toStringAsFixed(1)} → '
+                'tháng ${curves.last.month}: ${curves.last.median.toStringAsFixed(1)}',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
           ],
         ),

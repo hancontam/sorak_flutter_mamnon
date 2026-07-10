@@ -116,7 +116,6 @@ const _teacherUser = AuthUser(
   fullName: 'Teacher User',
   email: 'teacher@sorak.edu.vn',
   role: 'TEACHER',
-  token: 'demo-token-teacher',
 );
 
 const _parentUser = AuthUser(
@@ -124,5 +123,4 @@ const _parentUser = AuthUser(
   fullName: 'Parent User',
   email: 'parent@sorak.edu.vn',
   role: 'PARENT',
-  token: 'demo-token-parent',
 );

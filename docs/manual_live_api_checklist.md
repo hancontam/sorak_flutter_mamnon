@@ -52,6 +52,25 @@ Ket qua chi doc du lieu, khong ghi DB:
 | GET /outgoing-transfers | OK | 3 |
 | GET /incoming-transfers | OK | 3 |
 
+### Goal 38 re-smoke (2026-07-10)
+
+Read-only HTTP smoke against live deploy (no token/cookie/password logged; status codes only):
+
+| Step | Ket qua |
+| --- | --- |
+| POST /auth/login | HTTP 200, cookies present (values not logged) |
+| GET /auth/me | HTTP 200 |
+| POST /auth/refresh | HTTP 200 |
+| GET /academic-years + select active year | HTTP 200 |
+| GET /classes?school_year_id=selected | HTTP 200 |
+| GET /health-assessments/by-class-date | HTTP 200 |
+| GET /nutrition-assessments/grid | HTTP 200 |
+| GET /health-assessments/history | HTTP 200 |
+| GET /health-assessments/who-curves | HTTP 200 |
+| POST /auth/logout | HTTP 200 |
+
+Android emulator UI smoke: skipped in this environment (no device/emulator attached). Automated contract tests cover Flutter repository paths with Dio adapter.
+
 ## Quy Tac Khi Test DB That
 
 - Khong bam Delete/Archive tren record quan trong.

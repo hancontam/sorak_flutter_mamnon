@@ -1,6 +1,7 @@
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_page.dart';
 import '../../../core/network/api_response.dart';
 import '../../../core/repositories/crud_repository.dart';
 import '../models/outgoing_transfer.dart';
@@ -23,15 +24,48 @@ class OutgoingTransferRepository implements CrudRepository<OutgoingTransfer> {
   ];
 
   @override
-  Future<List<OutgoingTransfer>> getAll() async {
+  Future<List<OutgoingTransfer>> getAll({int? schoolYearId}) async {
     if (AppConfig.useMockApi) {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
-    final response = await _apiClient.dio.get(ApiEndpoints.outgoingTransfers);
-    return ApiResponse.list(response.data)
-        .map((json) => OutgoingTransfer.fromJson(json as Map<String, dynamic>))
-        .toList();
+    return (await getPage(
+      query: const ApiListQuery(pageSize: 500),
+      schoolYearId: schoolYearId,
+    )).items;
+  }
+
+  Future<ApiPage<OutgoingTransfer>> getPage({
+    ApiListQuery query = const ApiListQuery(),
+    int? schoolYearId,
+    String? status,
+    int? classId,
+    int? studentId,
+  }) async {
+    if (AppConfig.useMockApi) {
+      final items = _mockItems
+          .where(
+            (item) =>
+                !item.isDeleted &&
+                (status == null || item.status == status) &&
+                (studentId == null || item.studentId == studentId),
+          )
+          .toList();
+      return _mockPage(items, query);
+    }
+
+    final response = await _apiClient.dio.get(
+      ApiEndpoints.outgoingTransfers,
+      queryParameters: query.toQueryParameters(
+        filters: {
+          'school_year_id': ?schoolYearId,
+          'class_id': ?classId,
+          'student_id': ?studentId,
+          if (status != null && status.isNotEmpty) 'status': status,
+        },
+      ),
+    );
+    return ApiResponse.page(response.data, OutgoingTransfer.fromJson);
   }
 
   @override
@@ -94,14 +128,20 @@ class OutgoingTransferRepository implements CrudRepository<OutgoingTransfer> {
     return OutgoingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
-  Future<void> cancel(int id) async {
+  Future<void> cancel(int id, {String? cancelReason}) async {
     if (AppConfig.useMockApi) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(status: 'Cancelled');
       return;
     }
 
-    await _apiClient.dio.patch('${ApiEndpoints.outgoingTransfers}/$id/cancel');
+    await _apiClient.dio.patch(
+      '${ApiEndpoints.outgoingTransfers}/$id/cancel',
+      data: {
+        if (cancelReason != null && cancelReason.isNotEmpty)
+          'cancel_reason': cancelReason,
+      },
+    );
   }
 
   @override
@@ -120,11 +160,28 @@ class OutgoingTransferRepository implements CrudRepository<OutgoingTransfer> {
     if (AppConfig.useMockApi) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
+      return;
     }
+    throw UnsupportedError('Backend khong ho tro khoi phuc ho so chuyen di');
   }
 
   int _nextId() {
     return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
         1;
+  }
+
+  ApiPage<OutgoingTransfer> _mockPage(
+    List<OutgoingTransfer> items,
+    ApiListQuery query,
+  ) {
+    final start = (query.page - 1) * query.pageSize;
+    final end = (start + query.pageSize).clamp(0, items.length).toInt();
+    return ApiPage(
+      items: start >= items.length ? const [] : items.sublist(start, end),
+      page: query.page,
+      pageSize: query.pageSize,
+      total: items.length,
+      totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
+    );
   }
 }

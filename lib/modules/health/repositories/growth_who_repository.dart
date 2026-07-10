@@ -3,6 +3,7 @@ import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_response.dart';
 import '../models/health_assessment.dart';
+import '../models/who_curve_point.dart';
 
 class GrowthWhoRepository {
   GrowthWhoRepository({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -97,8 +98,41 @@ class GrowthWhoRepository {
     ),
   ];
 
-  Future<List<HealthAssessment>> getLatest({required String role}) async {
-    if (AppConfig.useMockApi || role == 'PARENT') {
+  final List<WhoCurvePoint> _mockCurves = const [
+    WhoCurvePoint(
+      month: 24,
+      sd3neg: 78,
+      sd2neg: 81,
+      median: 86,
+      sd2: 91,
+      sd3: 94,
+    ),
+    WhoCurvePoint(
+      month: 36,
+      sd3neg: 85,
+      sd2neg: 88,
+      median: 94,
+      sd2: 100,
+      sd3: 103,
+    ),
+    WhoCurvePoint(
+      month: 48,
+      sd3neg: 90,
+      sd2neg: 94,
+      median: 101,
+      sd2: 108,
+      sd3: 111,
+    ),
+  ];
+
+  /// Latest assessment per student.
+  /// Staff live: GET /health-assessments?latest=true&school_year_id=
+  /// Parent: staff endpoints are Principal/Teacher only — keep view-only mock data.
+  Future<List<HealthAssessment>> getLatest({
+    required String role,
+    int? schoolYearId,
+  }) async {
+    if (AppConfig.useMockApi || role.toUpperCase() == 'PARENT') {
       final latest = <int, HealthAssessment>{};
       for (final item in _mockHistory) {
         final current = latest[item.studentId];
@@ -109,7 +143,7 @@ class GrowthWhoRepository {
       }
       final items = latest.values.toList()
         ..sort((a, b) => a.studentName.compareTo(b.studentName));
-      if (role == 'PARENT') {
+      if (role.toUpperCase() == 'PARENT') {
         return items
             .where((item) => item.studentCode == 'NBA2024.001')
             .toList();
@@ -117,24 +151,36 @@ class GrowthWhoRepository {
       return items;
     }
 
-    final response = await _apiClient.dio.get(ApiEndpoints.healthAssessments);
+    final response = await _apiClient.dio.get(
+      ApiEndpoints.healthAssessments,
+      queryParameters: {
+        'latest': 'true',
+        'school_year_id': ?schoolYearId,
+      },
+    );
     return _readList(response.data)
         .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
+  /// Student growth history. Live: GET /health-assessments/history
+  /// Response shape: { student, records }
   Future<List<HealthAssessment>> getHistory({
     required int studentId,
     required String role,
+    int? schoolYearId,
   }) async {
-    if (AppConfig.useMockApi || role == 'PARENT') {
+    if (AppConfig.useMockApi || role.toUpperCase() == 'PARENT') {
       return _mockHistory.where((item) => item.studentId == studentId).toList()
         ..sort((a, b) => a.assessmentDate.compareTo(b.assessmentDate));
     }
 
     final response = await _apiClient.dio.get(
       '${ApiEndpoints.healthAssessments}/history',
-      queryParameters: {'student_id': studentId, 'school_year_id': 1},
+      queryParameters: {
+        'student_id': studentId,
+        'school_year_id': ?schoolYearId,
+      },
     );
     final object = ApiResponse.object(response.data);
     final records = object['records'];
@@ -143,6 +189,29 @@ class GrowthWhoRepository {
     }
     return records
         .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// WHO reference curves. Live: GET /health-assessments/who-curves
+  /// [indicator]: height | weight | bmi
+  /// [gender]: Nam | Nữ
+  Future<List<WhoCurvePoint>> getWhoCurves({
+    required String indicator,
+    required String gender,
+  }) async {
+    if (AppConfig.useMockApi) {
+      return List<WhoCurvePoint>.from(_mockCurves);
+    }
+
+    final response = await _apiClient.dio.get(
+      '${ApiEndpoints.healthAssessments}/who-curves',
+      queryParameters: {
+        'indicator': indicator,
+        'gender': gender,
+      },
+    );
+    return ApiResponse.list(response.data)
+        .map((json) => WhoCurvePoint.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 

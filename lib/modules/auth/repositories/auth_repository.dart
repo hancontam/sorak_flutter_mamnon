@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
@@ -15,8 +17,30 @@ class AuthRepository {
   final ApiClient _apiClient;
   final LocalStorage _localStorage;
 
+  Future<AuthUser?> restoreSession() async {
+    if (AppConfig.useMockApi) {
+      return getSavedUser();
+    }
+
+    try {
+      final response = await _apiClient.dio.get(ApiEndpoints.authMe);
+      final profile = ApiResponse.object(response.data);
+      final user = _userFromProfile(profile);
+      await _saveUser(user);
+      _apiClient.markSessionActive();
+      return user;
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        await _clearSession();
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<AuthUser?> getSavedUser() async {
-    final token = _localStorage.getToken();
     final id = _localStorage.getUserId();
     final fullName = _localStorage.getFullName();
     final email = _localStorage.getEmail();
@@ -26,13 +50,7 @@ class AuthRepository {
       return null;
     }
 
-    return AuthUser(
-      id: id,
-      fullName: fullName,
-      email: email,
-      role: role,
-      token: token ?? '',
-    );
+    return AuthUser(id: id, fullName: fullName, email: email, role: role);
   }
 
   Future<AuthUser> login({required String email, required String password}) {
@@ -112,9 +130,9 @@ class AuthRepository {
       );
       final data = ApiResponse.object(response.data);
       final userJson = data['user'] as Map<String, dynamic>? ?? data;
-      final token = _readAccessToken(response.headers.map['set-cookie']);
-      final user = AuthUser.fromJson({...userJson, 'token': token});
+      final user = AuthUser.fromJson(userJson);
       await _saveUser(user);
+      _apiClient.markSessionActive();
       return user;
     }
 
@@ -129,10 +147,10 @@ class AuthRepository {
       fullName: 'Principal Admin',
       email: 'admin@sorak.edu.vn',
       role: 'PRINCIPAL',
-      token: 'demo-token-admin',
     );
 
     await _saveUser(user);
+    _apiClient.markSessionActive();
     return user;
   }
 
@@ -150,9 +168,9 @@ class AuthRepository {
       );
       final data = ApiResponse.object(response.data);
       final userJson = data['user'] as Map<String, dynamic>? ?? data;
-      final token = _readAccessToken(response.headers.map['set-cookie']);
-      final user = AuthUser.fromJson({...userJson, 'token': token});
+      final user = AuthUser.fromJson(userJson);
       await _saveUser(user);
+      _apiClient.markSessionActive();
       return user;
     }
 
@@ -167,22 +185,28 @@ class AuthRepository {
       fullName: 'Parent Demo',
       email: 'parent@sorak.edu.vn',
       role: 'PARENT',
-      token: 'demo-token-parent',
     );
 
     await _saveUser(user);
+    _apiClient.markSessionActive();
     return user;
   }
 
   Future<void> logout() async {
-    if (!AppConfig.useMockApi) {
-      await _apiClient.dio.post(ApiEndpoints.authLogout);
+    try {
+      if (!AppConfig.useMockApi) {
+        await _apiClient.dio.post(ApiEndpoints.authLogout);
+      }
+    } finally {
+      await _clearSession();
     }
-    await _localStorage.clearAuth();
+  }
+
+  Future<void> clearSession() {
+    return _clearSession();
   }
 
   Future<void> _saveUser(AuthUser user) async {
-    await _localStorage.saveToken(user.token);
     await _localStorage.saveUser(
       id: user.id,
       fullName: user.fullName,
@@ -191,21 +215,15 @@ class AuthRepository {
     );
   }
 
-  String _readAccessToken(List<String>? cookies) {
-    if (cookies == null) {
-      return '';
-    }
+  AuthUser _userFromProfile(Map<String, dynamic> profile) {
+    return AuthUser.fromJson({
+      ...profile,
+      'email': profile['email'] ?? _localStorage.getEmail() ?? '',
+    });
+  }
 
-    for (final cookie in cookies) {
-      final parts = cookie.split(';');
-      for (final part in parts) {
-        final trimmed = part.trim();
-        if (trimmed.startsWith('sorak_access=')) {
-          return trimmed.replaceFirst('sorak_access=', '');
-        }
-      }
-    }
-
-    return '';
+  Future<void> _clearSession() async {
+    await _apiClient.clearSessionCookies();
+    await _localStorage.clearAuth();
   }
 }

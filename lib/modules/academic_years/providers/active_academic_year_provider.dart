@@ -1,14 +1,18 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/storage/local_storage.dart';
 import '../models/academic_year.dart';
 import '../repositories/academic_year_repository.dart';
 
 class ActiveAcademicYearProvider extends ChangeNotifier {
   ActiveAcademicYearProvider({
     required AcademicYearRepository academicYearRepository,
-  }) : _academicYearRepository = academicYearRepository;
+    required LocalStorage localStorage,
+  }) : _academicYearRepository = academicYearRepository,
+       _localStorage = localStorage;
 
   final AcademicYearRepository _academicYearRepository;
+  final LocalStorage _localStorage;
 
   final List<AcademicYear> _years = [];
   bool _isLoading = false;
@@ -45,7 +49,14 @@ class ActiveAcademicYearProvider extends ChangeNotifier {
         ..addAll(items);
       _years.sort((a, b) => b.name.compareTo(a.name));
 
-      _selectedYearId ??= _defaultYearId(_years);
+      final savedYearId = _localStorage.getSelectedAcademicYearId();
+      _selectedYearId = _isAvailableYearId(savedYearId)
+          ? savedYearId
+          : _defaultYearId(_years);
+      final selectedYearId = _selectedYearId;
+      if (selectedYearId != null) {
+        await _localStorage.saveSelectedAcademicYearId(selectedYearId);
+      }
     } catch (_) {
       _errorMessage = 'Chưa tải được danh sách năm học';
     } finally {
@@ -54,12 +65,20 @@ class ActiveAcademicYearProvider extends ChangeNotifier {
     }
   }
 
-  void selectYear(int yearId) {
+  Future<void> selectYear(int yearId) async {
     if (_selectedYearId == yearId) {
       return;
     }
     _selectedYearId = yearId;
+    await _localStorage.saveSelectedAcademicYearId(yearId);
     notifyListeners();
+  }
+
+  bool _isAvailableYearId(int? yearId) {
+    if (yearId == null) {
+      return false;
+    }
+    return _years.any((year) => year.id == yearId);
   }
 
   int? _defaultYearId(List<AcademicYear> years) {

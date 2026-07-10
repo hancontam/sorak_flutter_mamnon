@@ -17,8 +17,6 @@ import 'package:sorak_flutter_mamnon/modules/teachers/models/teacher.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/providers/teacher_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
-import 'helpers/test_app.dart';
-
 void main() {
   group('CRUD modules functional test', () {
     test(
@@ -159,8 +157,7 @@ void main() {
 }
 
 Future<ApiClient> _createApiClient() async {
-  final localStorage = await createTestLocalStorage();
-  return ApiClient(localStorage: localStorage);
+  return ApiClient.memory();
 }
 
 Future<void> _expectCrudFlow<T>({

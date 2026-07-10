@@ -10,8 +10,6 @@ import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/models/outgoing_
 import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
 
-import 'helpers/test_app.dart';
-
 void main() {
   group('Transfer modules functional test', () {
     test(
@@ -166,8 +164,7 @@ void main() {
 }
 
 Future<ApiClient> _createApiClient() async {
-  final localStorage = await createTestLocalStorage();
-  return ApiClient(localStorage: localStorage);
+  return ApiClient.memory();
 }
 
 ClassTransfer _findClassTransfer(ClassTransferProvider provider, int id) {

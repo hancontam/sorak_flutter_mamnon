@@ -36,7 +36,6 @@ void main() {
         fullName: 'Parent Demo',
         email: 'parent@sorak.edu.vn',
         role: 'PARENT',
-        token: 'demo-token-parent',
       );
 
       await tester.pumpSorakApp(savedUser: parentUser);

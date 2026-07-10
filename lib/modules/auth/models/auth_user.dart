@@ -9,18 +9,15 @@ class AuthUser {
     required this.fullName,
     required this.email,
     required this.role,
-    this.token = '',
   });
 
   @JsonKey(name: 'account_id')
   final int id;
   final String fullName;
+  @JsonKey(defaultValue: '')
   final String email;
   @JsonKey(defaultValue: 'TEACHER')
   final String role;
-  @JsonKey(defaultValue: '')
-  final String token;
-
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return _$AuthUserFromJson(json);
   }

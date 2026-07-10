@@ -1,6 +1,7 @@
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_page.dart';
 import '../../../core/network/api_response.dart';
 import '../../../core/repositories/crud_repository.dart';
 import '../models/account.dart';
@@ -82,42 +83,114 @@ class AccountRepository implements CrudRepository<Account> {
           .toList();
     }
 
-    final response = await _apiClient.dio.get(ApiEndpoints.accounts);
-    return ApiResponse.list(
-      response.data,
-    ).map((json) => Account.fromJson(json as Map<String, dynamic>)).toList();
+    return (await getStaffPage(query: const ApiListQuery(pageSize: 500))).items;
   }
 
-  Future<List<Account>> getStaffAccounts() async {
+  Future<List<Account>> getStaffAccounts({
+    ApiListQuery query = const ApiListQuery(pageSize: 200),
+    String? role,
+    bool? isActive,
+    String? workStatus,
+    String? position,
+  }) async {
+    return (await getStaffPage(
+      query: query,
+      role: role,
+      isActive: isActive,
+      workStatus: workStatus,
+      position: position,
+    )).items;
+  }
+
+  Future<ApiPage<Account>> getStaffPage({
+    ApiListQuery query = const ApiListQuery(),
+    String? role,
+    bool? isActive,
+    String? workStatus,
+    String? position,
+  }) async {
     if (AppConfig.useMockApi) {
-      return _mockItems
-          .where((item) => !item.isDeleted && item.accountType == 'staff')
+      final items = _mockItems
+          .where(
+            (item) =>
+                !item.isDeleted &&
+                item.accountType == 'staff' &&
+                (role == null || item.role == role) &&
+                (isActive == null || item.isActive == isActive) &&
+                (workStatus == null || item.workStatus == workStatus) &&
+                (position == null || item.position == position),
+          )
           .toList();
+      return _mockPage(items, query);
     }
 
     final response = await _apiClient.dio.get(
       ApiEndpoints.accounts,
-      queryParameters: {'type': 'staff', 'pageSize': 200},
+      queryParameters: query.toQueryParameters(
+        filters: {
+          'type': 'staff',
+          if (role != null && role.isNotEmpty) 'role': role,
+          if (isActive != null) 'is_active': '$isActive',
+          if (workStatus != null && workStatus.isNotEmpty)
+            'work_status': workStatus,
+          if (position != null && position.isNotEmpty) 'position': position,
+        },
+      ),
     );
-    return ApiResponse.list(
-      response.data,
-    ).map((json) => Account.fromJson(json as Map<String, dynamic>)).toList();
+    return ApiResponse.page(response.data, Account.fromJson);
   }
 
-  Future<List<Account>> getParentAccounts() async {
+  Future<List<Account>> getParentAccounts({
+    ApiListQuery query = const ApiListQuery(pageSize: 200),
+    bool? isActive,
+    String? studentStatus,
+  }) async {
+    return (await getParentPage(
+      query: query,
+      isActive: isActive,
+      studentStatus: studentStatus,
+    )).items;
+  }
+
+  Future<ApiPage<Account>> getParentPage({
+    ApiListQuery query = const ApiListQuery(),
+    bool? isActive,
+    String? studentStatus,
+  }) async {
     if (AppConfig.useMockApi) {
-      return _mockItems
-          .where((item) => !item.isDeleted && item.accountType == 'parent')
+      final items = _mockItems
+          .where(
+            (item) =>
+                !item.isDeleted &&
+                item.accountType == 'parent' &&
+                (isActive == null || item.isActive == isActive) &&
+                (studentStatus == null || item.studentStatus == studentStatus),
+          )
           .toList();
+      return _mockPage(items, query);
     }
 
     final response = await _apiClient.dio.get(
       ApiEndpoints.accounts,
-      queryParameters: {'type': 'parent', 'pageSize': 200},
+      queryParameters: query.toQueryParameters(
+        filters: {
+          'type': 'parent',
+          if (isActive != null) 'is_active': '$isActive',
+          if (studentStatus != null && studentStatus.isNotEmpty)
+            'student_status': studentStatus,
+        },
+      ),
     );
-    return ApiResponse.list(
-      response.data,
-    ).map((json) => Account.fromJson(json as Map<String, dynamic>)).toList();
+    final page = ApiResponse.page(response.data, Account.fromJson);
+    return ApiPage(
+      items: page.items
+          .map((account) => account.copyWith(accountType: 'parent'))
+          .toList(),
+      page: page.page,
+      pageSize: page.pageSize,
+      total: page.total,
+      totalPages: page.totalPages,
+    );
   }
 
   @override
@@ -301,5 +374,17 @@ class AccountRepository implements CrudRepository<Account> {
     return _mockItems.indexWhere((item) {
       return item.teacherId == teacherId || item.id == teacherId;
     });
+  }
+
+  ApiPage<Account> _mockPage(List<Account> items, ApiListQuery query) {
+    final start = (query.page - 1) * query.pageSize;
+    final end = (start + query.pageSize).clamp(0, items.length).toInt();
+    return ApiPage(
+      items: start >= items.length ? const [] : items.sublist(start, end),
+      page: query.page,
+      pageSize: query.pageSize,
+      total: items.length,
+      totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
+    );
   }
 }

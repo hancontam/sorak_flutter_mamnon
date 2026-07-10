@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/simple_form_screen.dart';
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../models/nutrition_assessment.dart';
 import '../providers/nutrition_assessment_provider.dart';
 
@@ -12,6 +13,9 @@ class NutritionAssessmentFormScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedYearId = context
+        .watch<ActiveAcademicYearProvider>()
+        .selectedYearId;
     return SimpleFormScreen(
       title: assessment == null
           ? 'Create Nutrition Record'
@@ -58,7 +62,10 @@ class NutritionAssessmentFormScreen extends StatelessWidget {
         'student_name': assessment?.studentName ?? '',
         'class_id': assessment?.classId.toString() ?? '',
         'class_name': assessment?.className ?? '',
-        'school_year_id': assessment?.schoolYearId.toString() ?? '1',
+        'school_year_id':
+            assessment?.schoolYearId.toString() ??
+            selectedYearId?.toString() ??
+            '',
         'period': assessment?.period ?? 'dau_nam',
         'weight_channel': assessment?.weightChannel ?? '',
         'is_stunting': assessment?.isStunting.toString() ?? 'false',

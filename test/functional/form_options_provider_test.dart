@@ -7,8 +7,6 @@ import 'package:sorak_flutter_mamnon/modules/form_options/repositories/form_opti
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
-import 'helpers/test_app.dart';
-
 void main() {
   group('Form options provider functional test', () {
     test('loads dropdown options and filters classes and students', () async {
@@ -48,6 +46,5 @@ void main() {
 }
 
 Future<ApiClient> _createApiClient() async {
-  final localStorage = await createTestLocalStorage();
-  return ApiClient(localStorage: localStorage);
+  return ApiClient.memory();
 }

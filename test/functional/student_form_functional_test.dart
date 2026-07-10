@@ -11,8 +11,6 @@ import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repos
 import 'package:sorak_flutter_mamnon/modules/students/screens/student_form_screen.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
-import 'helpers/test_app.dart';
-
 void main() {
   group('Student form functional test', () {
     testWidgets('uses Vietnamese dropdowns and filters classes by grade', (
@@ -65,8 +63,7 @@ void main() {
 }
 
 Future<Widget> _buildFormTestApp() async {
-  final localStorage = await createTestLocalStorage();
-  final apiClient = ApiClient(localStorage: localStorage);
+  final apiClient = ApiClient.memory();
   final academicYearRepository = AcademicYearRepository(apiClient: apiClient);
   final classRepository = ClassRepository(apiClient: apiClient);
   final teacherRepository = TeacherRepository(apiClient: apiClient);

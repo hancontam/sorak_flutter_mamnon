@@ -1,15 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../modules/academic_years/providers/active_academic_year_provider.dart';
 import '../../modules/auth/providers/auth_provider.dart';
+import '../../modules/class_transfers/providers/class_transfer_provider.dart';
 import '../../modules/classes/screens/class_list_screen.dart';
+import '../../modules/classes/providers/class_provider.dart';
 import '../../modules/health/screens/growth_who_screen.dart';
 import '../../modules/health/screens/health_screen.dart';
+import '../../modules/health/providers/growth_who_provider.dart';
+import '../../modules/health/providers/health_assessment_provider.dart';
+import '../../modules/health/providers/nutrition_assessment_provider.dart';
 import '../../modules/home/screens/home_screen.dart';
+import '../../modules/incoming_transfers/providers/incoming_transfer_provider.dart';
+import '../../modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import '../../modules/parent/screens/parent_portal_screen.dart';
+import '../../modules/students/providers/student_provider.dart';
 import '../../modules/students/screens/student_list_screen.dart';
+import '../../modules/teachers/providers/teacher_provider.dart';
 import '../../modules/transfers/screens/transfers_screen.dart';
+import '../../modules/form_options/providers/form_options_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
@@ -22,6 +34,28 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
+  int _yearRevision = 0;
+  int? _lastAcademicYearId;
+  ActiveAcademicYearProvider? _academicYearProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.read<ActiveAcademicYearProvider>();
+    if (identical(provider, _academicYearProvider)) {
+      return;
+    }
+
+    _academicYearProvider?.removeListener(_onAcademicYearChanged);
+    _academicYearProvider = provider..addListener(_onAcademicYearChanged);
+    _lastAcademicYearId = provider.selectedYearId;
+  }
+
+  @override
+  void dispose() {
+    _academicYearProvider?.removeListener(_onAcademicYearChanged);
+    super.dispose();
+  }
 
   Future<void> _logout() async {
     await context.read<AuthProvider>().logout();
@@ -42,6 +76,93 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  void _onAcademicYearChanged() {
+    final academicYearId = _academicYearProvider?.selectedYearId;
+    if (academicYearId == null || academicYearId == _lastAcademicYearId) {
+      return;
+    }
+    _lastAcademicYearId = academicYearId;
+    unawaited(_reloadSelectedDestination(academicYearId));
+  }
+
+  Future<void> _reloadSelectedDestination(int academicYearId) async {
+    await context.read<FormOptionsProvider>().applyGlobalAcademicYear(
+      academicYearId,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    final role = _currentRole();
+    final destination = _destinationsForRole(
+      role,
+    )[_selectedIndex.clamp(0, _destinationsForRole(role).length - 1)];
+
+    switch (destination.key) {
+      case 'home':
+        await Future.wait([
+          context.read<StudentProvider>().loadForAcademicYear(academicYearId),
+          context.read<ClassProvider>().loadForAcademicYear(academicYearId),
+          context.read<TeacherProvider>().loadForAcademicYear(academicYearId),
+          context.read<ClassTransferProvider>().loadForAcademicYear(
+            academicYearId,
+          ),
+        ]);
+        break;
+      case 'students':
+        await context.read<StudentProvider>().loadForAcademicYear(
+          academicYearId,
+        );
+        break;
+      case 'classes':
+        await context.read<ClassProvider>().loadForAcademicYear(academicYearId);
+        break;
+      case 'transfers':
+        await Future.wait([
+          context.read<ClassTransferProvider>().loadForAcademicYear(
+            academicYearId,
+          ),
+          context.read<OutgoingTransferProvider>().loadForAcademicYear(
+            academicYearId,
+          ),
+          context.read<IncomingTransferProvider>().loadForAcademicYear(
+            academicYearId,
+          ),
+        ]);
+        break;
+      case 'health':
+        await Future.wait([
+          context.read<HealthAssessmentProvider>().loadForAcademicYear(
+            academicYearId,
+          ),
+          context.read<NutritionAssessmentProvider>().loadForAcademicYear(
+            academicYearId,
+          ),
+        ]);
+        break;
+      case 'growth':
+        await context.read<GrowthWhoProvider>().load(
+          role: role,
+          academicYearId: academicYearId,
+        );
+        break;
+      case 'child':
+        await Future.wait([
+          context.read<HealthAssessmentProvider>().loadForAcademicYear(
+            academicYearId,
+          ),
+          context.read<NutritionAssessmentProvider>().loadForAcademicYear(
+            academicYearId,
+          ),
+        ]);
+        break;
+    }
+
+    if (mounted) {
+      setState(() => _yearRevision++);
+    }
   }
 
   void _selectDestinationByKey(
@@ -182,6 +303,11 @@ class _AppShellState extends State<AppShell> {
         'TEACHER';
   }
 
+  String _currentRole() {
+    return context.read<AuthProvider>().currentUser?.role.toUpperCase() ??
+        'TEACHER';
+  }
+
   @override
   Widget build(BuildContext context) {
     final role = _normalizedRole(context);
@@ -221,7 +347,10 @@ class _AppShellState extends State<AppShell> {
         onOpenSettings: () => _openDrawerRoute('/settings'),
         onLogout: _logout,
       ),
-      body: selectedDestination.screen,
+      body: KeyedSubtree(
+        key: ValueKey('${selectedDestination.key}_$_yearRevision'),
+        child: selectedDestination.screen,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: _selectTab,
@@ -299,11 +428,11 @@ class _ActiveYearDropdownState extends State<_ActiveYearDropdown> {
               isExpanded: true,
               icon: const Icon(Icons.keyboard_arrow_down, size: 18),
               hint: const Text('Năm học'),
-              onChanged: (value) {
+              onChanged: (value) async {
                 if (value == null) {
                   return;
                 }
-                provider.selectYear(value);
+                await provider.selectYear(value);
               },
               items: [
                 for (final year in provider.years)

@@ -56,7 +56,9 @@ class _NutritionAssessmentListScreenState
           itemStatus: (item) => item.statusSummary,
           itemFilterValue: (item) => item.className,
           onEdit: _openForm,
-          onDelete: (item) => provider.archiveItem(item.id),
+          // Backend has no nutrition DELETE/archive route — hide Delete UI.
+          showDelete: false,
+          onDelete: (_) async {},
           onDetail: (item) {
             Navigator.push(
               context,

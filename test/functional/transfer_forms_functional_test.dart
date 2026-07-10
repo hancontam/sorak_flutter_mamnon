@@ -18,8 +18,6 @@ import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/screens/outgoing
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
-import 'helpers/test_app.dart';
-
 void main() {
   group('Transfer forms functional test', () {
     testWidgets('class transfer filters students and target classes', (
@@ -128,8 +126,7 @@ void main() {
 }
 
 Future<Widget> _buildFormTestApp({required Widget home}) async {
-  final localStorage = await createTestLocalStorage();
-  final apiClient = ApiClient(localStorage: localStorage);
+  final apiClient = ApiClient.memory();
   final academicYearRepository = AcademicYearRepository(apiClient: apiClient);
   final classRepository = ClassRepository(apiClient: apiClient);
   final teacherRepository = TeacherRepository(apiClient: apiClient);

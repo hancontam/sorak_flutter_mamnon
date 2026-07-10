@@ -1,6 +1,7 @@
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_page.dart';
 import '../../../core/network/api_response.dart';
 import '../../../core/repositories/crud_repository.dart';
 import '../models/teacher.dart';
@@ -30,15 +31,51 @@ class TeacherRepository implements CrudRepository<Teacher> {
   ];
 
   @override
-  Future<List<Teacher>> getAll() async {
+  Future<List<Teacher>> getAll({int? schoolYearId}) async {
     if (AppConfig.useMockApi) {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
-    final response = await _apiClient.dio.get(ApiEndpoints.teachers);
-    return ApiResponse.list(
-      response.data,
-    ).map((json) => Teacher.fromJson(json as Map<String, dynamic>)).toList();
+    return (await getPage(
+      query: const ApiListQuery(pageSize: 500),
+      schoolYearId: schoolYearId,
+    )).items;
+  }
+
+  Future<ApiPage<Teacher>> getPage({
+    ApiListQuery query = const ApiListQuery(),
+    int? schoolYearId,
+    bool? isActive,
+    String? position,
+    String? role,
+    String? workStatus,
+  }) async {
+    if (AppConfig.useMockApi) {
+      final items = _mockItems
+          .where(
+            (item) =>
+                !item.isDeleted &&
+                (position == null || item.position == position) &&
+                (workStatus == null || item.workStatus == workStatus),
+          )
+          .toList();
+      return _mockPage(items, query);
+    }
+
+    final response = await _apiClient.dio.get(
+      ApiEndpoints.teachers,
+      queryParameters: query.toQueryParameters(
+        filters: {
+          'school_year_id': ?schoolYearId,
+          if (isActive != null) 'is_active': '$isActive',
+          if (position != null && position.isNotEmpty) 'position': position,
+          if (role != null && role.isNotEmpty) 'role': role,
+          if (workStatus != null && workStatus.isNotEmpty)
+            'work_status': workStatus,
+        },
+      ),
+    );
+    return ApiResponse.page(response.data, Teacher.fromJson);
   }
 
   @override
@@ -124,5 +161,17 @@ class TeacherRepository implements CrudRepository<Teacher> {
   int _nextId() {
     return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
         1;
+  }
+
+  ApiPage<Teacher> _mockPage(List<Teacher> items, ApiListQuery query) {
+    final start = (query.page - 1) * query.pageSize;
+    final end = (start + query.pageSize).clamp(0, items.length).toInt();
+    return ApiPage(
+      items: start >= items.length ? const [] : items.sublist(start, end),
+      page: query.page,
+      pageSize: query.pageSize,
+      total: items.length,
+      totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
+    );
   }
 }

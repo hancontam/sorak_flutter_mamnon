@@ -2,11 +2,12 @@
 
 ## Thong Tin Chung
 
-Ngay chay: 2026-07-09
+Ngay chay: 2026-07-10 (Goals 36-39)
 
 Pham vi:
 
 - Functional test bang `flutter test` voi mock API.
+- Live contract test (`USE_MOCK_API=false`) cho Health/Nutrition/Growth.
 - Regression gate cho generated code, static analysis, automated tests.
 - Smoke test live API chi doc du lieu, khong ghi DB that.
 - Manual live API checklist duoc tach rieng tai `docs/manual_live_api_checklist.md`.
@@ -23,13 +24,25 @@ Tai khoan smoke test:
 phanthihoa@edu.vn
 ```
 
+## Goals 36-39 status
+
+| Goal | Status | Notes |
+| --- | --- | --- |
+| 36 Health/Nutrition/Growth API wiring | Pass | by-class-date, bulk, grid, bulk, history, who-curves; contract tests green |
+| 37 Health layout regression | Pass | SafeArea, dynamic bottom padding, no fixed 720; small-viewport test |
+| 38 Live smoke + hardening | Pass (HTTP) / Android UI skip | Login/me/refresh/logout/year + Health/Nutrition/Growth reads HTTP 200; no secrets logged |
+| 39 Final regression + commit | Pass | analyze clean, full test 66 pass / 2 skip (live contract needs USE_MOCK_API=false), debug APK attempted |
+
 ## Regression Gate Ket Qua
 
 | Command | Ket qua | Ghi chu |
 | --- | --- | --- |
-| `dart run build_runner build` | Pass | Built with build_runner; wrote generated outputs |
+| `dart run build_runner build` | N/A | WhoCurvePoint is hand-written; no json_serializable model change |
 | `flutter analyze` | Pass | No issues found |
-| `flutter test` | Pass | All tests passed, tong 26 tests |
+| `flutter test` | Pass | 66 passed, 2 skipped (live contract skipped when mock default) |
+| Live contract health/nutrition/growth | Pass | `flutter test --dart-define=USE_MOCK_API=false test/functional/live_api_contract_functional_test.dart` |
+| Hard-code/endpoint scan | Pass | No live year-1 fallback in health; no secret prints |
+| Live HTTP smoke | Pass | login/me/refresh/year/health/nutrition/growth/logout all HTTP 200; secrets not logged |
 
 ## Automated Functional Test Files
 

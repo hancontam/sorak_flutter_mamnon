@@ -51,10 +51,13 @@ import 'modules/teachers/repositories/teacher_repository.dart';
 import 'modules/teachers/screens/teacher_list_screen.dart';
 import 'modules/transfers/screens/transfers_screen.dart';
 
+final appNavigatorKey = GlobalKey<NavigatorState>();
+
 class SorakApp extends StatelessWidget {
-  const SorakApp({super.key, required this.localStorage});
+  const SorakApp({super.key, required this.localStorage, this.apiClient});
 
   final LocalStorage localStorage;
+  final ApiClient? apiClient;
   static const Set<String> _allRoles = {'PRINCIPAL', 'TEACHER', 'PARENT'};
   static const Set<String> _staffRoles = {'PRINCIPAL', 'TEACHER'};
   static const Set<String> _principalOnly = {'PRINCIPAL'};
@@ -65,9 +68,7 @@ class SorakApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<LocalStorage>.value(value: localStorage),
-        Provider<ApiClient>(
-          create: (_) => ApiClient(localStorage: localStorage),
-        ),
+        Provider<ApiClient>(create: (_) => apiClient ?? ApiClient.memory()),
         ProxyProvider2<ApiClient, LocalStorage, AuthRepository>(
           update: (_, apiClient, localStorage, previous) {
             return AuthRepository(
@@ -77,9 +78,20 @@ class SorakApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider<AuthProvider>(
-          create: (context) =>
-              AuthProvider(authRepository: context.read<AuthRepository>())
-                ..loadCurrentUser(),
+          create: (context) {
+            final authProvider = AuthProvider(
+              authRepository: context.read<AuthRepository>(),
+            );
+            context.read<ApiClient>().onSessionExpired = () async {
+              await authProvider.handleSessionExpired();
+              appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+                '/login',
+                (_) => false,
+              );
+            };
+            authProvider.loadCurrentUser();
+            return authProvider;
+          },
         ),
         ChangeNotifierProvider<AcademicYearProvider>(
           create: (context) => AcademicYearProvider(
@@ -93,6 +105,7 @@ class SorakApp extends StatelessWidget {
             academicYearRepository: AcademicYearRepository(
               apiClient: context.read<ApiClient>(),
             ),
+            localStorage: context.read<LocalStorage>(),
           ),
         ),
         ChangeNotifierProvider<ClassProvider>(
@@ -185,6 +198,7 @@ class SorakApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: appNavigatorKey,
         title: 'Sorak Mam Non',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,

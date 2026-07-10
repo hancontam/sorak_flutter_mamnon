@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_date_field.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../classes/models/school_class.dart';
 import '../../form_options/providers/form_options_provider.dart';
 import '../../students/models/student.dart';
@@ -30,6 +31,7 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
   final TextEditingController _dateController = TextEditingController();
   String? _selectedClassId;
   String _selectedPeriod = 'dau_nam';
+  bool _isReloadingRoster = false;
 
   bool get _isHealth => widget.mode == HealthRosterMode.health;
 
@@ -37,17 +39,61 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
   void initState() {
     super.initState();
     _dateController.text = DateTime.now().toIso8601String().substring(0, 10);
+    _dateController.addListener(_onDateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<FormOptionsProvider>().loadInitialOptions();
-      context.read<HealthAssessmentProvider>().loadItems();
-      context.read<NutritionAssessmentProvider>().loadItems();
+      _reloadRoster();
     });
   }
 
   @override
   void dispose() {
+    _dateController.removeListener(_onDateChanged);
     _dateController.dispose();
     super.dispose();
+  }
+
+  void _onDateChanged() {
+    if (_isHealth) {
+      _reloadRoster();
+    }
+  }
+
+  Future<void> _reloadRoster() async {
+    if (!mounted || _isReloadingRoster) {
+      return;
+    }
+
+    final classId = int.tryParse(_selectedClassId ?? '');
+    if (classId == null) {
+      return;
+    }
+
+    setState(() => _isReloadingRoster = true);
+    try {
+      if (_isHealth) {
+        await context.read<HealthAssessmentProvider>().loadByClassDate(
+          classId: classId,
+          assessmentDate: _dateController.text.trim(),
+        );
+      } else {
+        final yearId = context
+            .read<ActiveAcademicYearProvider>()
+            .selectedYearId;
+        if (yearId == null) {
+          return;
+        }
+        await context.read<NutritionAssessmentProvider>().loadGrid(
+          classId: classId,
+          schoolYearId: yearId,
+          period: _selectedPeriod,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isReloadingRoster = false);
+      }
+    }
   }
 
   @override
@@ -55,10 +101,19 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
     final optionsProvider = context.watch<FormOptionsProvider>();
     final healthProvider = context.watch<HealthAssessmentProvider>();
     final nutritionProvider = context.watch<NutritionAssessmentProvider>();
+    final yearId = context.watch<ActiveAcademicYearProvider>().selectedYearId;
 
     _applyDefaultClass(optionsProvider);
 
     final students = _studentsForClass(optionsProvider);
+    final isLoading =
+        optionsProvider.isLoading ||
+        healthProvider.isLoading ||
+        nutritionProvider.isLoading ||
+        _isReloadingRoster;
+    final errorMessage = _isHealth
+        ? healthProvider.errorMessage
+        : nutritionProvider.errorMessage;
 
     return Material(
       type: MaterialType.transparency,
@@ -83,6 +138,7 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
               context.read<FormOptionsProvider>().selectClass(
                 int.tryParse(value ?? ''),
               );
+              _reloadRoster();
             },
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -102,8 +158,16 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
               hintText: 'Chọn giai đoạn',
               onChanged: (value) {
                 setState(() => _selectedPeriod = value ?? 'dau_nam');
+                _reloadRoster();
               },
             ),
+          if (!_isHealth && yearId == null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              'Chưa chọn năm học — không thể tải lưới nuôi dưỡng.',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           _RosterSummary(
             total: students.length,
@@ -115,10 +179,26 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
             label: _isHealth ? 'đã đo hôm nay' : 'đã đánh giá',
           ),
           const SizedBox(height: AppSpacing.sm),
-          if (optionsProvider.isLoading ||
-              healthProvider.isLoading ||
-              nutritionProvider.isLoading)
+          if (isLoading)
             const Center(child: CircularProgressIndicator())
+          else if (errorMessage != null && students.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                children: [
+                  Text(
+                    errorMessage,
+                    style: const TextStyle(color: AppColors.error),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  OutlinedButton(
+                    onPressed: _reloadRoster,
+                    child: const Text('Thử lại'),
+                  ),
+                ],
+              ),
+            )
           else if (students.isEmpty)
             const _EmptyRoster()
           else
@@ -160,6 +240,7 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
       context.read<FormOptionsProvider>().selectClass(
         optionsProvider.classes.first.id,
       );
+      _reloadRoster();
     });
   }
 
@@ -249,6 +330,10 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
         content: Text(saved ? 'Đã lưu đánh giá' : 'Chưa thể lưu đánh giá'),
       ),
     );
+
+    if (saved) {
+      await _reloadRoster();
+    }
   }
 }
 
@@ -372,12 +457,17 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    // Keyboard + system safe-area bottom so Save stays reachable.
+    final bottomPad =
+        media.viewInsets.bottom + media.padding.bottom + AppSpacing.md;
+
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.md,
         right: AppSpacing.md,
         top: AppSpacing.md,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
+        bottom: bottomPad,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -496,6 +586,7 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
+                key: const Key('health_roster_save_button'),
                 onPressed: _isSaving ? null : _save,
                 icon: _isSaving
                     ? const SizedBox(
@@ -517,34 +608,56 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
     setState(() => _isSaving = true);
     final healthProvider = context.read<HealthAssessmentProvider>();
     final nutritionProvider = context.read<NutritionAssessmentProvider>();
+    final schoolYearId = context
+        .read<ActiveAcademicYearProvider>()
+        .selectedYearId;
 
+    if (schoolYearId == null) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Chưa chọn năm học')));
+      }
+      return;
+    }
+
+    final classId = widget.student.classId;
     final ok = _isHealth
-        ? await healthProvider.createItem({
-            'student_id': widget.student.id.toString(),
-            'student_name': widget.student.fullName,
-            'class_id': widget.student.classId.toString(),
-            'class_name': widget.student.className,
-            'school_year_id': '1',
-            'assessment_date': widget.selectedDate,
-            'height_cm': _heightController.text.trim(),
-            'weight_kg': _weightController.text.trim(),
-            'note': _noteController.text.trim(),
-          })
-        : await nutritionProvider.createItem({
-            'student_id': widget.student.id.toString(),
-            'student_name': widget.student.fullName,
-            'class_id': widget.student.classId.toString(),
-            'class_name': widget.student.className,
-            'school_year_id': '1',
-            'period': widget.selectedPeriod,
-            'weight_channel': _weightChannel == NutritionOptions.weightNormal
-                ? ''
-                : _weightChannel,
-            'is_stunting': _isStunting.toString(),
-            'is_severe_stunting': _isSevereStunting.toString(),
-            'is_obese': _isObese.toString(),
-            'note': _noteController.text.trim(),
-          });
+        ? await healthProvider.bulkSaveRoster(
+            schoolYearId: schoolYearId,
+            classId: classId,
+            assessmentDate: widget.selectedDate,
+            rows: [
+              {
+                'student_id': widget.student.id,
+                'height_cm': _heightController.text.trim(),
+                'weight_kg': _weightController.text.trim(),
+                'note': _noteController.text.trim(),
+                'student_name': widget.student.fullName,
+                'class_name': widget.student.className,
+              },
+            ],
+          )
+        : await nutritionProvider.bulkSaveGrid(
+            classId: classId,
+            schoolYearId: schoolYearId,
+            period: widget.selectedPeriod,
+            rows: [
+              {
+                'student_id': widget.student.id,
+                'weight_channel': _weightChannel == NutritionOptions.weightNormal
+                    ? ''
+                    : _weightChannel,
+                'is_stunting': _isStunting,
+                'is_severe_stunting': _isSevereStunting,
+                'is_obese': _isObese,
+                'note': _noteController.text.trim(),
+                'student_name': widget.student.fullName,
+                'class_name': widget.student.className,
+              },
+            ],
+          );
 
     if (!mounted) {
       return;
@@ -553,9 +666,12 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
     if (ok) {
       Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Chưa thể lưu đánh giá')));
+      final message = _isHealth
+          ? healthProvider.errorMessage
+          : nutritionProvider.errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message ?? 'Chưa thể lưu đánh giá')),
+      );
     }
   }
 }

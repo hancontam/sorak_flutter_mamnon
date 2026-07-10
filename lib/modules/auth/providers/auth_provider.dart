@@ -27,7 +27,7 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _user = await _authRepository.getSavedUser();
+    _user = await _authRepository.restoreSession();
     _isLoading = false;
     notifyListeners();
   }
@@ -124,6 +124,14 @@ class AuthProvider extends ChangeNotifier {
     await _authRepository.logout();
     _user = null;
     _profile = const {};
+    notifyListeners();
+  }
+
+  Future<void> handleSessionExpired() async {
+    await _authRepository.clearSession();
+    _user = null;
+    _profile = const {};
+    _errorMessage = null;
     notifyListeners();
   }
 }

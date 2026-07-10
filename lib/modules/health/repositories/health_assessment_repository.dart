@@ -50,15 +50,90 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
   ];
 
   @override
-  Future<List<HealthAssessment>> getAll() async {
+  Future<List<HealthAssessment>> getAll({int? schoolYearId}) async {
     if (AppConfig.useMockApi) {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
-    final response = await _apiClient.dio.get(ApiEndpoints.healthAssessments);
+    final response = await _apiClient.dio.get(
+      ApiEndpoints.healthAssessments,
+      queryParameters: {
+        'school_year_id': ?schoolYearId,
+      },
+    );
     return _readList(response.data)
         .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Roster prefill for one class + assessment date.
+  /// Live: GET /health-assessments/by-class-date
+  Future<List<HealthAssessment>> getByClassDate({
+    required int classId,
+    required String assessmentDate,
+  }) async {
+    if (AppConfig.useMockApi) {
+      return _mockItems
+          .where(
+            (item) =>
+                !item.isDeleted &&
+                item.classId == classId &&
+                item.assessmentDate.startsWith(assessmentDate),
+          )
+          .toList();
+    }
+
+    final response = await _apiClient.dio.get(
+      '${ApiEndpoints.healthAssessments}/by-class-date',
+      queryParameters: {
+        'class_id': classId,
+        'assessment_date': assessmentDate,
+      },
+    );
+    return ApiResponse.list(response.data)
+        .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Roster bulk upsert. Live: POST /health-assessments/bulk
+  /// [schoolYearId] must come from ActiveAcademicYearProvider — no silent fallback.
+  Future<Map<String, dynamic>> bulkSave({
+    required int schoolYearId,
+    required int classId,
+    required String assessmentDate,
+    required List<Map<String, dynamic>> rows,
+  }) async {
+    if (rows.isEmpty) {
+      throw StateError('Cần ít nhất một dòng đánh giá');
+    }
+
+    if (AppConfig.useMockApi) {
+      for (final row in rows) {
+        await create({
+          ...row,
+          'class_id': classId,
+          'school_year_id': schoolYearId,
+          'assessment_date': assessmentDate,
+        });
+      }
+      return {
+        'created': rows.length,
+        'updated': 0,
+        'skipped': 0,
+        'errors': <dynamic>[],
+      };
+    }
+
+    final response = await _apiClient.dio.post(
+      '${ApiEndpoints.healthAssessments}/bulk',
+      data: {
+        'school_year_id': schoolYearId,
+        'class_id': classId,
+        'assessment_date': assessmentDate,
+        'rows': rows.map(_liveBulkRow).toList(),
+      },
+    );
+    return ApiResponse.object(response.data);
   }
 
   @override
@@ -81,7 +156,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
         id: _nextId(),
         studentId: int.tryParse('${data['student_id']}') ?? 0,
         classId: int.tryParse('${data['class_id']}') ?? 0,
-        schoolYearId: int.tryParse('${data['school_year_id']}') ?? 1,
+        schoolYearId: int.tryParse('${data['school_year_id']}') ?? 0,
         assessmentDate: data['assessment_date'] as String,
         heightCm: double.tryParse('${data['height_cm']}') ?? 0,
         weightKg: double.tryParse('${data['weight_kg']}') ?? 0,
@@ -130,6 +205,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
     return HealthAssessment.fromJson(ApiResponse.object(response.data));
   }
 
+  /// Live DELETE is hard delete (backend has no soft archive).
   @override
   Future<void> archive(int id) async {
     if (AppConfig.useMockApi) {
@@ -148,6 +224,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
       return;
     }
+    throw StateError('Backend không hỗ trợ khôi phục đánh giá sức khỏe');
   }
 
   List<dynamic> _readList(dynamic body) {
@@ -168,9 +245,13 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
   }
 
   Map<String, dynamic> _liveCreatePayload(Map<String, dynamic> data) {
+    final schoolYearId = int.tryParse('${data['school_year_id']}');
+    if (schoolYearId == null) {
+      throw StateError('Chưa chọn năm học');
+    }
     return {
       'student_id': int.tryParse('${data['student_id']}'),
-      'school_year_id': int.tryParse('${data['school_year_id']}'),
+      'school_year_id': schoolYearId,
       'assessment_date': data['assessment_date'],
       'height_cm': double.tryParse('${data['height_cm']}'),
       'weight_kg': double.tryParse('${data['weight_kg']}'),
@@ -184,6 +265,15 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
       'height_cm': double.tryParse('${data['height_cm']}'),
       'weight_kg': double.tryParse('${data['weight_kg']}'),
       'note': data['note'],
+    };
+  }
+
+  Map<String, dynamic> _liveBulkRow(Map<String, dynamic> row) {
+    return {
+      'student_id': int.tryParse('${row['student_id']}'),
+      'height_cm': double.tryParse('${row['height_cm']}'),
+      'weight_kg': double.tryParse('${row['weight_kg']}'),
+      if (row['note'] != null) 'note': row['note'],
     };
   }
 

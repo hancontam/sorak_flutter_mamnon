@@ -588,3 +588,64 @@ Goal planning rule:
 - Khong tach goal qua nho chi de doi label/tab.
 - Cac viec nho nhu doi `Con` -> `Trẻ` phai gom vao goal AppShell/Parent tuong ung.
 - Moi goal nen la mot khoi thay doi co the test duoc, vi du: foundation, AppShell/year selector, Teachers form, Students form, Accounts web flow.
+
+## Goal 33 Current State
+
+- `ActiveAcademicYearProvider` is the sole selected-year state. It persists `selected_academic_year_id` with `LocalStorage`.
+- Only `AppShell` presents the global year selector. Do not add another global selector inside a module screen.
+- On a change, AppShell must synchronize `FormOptionsProvider`, reload the active role destination, and reset dependent class/student options.
+- Live repositories and live create/bulk payloads must receive the selected year. Do not use `school_year_id: 1`, `?? 1`, or any hidden year fallback in a live flow.
+- Existing year-aware providers: Class, Student, Teacher, ClassTransfer, IncomingTransfer, OutgoingTransfer, HealthAssessment, NutritionAssessment, and GrowthWho.
+
+## Goals 34-35 API Contract State
+
+- Use `ApiListQuery` and `ApiPage` for new paginated live list calls. The valid common keys are `page`, `pageSize`, `search`, `sortBy`, and `sortOrder`.
+- Academic Years is the exception: its current backend validator accepts an empty query only. Do not send pagination or filters there.
+- Core `getPage(...)` calls are implemented for Classes, Teachers, Students, and Accounts. Keep `getAll()` only as a compatibility adapter for existing screens.
+- Accounts: `assign-role` and `role` use `teacher_id`; active/password/archive use `account_id`; parent active uses `student_id`.
+- Class Transfer has no DELETE route. Use status actions `approve`, `reject`, `cancel`, and `revert` on `request_id` with optional `note`.
+- Incoming/Outgoing Cancel uses `transfer_id` plus optional `cancel_reason`. Archive is DELETE/soft-delete. The backend has no restore endpoint for school transfers; never fake a successful restore.
+- Live contract gate: `flutter test --dart-define=USE_MOCK_API=false test/functional/live_api_contract_functional_test.dart`.
+
+## Core API Integration Context (Locked)
+
+Tu Goal 30 tro di, uu tien core API va dung vibe/polish UI cho den khi live API on dinh.
+
+Nguon su that theo thu tu:
+
+1. `sorak-api/src/routes` xac dinh endpoint, method va role.
+2. `sorak-api/src/validators` xac dinh body/query hop le.
+3. `sorak-api/src/controllers` va `services` xac dinh response va nghiep vu.
+4. `sorak-web/src/shared/api/client.js` va feature tuong ung xac dinh auth lifecycle va cach FE goi API.
+
+Khong doan endpoint, body, query parameter, status string hoac response shape. Moi repository live phai co contract doi chieu trong `docs/core_api_integration_handoff.md`.
+
+Auth live cua backend la cookie-based:
+
+- Login tra `sorak_access` (15 phut, path `/`) va `sorak_refresh` (7 ngay, path `/api/auth`) bang `Set-Cookie` httpOnly.
+- Web dung `withCredentials: true`, khong luu JWT trong Zustand/localStorage va khong tu gan Bearer.
+- Backend chi ho tro Bearer nhu fallback cho Swagger/tool; refresh van bat buoc cookie `sorak_refresh`.
+- Flutter dung cookie jar chung cho login/request/refresh/logout. Khong parse access token va khong luu JWT trong SharedPreferences.
+- ApiClient da co single-flight refresh, retry dung mot lan, va clear session khi refresh that bai. Khong sua flow nay ma khong cap nhat test 401.
+- Khong log token, password, Cookie hoac Set-Cookie.
+
+Academic year la global filter:
+
+- `ActiveAcademicYearProvider` la single source of truth trong toan app.
+- Load `/academic-years`, uu tien year co `status == active`, va persist selected id.
+- Moi module co `school_year_id` phai doc year tu provider va gui query/body dung contract.
+- Khi doi year, module dang mo phai reset filter phu thuoc (class/student), reload data, va khong dung hard-code `school_year_id: 1`.
+
+Health layout:
+
+- Noi dung tab Health phai nam trong `SafeArea` va co bottom scroll padding tinh theo `MediaQuery.padding.bottom` + khoang cach NavigationBar.
+- Bottom sheet quick entry phai tinh ca `viewInsets.bottom` va safe-area bottom.
+- Kiem tra item cuoi, nut luu va empty/error state khong bi NavigationBar/ban phim che.
+
+Chi tiet handoff, contract va Goal 30+ nam trong:
+
+```text
+CLAUDE.md
+docs/api_contract_audit.md
+docs/core_api_integration_handoff.md
+```

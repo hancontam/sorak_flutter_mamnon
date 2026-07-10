@@ -13,7 +13,6 @@ const testAuthUser = AuthUser(
   fullName: 'Principal Admin',
   email: 'admin@sorak.edu.vn',
   role: 'PRINCIPAL',
-  token: 'demo-token-admin',
 );
 
 const testAcademicYear = AcademicYear(

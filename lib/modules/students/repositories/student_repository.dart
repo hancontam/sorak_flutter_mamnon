@@ -1,6 +1,7 @@
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_page.dart';
 import '../../../core/network/api_response.dart';
 import '../../../core/repositories/crud_repository.dart';
 import '../models/student.dart';
@@ -32,15 +33,60 @@ class StudentRepository implements CrudRepository<Student> {
   ];
 
   @override
-  Future<List<Student>> getAll() async {
+  Future<List<Student>> getAll({int? schoolYearId, int? classId}) async {
     if (AppConfig.useMockApi) {
-      return _mockItems.where((item) => !item.isDeleted).toList();
+      return _mockItems
+          .where(
+            (item) =>
+                !item.isDeleted && (classId == null || item.classId == classId),
+          )
+          .toList();
     }
 
-    final response = await _apiClient.dio.get(ApiEndpoints.students);
-    return ApiResponse.list(
-      response.data,
-    ).map((json) => Student.fromJson(json as Map<String, dynamic>)).toList();
+    return (await getPage(
+      query: const ApiListQuery(pageSize: 500),
+      schoolYearId: schoolYearId,
+      classId: classId,
+    )).items;
+  }
+
+  Future<ApiPage<Student>> getPage({
+    ApiListQuery query = const ApiListQuery(),
+    int? schoolYearId,
+    int? classId,
+    String? gradeLevel,
+    bool? isActive,
+    String? studentStatus,
+  }) async {
+    if (AppConfig.useMockApi) {
+      final items = _mockItems
+          .where(
+            (item) =>
+                !item.isDeleted &&
+                (classId == null || item.classId == classId) &&
+                (studentStatus == null ||
+                    item.studentStatus == studentStatus) &&
+                (isActive == null || item.isActive == isActive),
+          )
+          .toList();
+      return _mockPage(items, query);
+    }
+
+    final response = await _apiClient.dio.get(
+      ApiEndpoints.students,
+      queryParameters: query.toQueryParameters(
+        filters: {
+          'school_year_id': ?schoolYearId,
+          'class_id': ?classId,
+          if (gradeLevel != null && gradeLevel.isNotEmpty)
+            'grade_level': gradeLevel,
+          if (isActive != null) 'is_active': '$isActive',
+          if (studentStatus != null && studentStatus.isNotEmpty)
+            'student_status': studentStatus,
+        },
+      ),
+    );
+    return ApiResponse.page(response.data, Student.fromJson);
   }
 
   @override
@@ -127,5 +173,17 @@ class StudentRepository implements CrudRepository<Student> {
   int _nextId() {
     return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
         1;
+  }
+
+  ApiPage<Student> _mockPage(List<Student> items, ApiListQuery query) {
+    final start = (query.page - 1) * query.pageSize;
+    final end = (start + query.pageSize).clamp(0, items.length).toInt();
+    return ApiPage(
+      items: start >= items.length ? const [] : items.sublist(start, end),
+      page: query.page,
+      pageSize: query.pageSize,
+      total: items.length,
+      totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
+    );
   }
 }

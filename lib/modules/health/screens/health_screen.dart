@@ -26,53 +26,72 @@ class _HealthScreenState extends State<HealthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      children: [
-        if (widget.showTitle) ...[
-          Text(
-            'Health & Growth',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-        SegmentedButton<HealthSection>(
-          segments: const [
-            ButtonSegment<HealthSection>(
-              value: HealthSection.health,
-              icon: Icon(Icons.favorite_outline),
-              label: Text('Sức khỏe'),
-            ),
-            ButtonSegment<HealthSection>(
-              value: HealthSection.nutrition,
-              icon: Icon(Icons.restaurant_outlined),
-              label: Text('Nuôi dưỡng'),
-            ),
-            ButtonSegment<HealthSection>(
-              value: HealthSection.growth,
-              icon: Icon(Icons.trending_up),
-              label: Text('Tăng trưởng'),
-            ),
-          ],
-          selected: {_selectedSection},
-          onSelectionChanged: (values) {
-            setState(() {
-              _selectedSection = values.first;
-            });
-          },
+    final media = MediaQuery.of(context);
+    // Bottom clearance for system inset + NavigationBar so last items scroll up.
+    final bottomPadding =
+        AppSpacing.md +
+        media.padding.bottom +
+        kBottomNavigationBarHeight +
+        AppSpacing.sm;
+
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          bottomPadding,
         ),
-        const SizedBox(height: AppSpacing.md),
-        if (_selectedSection == HealthSection.health)
-          const HealthRosterDashboard(mode: HealthRosterMode.health)
-        else if (_selectedSection == HealthSection.nutrition)
-          const HealthRosterDashboard(mode: HealthRosterMode.nutrition)
-        else if (_selectedSection == HealthSection.growth)
-          const SizedBox(height: 720, child: GrowthWhoScreen())
-        else
-          _HealthSectionCard(section: _selectedSection),
-      ],
+        children: [
+          if (widget.showTitle) ...[
+            Text(
+              'Sức khỏe & Tăng trưởng',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          SegmentedButton<HealthSection>(
+            segments: const [
+              ButtonSegment<HealthSection>(
+                value: HealthSection.health,
+                icon: Icon(Icons.favorite_outline),
+                label: Text('Sức khỏe'),
+              ),
+              ButtonSegment<HealthSection>(
+                value: HealthSection.nutrition,
+                icon: Icon(Icons.restaurant_outlined),
+                label: Text('Nuôi dưỡng'),
+              ),
+              ButtonSegment<HealthSection>(
+                value: HealthSection.growth,
+                icon: Icon(Icons.trending_up),
+                label: Text('Tăng trưởng'),
+              ),
+            ],
+            selected: {_selectedSection},
+            onSelectionChanged: (values) {
+              setState(() {
+                _selectedSection = values.first;
+              });
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (_selectedSection == HealthSection.health)
+            const HealthRosterDashboard(mode: HealthRosterMode.health)
+          else if (_selectedSection == HealthSection.nutrition)
+            const HealthRosterDashboard(mode: HealthRosterMode.nutrition)
+          else if (_selectedSection == HealthSection.growth)
+            // No fixed height — Growth content participates in parent ListView
+            // via shrink-wrapped internal layout when embedded.
+            const GrowthWhoScreen(embedded: true)
+          else
+            _HealthSectionCard(section: _selectedSection),
+        ],
+      ),
     );
   }
 }

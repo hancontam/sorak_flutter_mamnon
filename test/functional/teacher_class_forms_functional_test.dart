@@ -13,8 +13,6 @@ import 'package:sorak_flutter_mamnon/modules/teachers/providers/teacher_provider
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/screens/teacher_form_screen.dart';
 
-import 'helpers/test_app.dart';
-
 void main() {
   group('Teacher and class forms functional test', () {
     testWidgets('teacher form uses Vietnamese dropdown fields', (tester) async {
@@ -87,8 +85,7 @@ void main() {
 }
 
 Future<Widget> _buildFormTestApp({required Widget home}) async {
-  final localStorage = await createTestLocalStorage();
-  final apiClient = ApiClient(localStorage: localStorage);
+  final apiClient = ApiClient.memory();
   final academicYearRepository = AcademicYearRepository(apiClient: apiClient);
   final classRepository = ClassRepository(apiClient: apiClient);
   final teacherRepository = TeacherRepository(apiClient: apiClient);

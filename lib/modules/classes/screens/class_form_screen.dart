@@ -74,7 +74,7 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
           initialValues: {
             'class_name': widget.schoolClass?.className ?? '',
             'school_year_id':
-                '${widget.schoolClass?.schoolYearId ?? optionsProvider.selectedAcademicYearId ?? 1}',
+                '${widget.schoolClass?.schoolYearId ?? optionsProvider.selectedAcademicYearId ?? ''}',
             'age_group': _normalizeGrade(widget.schoolClass?.ageGroup),
             'room': widget.schoolClass?.room ?? '',
             'teacher_name': widget.schoolClass?.teacherName ?? '',

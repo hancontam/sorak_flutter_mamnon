@@ -7,14 +7,6 @@ class LocalStorage {
 
   final SharedPreferences _preferences;
 
-  Future<void> saveToken(String token) {
-    return _preferences.setString(StorageKeys.token, token);
-  }
-
-  String? getToken() {
-    return _preferences.getString(StorageKeys.token);
-  }
-
   Future<void> saveUser({
     required int id,
     required String fullName,
@@ -43,8 +35,15 @@ class LocalStorage {
     return _preferences.getString(StorageKeys.role);
   }
 
+  Future<void> saveSelectedAcademicYearId(int id) {
+    return _preferences.setInt(StorageKeys.selectedAcademicYearId, id);
+  }
+
+  int? getSelectedAcademicYearId() {
+    return _preferences.getInt(StorageKeys.selectedAcademicYearId);
+  }
+
   Future<void> clearAuth() async {
-    await _preferences.remove(StorageKeys.token);
     await _preferences.remove(StorageKeys.userId);
     await _preferences.remove(StorageKeys.fullName);
     await _preferences.remove(StorageKeys.email);

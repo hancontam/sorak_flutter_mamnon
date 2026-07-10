@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/simple_form_screen.dart';
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../models/health_assessment.dart';
 import '../providers/health_assessment_provider.dart';
 
@@ -12,6 +13,9 @@ class HealthAssessmentFormScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedYearId = context
+        .watch<ActiveAcademicYearProvider>()
+        .selectedYearId;
     return SimpleFormScreen(
       title: assessment == null
           ? 'Quick Health Entry'
@@ -68,7 +72,10 @@ class HealthAssessmentFormScreen extends StatelessWidget {
             ? ''
             : assessment!.classId.toString(),
         'class_name': assessment?.className ?? '',
-        'school_year_id': assessment?.schoolYearId.toString() ?? '1',
+        'school_year_id':
+            assessment?.schoolYearId.toString() ??
+            selectedYearId?.toString() ??
+            '',
         'assessment_date':
             assessment?.assessmentDate.substring(0, 10) ??
             DateTime.now().toIso8601String().substring(0, 10),

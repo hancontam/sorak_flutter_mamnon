@@ -32,7 +32,6 @@ void main() {
 
       expect(find.text('Sorak Mầm non'), findsOneWidget);
       expect(find.text('Welcome, Principal Admin'), findsOneWidget);
-      expect(localStorage.getToken(), 'demo-token-admin');
       expect(localStorage.getEmail(), 'admin@sorak.edu.vn');
       expect(localStorage.getRole(), 'PRINCIPAL');
     });
@@ -48,7 +47,6 @@ void main() {
 
       expect(find.text('Cổng phụ huynh'), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_child')), findsOneWidget);
-      expect(localStorage.getToken(), 'demo-token-parent');
       expect(localStorage.getEmail(), 'parent@sorak.edu.vn');
       expect(localStorage.getRole(), 'PARENT');
     });
@@ -139,7 +137,6 @@ void main() {
 }
 
 void _expectSessionCleared(LocalStorage localStorage) {
-  expect(localStorage.getToken(), isNull);
   expect(localStorage.getUserId(), isNull);
   expect(localStorage.getFullName(), isNull);
   expect(localStorage.getEmail(), isNull);

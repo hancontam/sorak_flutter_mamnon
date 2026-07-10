@@ -13,7 +13,6 @@ Future<LocalStorage> createTestLocalStorage({AuthUser? savedUser}) async {
   final user = savedUser;
 
   if (user != null) {
-    await localStorage.saveToken(user.token);
     await localStorage.saveUser(
       id: user.id,
       fullName: user.fullName,

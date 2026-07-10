@@ -128,6 +128,8 @@ class FormOptionsProvider extends ChangeNotifier {
 
     try {
       await _loadClassesForSelectedYear();
+      await _loadWorkingTeachers();
+      _allStudents.clear();
       await _loadStudentsForSelectedClass();
       _errorMessage = null;
     } catch (error) {
@@ -155,6 +157,17 @@ class FormOptionsProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> applyGlobalAcademicYear(int? academicYearId) async {
+    if (academicYearId == null) {
+      return;
+    }
+
+    if (_academicYears.isEmpty) {
+      await loadInitialOptions();
+    }
+    await selectAcademicYear(academicYearId);
+  }
+
   Future<void> _loadClassesForSelectedYear() async {
     final classes = await _formOptionsRepository.getClassesByYear(
       _selectedAcademicYearId,
@@ -169,7 +182,9 @@ class FormOptionsProvider extends ChangeNotifier {
   }
 
   Future<void> _loadWorkingTeachers() async {
-    final teachers = await _formOptionsRepository.getWorkingTeachers();
+    final teachers = await _formOptionsRepository.getWorkingTeachers(
+      _selectedAcademicYearId,
+    );
     _workingTeachers
       ..clear()
       ..addAll(teachers);
@@ -191,7 +206,10 @@ class FormOptionsProvider extends ChangeNotifier {
   }
 
   Future<void> _loadAllStudents() async {
-    final students = await _formOptionsRepository.getStudentsByClass(null);
+    final students = await _formOptionsRepository.getStudentsByClass(
+      schoolYearId: _selectedAcademicYearId,
+      classId: null,
+    );
     _allStudents
       ..clear()
       ..addAll(students);

@@ -1,6 +1,7 @@
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_page.dart';
 import '../../../core/network/api_response.dart';
 import '../../../core/repositories/crud_repository.dart';
 import '../models/academic_year.dart';
@@ -33,10 +34,19 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
+    return (await getPage(query: const ApiListQuery(pageSize: 500))).items;
+  }
+
+  Future<ApiPage<AcademicYear>> getPage({
+    ApiListQuery query = const ApiListQuery(),
+  }) async {
+    if (AppConfig.useMockApi) {
+      final items = _mockItems.where((item) => !item.isDeleted).toList();
+      return _mockPage(items, query);
+    }
+
     final response = await _apiClient.dio.get(ApiEndpoints.academicYears);
-    return ApiResponse.list(response.data)
-        .map((json) => AcademicYear.fromJson(json as Map<String, dynamic>))
-        .toList();
+    return ApiResponse.page(response.data, AcademicYear.fromJson);
   }
 
   @override
@@ -132,5 +142,20 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
   int _nextId() {
     return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
         1;
+  }
+
+  ApiPage<AcademicYear> _mockPage(
+    List<AcademicYear> items,
+    ApiListQuery query,
+  ) {
+    final start = (query.page - 1) * query.pageSize;
+    final end = (start + query.pageSize).clamp(0, items.length).toInt();
+    return ApiPage(
+      items: start >= items.length ? const [] : items.sublist(start, end),
+      page: query.page,
+      pageSize: query.pageSize,
+      total: items.length,
+      totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
+    );
   }
 }

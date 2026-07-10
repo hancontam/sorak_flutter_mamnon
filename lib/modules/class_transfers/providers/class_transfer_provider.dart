@@ -9,6 +9,25 @@ class ClassTransferProvider extends CrudProvider<ClassTransfer> {
        super(repository: classTransferRepository);
 
   final ClassTransferRepository _classTransferRepository;
+  int? _academicYearId;
+
+  @override
+  Future<void> loadItems() {
+    final academicYearId = _academicYearId;
+    if (academicYearId == null) {
+      return super.loadItems();
+    }
+    return loadItemsWith(
+      () => _classTransferRepository.getAll(schoolYearId: academicYearId),
+    );
+  }
+
+  Future<void> loadForAcademicYear(int yearId) {
+    _academicYearId = yearId;
+    return loadItemsWith(
+      () => _classTransferRepository.getAll(schoolYearId: yearId),
+    );
+  }
 
   Future<void> updateStatus(int id, String action) async {
     await _classTransferRepository.updateStatus(id, action);

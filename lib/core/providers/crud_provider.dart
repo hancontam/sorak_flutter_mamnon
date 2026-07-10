@@ -19,9 +19,13 @@ class CrudProvider<T> extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   Future<void> loadItems() async {
+    await loadItemsWith(_repository.getAll);
+  }
+
+  Future<void> loadItemsWith(Future<List<T>> Function() loader) async {
     _setLoading(true);
     try {
-      _items = await _repository.getAll();
+      _items = await loader();
       _errorMessage = null;
     } catch (error) {
       _errorMessage = error.toString().replaceFirst('Exception: ', '');

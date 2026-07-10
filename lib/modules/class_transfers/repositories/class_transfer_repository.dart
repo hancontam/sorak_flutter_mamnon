@@ -1,6 +1,7 @@
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_page.dart';
 import '../../../core/network/api_response.dart';
 import '../../../core/repositories/crud_repository.dart';
 import '../models/class_transfer.dart';
@@ -25,15 +26,47 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
   ];
 
   @override
-  Future<List<ClassTransfer>> getAll() async {
+  Future<List<ClassTransfer>> getAll({int? schoolYearId}) async {
     if (AppConfig.useMockApi) {
       return List.of(_mockItems);
     }
 
-    final response = await _apiClient.dio.get(ApiEndpoints.classTransfers);
-    return ApiResponse.list(response.data)
-        .map((json) => ClassTransfer.fromJson(json as Map<String, dynamic>))
-        .toList();
+    return (await getPage(
+      query: const ApiListQuery(pageSize: 500),
+      schoolYearId: schoolYearId,
+    )).items;
+  }
+
+  Future<ApiPage<ClassTransfer>> getPage({
+    ApiListQuery query = const ApiListQuery(),
+    int? schoolYearId,
+    String? status,
+    int? classId,
+    int? studentId,
+  }) async {
+    if (AppConfig.useMockApi) {
+      final items = _mockItems
+          .where(
+            (item) =>
+                (status == null || item.status == status) &&
+                (studentId == null || item.studentId == studentId),
+          )
+          .toList();
+      return _mockPage(items, query);
+    }
+
+    final response = await _apiClient.dio.get(
+      ApiEndpoints.classTransfers,
+      queryParameters: query.toQueryParameters(
+        filters: {
+          'school_year_id': ?schoolYearId,
+          'class_id': ?classId,
+          'student_id': ?studentId,
+          if (status != null && status.isNotEmpty) 'status': status,
+        },
+      ),
+    );
+    return ApiResponse.page(response.data, ClassTransfer.fromJson);
   }
 
   @override
@@ -76,10 +109,18 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
 
   @override
   Future<ClassTransfer> update(int id, Map<String, dynamic> data) async {
-    return updateStatus(id, data['action'] as String? ?? 'cancel');
+    return updateStatus(
+      id,
+      data['action'] as String? ?? 'cancel',
+      note: data['note'] as String?,
+    );
   }
 
-  Future<ClassTransfer> updateStatus(int id, String action) async {
+  Future<ClassTransfer> updateStatus(
+    int id,
+    String action, {
+    String? note,
+  }) async {
     if (AppConfig.useMockApi) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
@@ -90,7 +131,10 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
 
     final response = await _apiClient.dio.patch(
       '${ApiEndpoints.classTransfers}/$id/status',
-      data: {'action': action},
+      data: {
+        'action': action,
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
     );
     return ClassTransfer.fromJson(ApiResponse.object(response.data));
   }
@@ -121,5 +165,20 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
   int _nextId() {
     return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
         1;
+  }
+
+  ApiPage<ClassTransfer> _mockPage(
+    List<ClassTransfer> items,
+    ApiListQuery query,
+  ) {
+    final start = (query.page - 1) * query.pageSize;
+    final end = (start + query.pageSize).clamp(0, items.length).toInt();
+    return ApiPage(
+      items: start >= items.length ? const [] : items.sublist(start, end),
+      page: query.page,
+      pageSize: query.pageSize,
+      total: items.length,
+      totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
+    );
   }
 }

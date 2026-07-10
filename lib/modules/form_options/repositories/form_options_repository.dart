@@ -32,7 +32,7 @@ class FormOptionsRepository {
   }
 
   Future<List<SchoolClass>> getClassesByYear(int? schoolYearId) async {
-    final classes = await _classRepository.getAll();
+    final classes = await _classRepository.getAll(schoolYearId: schoolYearId);
     final visibleClasses = classes.where((schoolClass) {
       if (schoolClass.isDeleted) {
         return false;
@@ -47,8 +47,10 @@ class FormOptionsRepository {
     return visibleClasses;
   }
 
-  Future<List<Teacher>> getWorkingTeachers() async {
-    final teachers = await _teacherRepository.getAll();
+  Future<List<Teacher>> getWorkingTeachers(int? schoolYearId) async {
+    final teachers = await _teacherRepository.getAll(
+      schoolYearId: schoolYearId,
+    );
     final visibleTeachers = teachers.where((teacher) {
       return !teacher.isDeleted && _isWorkingStatus(teacher.workStatus);
     }).toList();
@@ -57,8 +59,14 @@ class FormOptionsRepository {
     return visibleTeachers;
   }
 
-  Future<List<Student>> getStudentsByClass(int? classId) async {
-    final students = await _studentRepository.getAll();
+  Future<List<Student>> getStudentsByClass({
+    required int? schoolYearId,
+    required int? classId,
+  }) async {
+    final students = await _studentRepository.getAll(
+      schoolYearId: schoolYearId,
+      classId: classId,
+    );
     final visibleStudents = students.where((student) {
       if (student.isDeleted || !student.isActive) {
         return false;
