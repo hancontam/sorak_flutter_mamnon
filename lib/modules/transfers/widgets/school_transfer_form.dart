@@ -33,12 +33,10 @@ class SchoolTransferFormData {
   Map<String, dynamic> toJson(String schoolField) {
     return {
       'student_id': studentId,
-      'student_name': studentName,
       schoolField: school,
       'transfer_date': transferDate,
       'reason': reason,
       'note': note,
-      'status': status,
     };
   }
 }

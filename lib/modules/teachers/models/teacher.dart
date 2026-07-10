@@ -11,7 +11,8 @@ class Teacher {
     required this.position,
     this.phone = '',
     this.gender = '',
-    this.workStatus = 'Dang lam viec',
+    this.accountId = 0,
+    this.workStatus = 'Đang làm việc',
     this.isDeleted = false,
   });
 
@@ -24,7 +25,9 @@ class Teacher {
   final String phone;
   @JsonKey(defaultValue: '')
   final String gender;
-  @JsonKey(defaultValue: 'Dang lam viec')
+  @JsonKey(readValue: _readAccountId)
+  final int accountId;
+  @JsonKey(defaultValue: 'Đang làm việc')
   final String workStatus;
   @JsonKey(readValue: _readIsDeleted)
   final bool isDeleted;
@@ -44,6 +47,7 @@ class Teacher {
     String? position,
     String? phone,
     String? gender,
+    int? accountId,
     String? workStatus,
     bool? isDeleted,
   }) {
@@ -54,6 +58,7 @@ class Teacher {
       position: position ?? this.position,
       phone: phone ?? this.phone,
       gender: gender ?? this.gender,
+      accountId: accountId ?? this.accountId,
       workStatus: workStatus ?? this.workStatus,
       isDeleted: isDeleted ?? this.isDeleted,
     );
@@ -61,5 +66,13 @@ class Teacher {
 
   static Object? _readIsDeleted(Map<dynamic, dynamic> json, String key) {
     return json['is_deleted'] == true || json['deleted_at'] != null;
+  }
+
+  static Object? _readAccountId(Map<dynamic, dynamic> json, String key) {
+    final account = json['account'];
+    if (account is Map && account['account_id'] is num) {
+      return (account['account_id'] as num).toInt();
+    }
+    return json['account_id'] ?? 0;
   }
 }

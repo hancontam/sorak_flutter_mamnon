@@ -27,20 +27,20 @@ void main() {
       expect(provider.classOptions, isNotEmpty);
       expect(provider.workingTeacherOptions, isNotEmpty);
       expect(provider.studentOptions, isNotEmpty);
-      expect(provider.selectedAcademicYearId, 1);
-      expect(provider.selectedClassId, 2);
-      expect(provider.studentOptions.single.label, 'Tran Bao Ngoc');
+      expect(provider.selectedAcademicYearId, 101);
+      expect(provider.selectedClassId, 302);
+      expect(provider.studentOptions.single.label, 'Trần Bảo Ngọc');
 
-      await provider.selectClass(1);
+      await provider.selectClass(301);
 
-      expect(provider.selectedClassId, 1);
-      expect(provider.studentOptions.single.label, 'Nguyen Minh An');
+      expect(provider.selectedClassId, 301);
+      expect(provider.studentOptions.single.label, 'Nguyễn Minh An');
 
-      await provider.selectAcademicYear(2);
+      await provider.selectAcademicYear(103);
 
-      expect(provider.selectedAcademicYearId, 2);
+      expect(provider.selectedAcademicYearId, 103);
       expect(provider.classOptions, isEmpty);
-      expect(provider.studentOptions, isNotEmpty);
+      expect(provider.studentOptions, isEmpty);
     });
   });
 }

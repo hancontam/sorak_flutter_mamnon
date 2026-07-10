@@ -34,7 +34,7 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
               ? ''
               : ' - ${teacher.position}';
           return AppOption(
-            value: teacher.fullName,
+            value: '${teacher.accountId}',
             label: '${teacher.fullName}$position',
           );
         }).toList();
@@ -61,7 +61,7 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
             ),
             const FormFieldConfig(name: 'room', label: 'Phòng'),
             FormFieldConfig(
-              name: 'teacher_name',
+              name: 'teacher_account_id',
               label: 'Giáo viên',
               type: SimpleFormFieldType.dropdown,
               options: teacherOptions,
@@ -77,7 +77,10 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
                 '${widget.schoolClass?.schoolYearId ?? optionsProvider.selectedAcademicYearId ?? ''}',
             'age_group': _normalizeGrade(widget.schoolClass?.ageGroup),
             'room': widget.schoolClass?.room ?? '',
-            'teacher_name': widget.schoolClass?.teacherName ?? '',
+            'teacher_account_id': _teacherAccountId(
+              optionsProvider,
+              widget.schoolClass?.teacherName,
+            ),
           },
           onSave: (data) {
             final provider = context.read<ClassProvider>();
@@ -107,5 +110,15 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
       'nhà trẻ' || 'nha tre' => GradeOptions.nursery,
       _ => value ?? '',
     };
+  }
+
+  String _teacherAccountId(FormOptionsProvider provider, String? teacherName) {
+    if (teacherName == null || teacherName.isEmpty) return '';
+    for (final teacher in provider.workingTeachers) {
+      if (teacher.fullName == teacherName && teacher.accountId > 0) {
+        return '${teacher.accountId}';
+      }
+    }
+    return '';
   }
 }

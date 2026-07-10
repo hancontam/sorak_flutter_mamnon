@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../utils/text_normalizer.dart';
 import 'app_search_bar.dart';
 import 'confirm_archive_dialog.dart';
 import 'empty_view.dart';
@@ -42,6 +43,8 @@ class ModuleListScreen<T> extends StatefulWidget {
     this.itemStatus,
     this.itemFilterValue,
     this.searchHint,
+    this.showAdd = true,
+    this.showEdit = true,
     this.showDelete = true,
   });
 
@@ -60,6 +63,8 @@ class ModuleListScreen<T> extends StatefulWidget {
   final String Function(T item)? itemStatus;
   final String Function(T item)? itemFilterValue;
   final String? searchHint;
+  final bool showAdd;
+  final bool showEdit;
   final bool showDelete;
 
   @override
@@ -78,7 +83,7 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
   }
 
   List<T> get _filteredItems {
-    final query = _query.trim().toLowerCase();
+    final query = normalizeVietnamese(_query);
     final selectedFilter = _selectedFilter;
 
     return widget.items.where((item) {
@@ -95,9 +100,9 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
         widget.itemSubtitle(item),
         widget.itemStatus?.call(item) ?? '',
         _filterValue(item) ?? '',
-      ].join(' ').toLowerCase();
+      ].join(' ');
 
-      return searchableText.contains(query);
+      return normalizeVietnamese(searchableText).contains(query);
     }).toList();
   }
 
@@ -134,10 +139,10 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
       );
     } else if (widget.items.isEmpty) {
       body = EmptyView(
-        title: 'No ${widget.title.toLowerCase()} yet',
-        message: 'Create the first record to start managing this module.',
-        actionLabel: 'Create',
-        onAction: widget.onAdd,
+        title: 'Chưa có dữ liệu',
+        message: 'Không có dữ liệu phù hợp với năm học và quyền hiện tại.',
+        actionLabel: widget.showAdd ? 'Tạo mới' : null,
+        onAction: widget.showAdd ? widget.onAdd : null,
       );
     } else {
       final filteredItems = _filteredItems;
@@ -154,7 +159,7 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
             ),
             child: AppSearchBar(
               controller: _searchController,
-              hintText: widget.searchHint ?? 'Search ${widget.title}',
+              hintText: widget.searchHint ?? 'Tìm kiếm ${widget.title}',
               onChanged: (value) {
                 setState(() {
                   _query = value;
@@ -185,11 +190,11 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
           Expanded(
             child: filteredItems.isEmpty
                 ? EmptyView(
-                    title: 'No matching records',
+                    title: 'Không tìm thấy dữ liệu',
                     message:
-                        'Try another keyword, change filter, or clear the search box.',
+                        'Thử từ khóa khác, đổi bộ lọc hoặc xóa nội dung tìm kiếm.',
                     icon: Icons.search_off,
-                    actionLabel: 'Clear filters',
+                    actionLabel: 'Xóa bộ lọc',
                     onAction: () {
                       _searchController.clear();
                       setState(() {
@@ -217,6 +222,7 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
                           subtitle: widget.itemSubtitle(item),
                           status: widget.itemStatus?.call(item),
                           extraActions: widget.extraActions?.call(item),
+                          showEdit: widget.showEdit,
                           showDelete: widget.showDelete,
                           onTap: widget.onDetail == null
                               ? null
@@ -237,17 +243,20 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
         title: Text(widget.title),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: 'Làm mới',
             onPressed: widget.onRefresh,
             icon: const Icon(Icons.refresh),
           ),
         ],
       ),
       body: body,
-      floatingActionButton: FloatingActionButton(
-        onPressed: widget.onAdd,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: widget.showAdd
+          ? FloatingActionButton(
+              key: const ValueKey('module_add_button'),
+              onPressed: widget.onAdd,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
@@ -264,7 +273,7 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
         }
 
         messenger.showSnackBar(
-          const SnackBar(content: Text('Record archived')),
+          const SnackBar(content: Text('Đã xóa dữ liệu khỏi danh sách')),
         );
       } catch (_) {
         if (!mounted) {
@@ -272,7 +281,7 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
         }
 
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not archive record')),
+          const SnackBar(content: Text('Chưa thể xóa dữ liệu')),
         );
       }
     }
@@ -283,6 +292,7 @@ class _ModuleListCard<T> extends StatelessWidget {
   const _ModuleListCard({
     required this.title,
     required this.subtitle,
+    required this.showEdit,
     required this.showDelete,
     required this.onEdit,
     required this.onDelete,
@@ -294,6 +304,7 @@ class _ModuleListCard<T> extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? status;
+  final bool showEdit;
   final bool showDelete;
   final List<ModuleListAction>? extraActions;
   final VoidCallback? onTap;
@@ -337,6 +348,7 @@ class _ModuleListCard<T> extends StatelessWidget {
         onTap: onTap,
         trailing: _ModuleListActionMenu(
           extraActions: extraActions ?? const [],
+          showEdit: showEdit,
           showDelete: showDelete,
           onEdit: onEdit,
           onDelete: onDelete,
@@ -349,12 +361,14 @@ class _ModuleListCard<T> extends StatelessWidget {
 class _ModuleListActionMenu extends StatelessWidget {
   const _ModuleListActionMenu({
     required this.extraActions,
+    required this.showEdit,
     required this.showDelete,
     required this.onEdit,
     required this.onDelete,
   });
 
   final List<ModuleListAction> extraActions;
+  final bool showEdit;
   final bool showDelete;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -363,22 +377,27 @@ class _ModuleListActionMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = [
       ...extraActions,
-      ModuleListAction(
-        label: 'Edit',
-        icon: Icons.edit_outlined,
-        onSelected: onEdit,
-      ),
+      if (showEdit)
+        ModuleListAction(
+          label: 'Chỉnh sửa',
+          icon: Icons.edit_outlined,
+          onSelected: onEdit,
+        ),
       if (showDelete)
         ModuleListAction(
-          label: 'Delete',
+          label: 'Xóa',
           icon: Icons.delete_outline,
           onSelected: onDelete,
           isDestructive: true,
         ),
     ];
 
+    if (actions.isEmpty) {
+      return const Icon(Icons.chevron_right, color: AppColors.textGray);
+    }
+
     return PopupMenuButton<int>(
-      tooltip: 'More actions',
+      tooltip: 'Thao tác khác',
       icon: const Icon(Icons.more_vert),
       onSelected: (index) => actions[index].onSelected(),
       itemBuilder: (context) {

@@ -1,4 +1,5 @@
 import '../../../core/providers/crud_provider.dart';
+import '../../../core/network/api_exception.dart';
 import '../models/health_assessment.dart';
 import '../repositories/health_assessment_repository.dart';
 
@@ -64,14 +65,11 @@ class HealthAssessmentProvider extends CrudProvider<HealthAssessment> {
         assessmentDate: assessmentDate,
         rows: rows,
       );
-      await loadByClassDate(
-        classId: classId,
-        assessmentDate: assessmentDate,
-      );
+      await loadByClassDate(classId: classId, assessmentDate: assessmentDate);
       return true;
     } catch (error) {
       // Surface error via CrudProvider without inventing archive semantics.
-      final message = error.toString().replaceFirst('Exception: ', '');
+      final message = apiErrorMessage(error);
       await loadItemsWith(() async {
         throw Exception(message);
       });

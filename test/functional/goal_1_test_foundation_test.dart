@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/providers/crud_provider.dart';
@@ -13,18 +13,18 @@ void main() {
     testWidgets('can pump Sorak app without saved user', (tester) async {
       await tester.pumpSorakApp();
 
-      expect(find.text('Sorak Mam Non'), findsOneWidget);
+      expect(find.text('Sorak Mầm non'), findsOneWidget);
       expect(find.text('Phụ huynh'), findsOneWidget);
       expect(find.text('Cán bộ'), findsOneWidget);
       expect(find.text('Mã thẻ học sinh'), findsOneWidget);
-      expect(find.text('Password'), findsOneWidget);
+      expect(find.text('Mật khẩu'), findsOneWidget);
     });
 
     testWidgets('can pump Sorak app with saved user', (tester) async {
       await tester.pumpLoggedInSorakApp();
 
       expect(find.text('Sorak Mầm non'), findsOneWidget);
-      expect(find.text('Welcome, Principal Admin'), findsOneWidget);
+      expect(find.text('Xin chào, Phan Thị Hòa'), findsOneWidget);
       expect(find.byKey(const ValueKey('open_drawer_button')), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
     });

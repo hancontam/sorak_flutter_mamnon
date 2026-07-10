@@ -1,6 +1,25 @@
 # Sorak Flutter - Claude Handoff
 
-Core read and transfer wiring is complete through Goals 34-35. Before touching these repositories, read `docs/core_api_integration_handoff.md` and run `flutter test --dart-define=USE_MOCK_API=false test/functional/live_api_contract_functional_test.dart`. In particular, Academic Years accepts no pagination query; class transfers have no DELETE route; school transfers have no restore route.
+## Current baseline after Goals 40-49
+
+Read `docs/test_plan_after_core_api.md`, `docs/functional_defect_inventory.md`,
+and `docs/test_regression_report.md` before changing API or role behavior.
+
+- Mock mode uses one `MockApiBackend` as Dio's `HttpClientAdapter`.
+- Mock and live share `ApiResponse`, `fromJson`, query mapping, DTOs,
+  interceptors, and error handling.
+- Do not add repository-local mock branches. The migration-only switch
+  `AppConfig.useLegacyRepositoryMocks` stays `false`.
+- Canonical ID ranges are year 101+, teacher 201+, class 301+, student 401+,
+  transfer 501+, and account 1001+.
+- Parent profile comes only from `/auth/me`. Parent Health/Growth APIs do not
+  exist, so UI shows unavailable state and never fixture data.
+- Global year changes invalidate every year-scoped provider; stale async
+  responses are rejected by `CrudProvider` revisions.
+- Default and live-contract test commands must both pass. See the regression
+  report for the latest exact count and Android/manual blockers.
+
+Core read and transfer wiring is complete. Before touching these repositories, read `docs/core_api_integration_handoff.md` and run `flutter test --dart-define=USE_MOCK_API=false test/functional/live_api_contract_functional_test.dart`. In particular, Academic Years accepts no pagination query; class transfers have no DELETE route; school transfers have no restore route.
 
 ## Goal 33 complete - Global Academic Year
 

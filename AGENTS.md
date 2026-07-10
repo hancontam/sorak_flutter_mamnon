@@ -12,7 +12,8 @@
 - State management: `Provider` + `ChangeNotifier`.
 - API: dung `Dio` thong qua `ApiClient`.
 - Local storage: dung `SharedPreferences` thong qua `LocalStorage`.
-- Mock API truoc trong repository, sau do moi noi endpoint that tu backend.
+- Mock API qua `MockApiBackend` gan vao Dio `HttpClientAdapter`; mock va live
+  phai di chung repository/parser/DTO, khong tra object Dart truc tiep.
 - Model JSON phai dung `json_serializable` + generated file `.g.dart`.
 - Khong viet `fromJson` / `toJson` thu cong cho model API.
 - Sau khi tao/sua model co generated code, chay:
@@ -121,6 +122,19 @@ Can lam cac module:
 
 ## Functional Test Context
 
+Nen test hien tai sau Goals 40+:
+
+- Fixture canonical nam trong `lib/core/network/mock_api_backend.dart`.
+- Moi fixture phai tra envelope `{success,data,meta}` hoac
+  `{success:false,message,errors,traceId}`.
+- ID year/teacher/class/student/transfer/account phai tach dai.
+- Test role phai kiem tra ca data scope, visibility action, deep-link guard va
+  API 403.
+- Parent chi lay profile tre tu `/auth/me`; khong fallback mock Health/Growth
+  trong live mode.
+- Doc `docs/test_plan_after_core_api.md` va
+  `docs/functional_defect_inventory.md` truoc khi sua fixture/API.
+
 - Test theo muc chuc nang, khong viet unit test qua chi tiet cho tung ham nho.
 - Uu tien automated test bang `flutter test` voi mock API de test UI flow, provider state, navigation, CRUD co ban, va archive behavior.
 - Live API/DB that chi dung cho manual smoke test vi phu thuoc backend, session, role, va du lieu that.
@@ -134,7 +148,7 @@ http://103.69.191.210:8082/api
 
 ```text
 Email: phanthihoa@edu.vn
-Password: Hoa@12345
+Password: <nhap tu bien moi truong hoac password manager cuc bo>
 ```
 
 - Cac module can co functional test:
@@ -571,7 +585,7 @@ flutter run --dart-define=USE_MOCK_API=false --dart-define=API_BASE_URL=http://1
 - Tai khoan principal test:
 
 ```text
-phanthihoa@edu.vn / Hoa@12345
+phanthihoa@edu.vn / <khong luu password trong repo>
 ```
 
 - Tai khoan teacher test da verify tren live API:

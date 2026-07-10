@@ -4,10 +4,12 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../constants/app_config.dart';
+import 'mock_api_backend.dart';
 
 class ApiClient {
   ApiClient({CookieJar? cookieJar})
     : cookieJar = cookieJar ?? CookieJar(),
+      mockBackend = AppConfig.useMockApi ? MockApiBackend() : null,
       dio = Dio(
         BaseOptions(
           baseUrl: AppConfig.apiBaseUrl,
@@ -16,6 +18,10 @@ class ApiClient {
           headers: {'Content-Type': 'application/json'},
         ),
       ) {
+    final backend = mockBackend;
+    if (backend != null) {
+      dio.httpClientAdapter = backend;
+    }
     dio.interceptors.add(CookieManager(this.cookieJar));
     dio.interceptors.add(
       InterceptorsWrapper(onError: _handleUnauthorizedResponse),
@@ -45,6 +51,7 @@ class ApiClient {
 
   final CookieJar cookieJar;
   final Dio dio;
+  final MockApiBackend? mockBackend;
   Future<void> Function()? onSessionExpired;
 
   Future<void>? _refreshing;
@@ -52,6 +59,20 @@ class ApiClient {
 
   Future<void> clearSessionCookies() {
     return cookieJar.deleteAll();
+  }
+
+  void configureMockSession({
+    required String role,
+    required int accountId,
+    int? teacherId,
+    int? studentId,
+  }) {
+    mockBackend?.configureSession(
+      role: role,
+      accountId: accountId,
+      teacherId: teacherId,
+      studentId: studentId,
+    );
   }
 
   void markSessionActive() {

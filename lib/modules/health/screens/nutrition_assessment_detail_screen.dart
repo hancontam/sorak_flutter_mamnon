@@ -14,54 +14,54 @@ class NutritionAssessmentDetailScreen extends StatelessWidget {
       title: assessment.studentName,
       rows: [
         DetailRow(
-          label: 'Student code',
+          label: 'Mã trẻ',
           value: assessment.studentCode,
           icon: Icons.badge_outlined,
         ),
         DetailRow(
-          label: 'Class',
+          label: 'Lớp',
           value: assessment.className,
           icon: Icons.class_outlined,
         ),
         DetailRow(
-          label: 'Period',
+          label: 'Giai đoạn',
           value: assessment.period,
           icon: Icons.event_repeat_outlined,
         ),
         DetailRow(
-          label: 'Nutrition status',
+          label: 'Tình trạng dinh dưỡng',
           value: assessment.statusSummary,
           icon: Icons.restaurant_outlined,
         ),
         DetailRow(
-          label: 'Latest BMI',
+          label: 'BMI gần nhất',
           value: assessment.latestBmi == 0
               ? '-'
               : assessment.latestBmi.toStringAsFixed(2),
           icon: Icons.favorite_outline,
         ),
         DetailRow(
-          label: 'Latest BMI status',
+          label: 'Tình trạng BMI gần nhất',
           value: assessment.latestBmiStatus,
           icon: Icons.insights_outlined,
         ),
         DetailRow(
-          label: 'Stunting',
-          value: assessment.isStunting ? 'Yes' : 'No',
+          label: 'Thấp còi',
+          value: assessment.isStunting ? 'Có' : 'Không',
           icon: Icons.height,
         ),
         DetailRow(
-          label: 'Severe stunting',
-          value: assessment.isSevereStunting ? 'Yes' : 'No',
+          label: 'Thấp còi nặng',
+          value: assessment.isSevereStunting ? 'Có' : 'Không',
           icon: Icons.warning_amber_outlined,
         ),
         DetailRow(
-          label: 'Obese',
-          value: assessment.isObese ? 'Yes' : 'No',
+          label: 'Béo phì',
+          value: assessment.isObese ? 'Có' : 'Không',
           icon: Icons.monitor_weight_outlined,
         ),
         DetailRow(
-          label: 'Note',
+          label: 'Ghi chú',
           value: assessment.note,
           icon: Icons.notes_outlined,
         ),

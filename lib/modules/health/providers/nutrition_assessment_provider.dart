@@ -1,4 +1,5 @@
 import '../../../core/providers/crud_provider.dart';
+import '../../../core/network/api_exception.dart';
 import '../models/nutrition_assessment.dart';
 import '../repositories/nutrition_assessment_repository.dart';
 
@@ -79,7 +80,7 @@ class NutritionAssessmentProvider extends CrudProvider<NutritionAssessment> {
       );
       return true;
     } catch (error) {
-      final message = error.toString().replaceFirst('Exception: ', '');
+      final message = apiErrorMessage(error);
       await loadItemsWith(() async {
         throw Exception(message);
       });

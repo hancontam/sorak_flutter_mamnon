@@ -39,17 +39,17 @@ class _NutritionAssessmentListScreenState
     return Consumer<NutritionAssessmentProvider>(
       builder: (context, provider, _) {
         return ModuleListScreen<NutritionAssessment>(
-          title: 'Nutrition',
+          title: 'Đánh giá nuôi dưỡng',
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,
           onRefresh: provider.loadItems,
           onAdd: () => _openForm(),
-          searchHint: 'Search student, class, or card number',
+          searchHint: 'Tìm trẻ, lớp hoặc mã thẻ',
           itemTitle: (item) => item.studentName,
           itemSubtitle: (item) {
             final bmi = item.latestBmi == 0
-                ? 'No BMI'
+                ? 'Chưa có BMI'
                 : 'BMI ${item.latestBmi.toStringAsFixed(1)}';
             return '${item.className} | ${item.period} | $bmi';
           },

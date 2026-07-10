@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../models/health_assessment.dart';
 import '../models/who_curve_point.dart';
 import '../repositories/growth_who_repository.dart';
@@ -48,7 +49,7 @@ class GrowthWhoProvider extends ChangeNotifier {
         _whoCurves = [];
       }
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
     } finally {
       _setLoading(false);
     }
@@ -74,7 +75,7 @@ class GrowthWhoProvider extends ChangeNotifier {
       notifyListeners();
       await loadWhoCurves(indicator: _indicator, gender: gender);
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
       notifyListeners();
     }
   }
@@ -93,7 +94,7 @@ class GrowthWhoProvider extends ChangeNotifier {
       );
     } catch (error) {
       _whoCurves = [];
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
     } finally {
       _isLoadingCurves = false;
       notifyListeners();

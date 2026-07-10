@@ -25,7 +25,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
 
   @override
   Future<List<IncomingTransfer>> getAll({int? schoolYearId}) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
@@ -43,7 +43,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
     int? studentId,
     String? previousSchool,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final items = _mockItems
           .where(
             (item) =>
@@ -75,7 +75,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
 
   @override
   Future<IncomingTransfer?> getById(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final matches = _mockItems.where((item) => item.id == id);
       return matches.isEmpty ? null : matches.first;
     }
@@ -88,7 +88,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
 
   @override
   Future<IncomingTransfer> create(Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final item = IncomingTransfer(
         id: _nextId(),
         studentId: int.tryParse('${data['student_id']}') ?? 0,
@@ -105,14 +105,14 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
 
     final response = await _apiClient.dio.post(
       ApiEndpoints.incomingTransfers,
-      data: data,
+      data: _createPayload(data),
     );
     return IncomingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
   @override
   Future<IncomingTransfer> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
       final item = current.copyWith(
@@ -128,13 +128,13 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
 
     final response = await _apiClient.dio.patch(
       '${ApiEndpoints.incomingTransfers}/$id',
-      data: data,
+      data: _updatePayload(data),
     );
     return IncomingTransfer.fromJson(ApiResponse.object(response.data));
   }
 
   Future<void> cancel(int id, {String? cancelReason}) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(status: 'Cancelled');
       return;
@@ -151,7 +151,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
 
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
       return;
@@ -162,7 +162,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
       return;
@@ -189,4 +189,21 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
       totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
     );
   }
+
+  Map<String, dynamic> _createPayload(Map<String, dynamic> data) => {
+    'student_id': int.tryParse('${data['student_id']}'),
+    'school_year_id': int.tryParse('${data['school_year_id']}'),
+    'previous_school': data['previous_school'],
+    'transfer_date': data['transfer_date'],
+    if (data['reason'] != null) 'reason': data['reason'],
+    if (data['note'] != null) 'note': data['note'],
+  };
+
+  Map<String, dynamic> _updatePayload(Map<String, dynamic> data) => {
+    if (data['previous_school'] != null)
+      'previous_school': data['previous_school'],
+    if (data['transfer_date'] != null) 'transfer_date': data['transfer_date'],
+    if (data['reason'] != null) 'reason': data['reason'],
+    if (data['note'] != null) 'note': data['note'],
+  };
 }

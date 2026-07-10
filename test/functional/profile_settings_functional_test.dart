@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/test_app.dart';
@@ -16,7 +16,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Profile'), findsOneWidget);
-      expect(find.text('Principal Admin'), findsWidgets);
+      expect(find.text('Phan Thị Hòa'), findsWidgets);
       expect(find.text('Staff profile'), findsOneWidget);
       expect(find.text('Account'), findsOneWidget);
     });

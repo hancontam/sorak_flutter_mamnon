@@ -27,7 +27,7 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
 
   @override
   Future<List<ClassTransfer>> getAll({int? schoolYearId}) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return List.of(_mockItems);
     }
 
@@ -44,7 +44,7 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
     int? classId,
     int? studentId,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final items = _mockItems
           .where(
             (item) =>
@@ -71,7 +71,7 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
 
   @override
   Future<ClassTransfer?> getById(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final matches = _mockItems.where((item) => item.id == id);
       return matches.isEmpty ? null : matches.first;
     }
@@ -84,7 +84,7 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
 
   @override
   Future<ClassTransfer> create(Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final item = ClassTransfer(
         id: _nextId(),
         studentId: int.tryParse('${data['student_id']}') ?? 0,
@@ -102,7 +102,12 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
 
     final response = await _apiClient.dio.post(
       ApiEndpoints.classTransfers,
-      data: data,
+      data: {
+        'student_id': int.tryParse('${data['student_id']}'),
+        'to_class_id': int.tryParse('${data['to_class_id']}'),
+        'reason': data['reason'],
+        'effective_date': data['effective_date'],
+      },
     );
     return ClassTransfer.fromJson(ApiResponse.object(response.data));
   }
@@ -121,7 +126,7 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
     String action, {
     String? note,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
       final item = current.copyWith(status: _statusFromAction(action));

@@ -15,12 +15,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _staffEmailController = TextEditingController(
-    text: 'admin@sorak.edu.vn',
-  );
-  final _staffPasswordController = TextEditingController(text: '123456');
-  final _parentCardController = TextEditingController(text: 'NBA2024.001');
-  final _parentPasswordController = TextEditingController(text: '123456');
+  final _staffEmailController = TextEditingController();
+  final _staffPasswordController = TextEditingController();
+  final _parentCardController = TextEditingController();
+  final _parentPasswordController = TextEditingController();
 
   LoginMode _mode = LoginMode.parent;
   bool _showPassword = false;
@@ -58,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(authProvider.errorMessage ?? 'Login failed'),
+        content: Text(authProvider.errorMessage ?? 'Đăng nhập thất bại'),
         backgroundColor: AppColors.error,
       ),
     );
@@ -76,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'Sorak Mam Non',
+              'Sorak Mầm non',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w700,
@@ -85,8 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: AppSpacing.xs),
             Text(
               isParent
-                  ? 'Parent portal for child health and growth.'
-                  : 'Staff access for school management.',
+                  ? 'Theo dõi sức khỏe và sự phát triển của trẻ.'
+                  : 'Quản lý công việc dành cho cán bộ nhà trường.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textGray),
@@ -138,10 +136,10 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: isParent
                   ? _parentPasswordController
                   : _staffPasswordController,
-              label: 'Password',
+              label: 'Mật khẩu',
               obscureText: !_showPassword,
               suffixIcon: IconButton(
-                tooltip: _showPassword ? 'Hide password' : 'Show password',
+                tooltip: _showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu',
                 onPressed: () {
                   setState(() {
                     _showPassword = !_showPassword;
@@ -166,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     )
                   : const Icon(Icons.login),
-              label: const Text('Login'),
+              label: const Text('Đăng nhập'),
             ),
             if (isParent) ...[
               const SizedBox(height: AppSpacing.sm),

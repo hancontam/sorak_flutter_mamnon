@@ -24,7 +24,7 @@ void main() {
       await tester.tap(find.text('Chưa cấp'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Tran Thi Hoa'), findsOneWidget);
+      expect(find.text('Lê Minh Anh'), findsOneWidget);
       expect(find.text('Chưa cấp'), findsWidgets);
 
       await tester.tap(find.byTooltip('Thao tác').first);
@@ -55,8 +55,8 @@ void main() {
       await tester.tap(find.text('Tài khoản phụ huynh'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Mã thẻ: MN0001'), findsOneWidget);
-      expect(find.text('SĐT PH: 0912000001'), findsOneWidget);
+      expect(find.text('Mã thẻ: NMA2025.001'), findsOneWidget);
+      expect(find.text('SĐT PH: 0910000401'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Thao tác').first);
       await tester.pumpAndSettle();

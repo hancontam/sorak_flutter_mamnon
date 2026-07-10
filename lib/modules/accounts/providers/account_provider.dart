@@ -1,4 +1,5 @@
 import '../../../core/providers/crud_provider.dart';
+import '../../../core/network/api_exception.dart';
 import '../models/account.dart';
 import '../repositories/account_repository.dart';
 
@@ -30,7 +31,7 @@ class AccountProvider extends CrudProvider<Account> {
       _parentAccounts = results[1];
       _accountsErrorMessage = null;
     } catch (error) {
-      _accountsErrorMessage = error.toString().replaceFirst('Exception: ', '');
+      _accountsErrorMessage = apiErrorMessage(error);
     } finally {
       _setAccountsLoading(false);
     }
@@ -105,7 +106,7 @@ class AccountProvider extends CrudProvider<Account> {
       await loadAccountManagement();
       return true;
     } catch (error) {
-      _accountsErrorMessage = error.toString().replaceFirst('Exception: ', '');
+      _accountsErrorMessage = apiErrorMessage(error);
       _setAccountsLoading(false);
       return false;
     }

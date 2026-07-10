@@ -34,7 +34,7 @@ class StudentRepository implements CrudRepository<Student> {
 
   @override
   Future<List<Student>> getAll({int? schoolYearId, int? classId}) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems
           .where(
             (item) =>
@@ -58,7 +58,7 @@ class StudentRepository implements CrudRepository<Student> {
     bool? isActive,
     String? studentStatus,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final items = _mockItems
           .where(
             (item) =>
@@ -91,7 +91,7 @@ class StudentRepository implements CrudRepository<Student> {
 
   @override
   Future<Student?> getById(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final matches = _mockItems.where((item) => item.id == id);
       return matches.isEmpty ? null : matches.first;
     }
@@ -102,7 +102,7 @@ class StudentRepository implements CrudRepository<Student> {
 
   @override
   Future<Student> create(Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final item = Student(
         id: _nextId(),
         fullName: data['full_name'] as String,
@@ -118,14 +118,14 @@ class StudentRepository implements CrudRepository<Student> {
 
     final response = await _apiClient.dio.post(
       ApiEndpoints.students,
-      data: data,
+      data: _createPayload(data),
     );
     return Student.fromJson(ApiResponse.object(response.data));
   }
 
   @override
   Future<Student> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
       final item = current.copyWith(
@@ -143,14 +143,14 @@ class StudentRepository implements CrudRepository<Student> {
 
     final response = await _apiClient.dio.patch(
       '${ApiEndpoints.students}/$id',
-      data: data,
+      data: _updatePayload(data),
     );
     return Student.fromJson(ApiResponse.object(response.data));
   }
 
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
       return;
@@ -161,7 +161,7 @@ class StudentRepository implements CrudRepository<Student> {
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
       return;
@@ -185,5 +185,72 @@ class StudentRepository implements CrudRepository<Student> {
       total: items.length,
       totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
     );
+  }
+
+  static const _createFields = {
+    'full_name',
+    'date_of_birth',
+    'gender',
+    'grade_level',
+    'enrollment_date',
+    'ethnicity',
+    'nationality',
+    'religion',
+    'blood_type',
+    'birth_place',
+    'contact_phone',
+    'permanent_province',
+    'permanent_ward',
+    'permanent_address_detail',
+    'current_address',
+    'hometown_province',
+    'hometown_ward',
+    'photo_url',
+    'class_id',
+    'parents',
+  };
+
+  static const _updateFields = {
+    'full_name',
+    'student_status',
+    'date_of_birth',
+    'gender',
+    'enrollment_date',
+    'ethnicity',
+    'nationality',
+    'religion',
+    'area_type',
+    'blood_type',
+    'contact_phone',
+    'birth_place',
+    'permanent_province',
+    'permanent_ward',
+    'permanent_address_detail',
+    'current_address',
+    'hometown_province',
+    'hometown_ward',
+    'photo_url',
+  };
+
+  Map<String, dynamic> _createPayload(Map<String, dynamic> data) {
+    return _pick(data, _createFields, integerFields: const {'class_id'});
+  }
+
+  Map<String, dynamic> _updatePayload(Map<String, dynamic> data) {
+    return _pick(data, _updateFields);
+  }
+
+  Map<String, dynamic> _pick(
+    Map<String, dynamic> data,
+    Set<String> fields, {
+    Set<String> integerFields = const {},
+  }) {
+    return {
+      for (final entry in data.entries)
+        if (fields.contains(entry.key) && entry.value != null)
+          entry.key: integerFields.contains(entry.key)
+              ? int.tryParse('${entry.value}')
+              : entry.value,
+    };
   }
 }

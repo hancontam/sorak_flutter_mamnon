@@ -37,7 +37,7 @@ class Account {
   final String email;
   @JsonKey(readValue: _readRole)
   final String role;
-  @JsonKey(defaultValue: '')
+  @JsonKey(readValue: _readPhone)
   final String phone;
   @JsonKey(defaultValue: '')
   final String gender;
@@ -142,6 +142,16 @@ class Account {
 
   static Object? _readWorkStatus(Map<dynamic, dynamic> json, String key) {
     return json['work_status'] ?? json[key] ?? '';
+  }
+
+  static Object? _readPhone(Map<dynamic, dynamic> json, String key) {
+    final direct = json['phone'] ?? json['contact_phone'];
+    if (direct != null && '$direct'.isNotEmpty) return direct;
+    final parents = json['parents'];
+    if (parents is List && parents.isNotEmpty && parents.first is Map) {
+      return (parents.first as Map)['phone'] ?? '';
+    }
+    return '';
   }
 
   static Object? _readClassName(Map<dynamic, dynamic> json, String key) {

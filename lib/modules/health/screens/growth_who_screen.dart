@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/text_normalizer.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/empty_view.dart';
 import '../../../core/widgets/error_view.dart';
@@ -36,6 +37,7 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final role = _role(context);
+      if (role == 'PARENT') return;
       context.read<GrowthWhoProvider>().load(
         role: role,
         academicYearId: context
@@ -69,6 +71,21 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
     final bottomPadding = widget.embedded
         ? 0.0
         : AppSpacing.md + media.padding.bottom + kBottomNavigationBarHeight;
+
+    if (isParent) {
+      return const Center(
+        key: ValueKey('parent_growth_api_unavailable'),
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.md),
+          child: EmptyView(
+            title: 'Chưa có dữ liệu tăng trưởng',
+            message:
+                'Nhà trường chưa cung cấp API tăng trưởng dành cho phụ huynh. Ứng dụng không hiển thị dữ liệu mẫu khi đang kết nối hệ thống thật.',
+            icon: Icons.cloud_off_outlined,
+          ),
+        ),
+      );
+    }
 
     return Consumer<GrowthWhoProvider>(
       builder: (context, provider, _) {
@@ -183,7 +200,7 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
       return students;
     }
 
-    final query = _query.trim().toLowerCase();
+    final query = normalizeVietnamese(_query);
     return students.where((student) {
       if (_selectedClass != null && student.className != _selectedClass) {
         return false;
@@ -191,11 +208,9 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
       if (query.isEmpty) {
         return true;
       }
-      return [
-        student.studentName,
-        student.studentCode,
-        student.className,
-      ].join(' ').toLowerCase().contains(query);
+      return normalizeVietnamese(
+        [student.studentName, student.studentCode, student.className].join(' '),
+      ).contains(query);
     }).toList();
   }
 

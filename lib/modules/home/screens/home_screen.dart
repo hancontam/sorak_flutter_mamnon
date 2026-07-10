@@ -42,7 +42,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
       context.read<StudentProvider>().loadItems();
       context.read<ClassProvider>().loadItems();
-      context.read<TeacherProvider>().loadItems();
+      final role = context.read<AuthProvider>().currentUser?.role.toUpperCase();
+      if (role == 'PRINCIPAL') {
+        context.read<TeacherProvider>().loadItems();
+      }
       context.read<ClassTransferProvider>().loadItems();
     });
   }
@@ -119,14 +122,14 @@ class _HomeBody extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         Text(
-          'Welcome, ${user?.fullName ?? 'Guest'}',
+          'Xin chào, ${user?.fullName ?? 'Khách'}',
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Role: ${user?.role ?? '-'}',
+          'Vai trò: ${user?.role ?? '-'}',
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppColors.textGray),
@@ -139,7 +142,7 @@ class _HomeBody extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Today overview',
+          'Tổng quan hôm nay',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -154,25 +157,33 @@ class _HomeBody extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           children: [
             _SummaryCard(
-              title: 'Students',
+              title: 'Trẻ',
               value: studentsProvider.items.length.toString(),
               icon: Icons.child_care,
               isLoading: studentsProvider.isLoading,
             ),
             _SummaryCard(
-              title: 'Classes',
+              title: 'Lớp học',
               value: classesProvider.items.length.toString(),
               icon: Icons.class_,
               isLoading: classesProvider.isLoading,
             ),
+            if (isPrincipal)
+              _SummaryCard(
+                title: 'Giáo viên',
+                value: teachersProvider.items.length.toString(),
+                icon: Icons.badge,
+                isLoading: teachersProvider.isLoading,
+              )
+            else
+              _SummaryCard(
+                title: 'Yêu cầu chuyển lớp',
+                value: transfersProvider.items.length.toString(),
+                icon: Icons.swap_horiz,
+                isLoading: transfersProvider.isLoading,
+              ),
             _SummaryCard(
-              title: 'Teachers',
-              value: teachersProvider.items.length.toString(),
-              icon: Icons.badge,
-              isLoading: teachersProvider.isLoading,
-            ),
-            _SummaryCard(
-              title: 'Pending',
+              title: 'Chờ duyệt',
               value: pendingTransfers.toString(),
               icon: Icons.pending_actions,
               isLoading: transfersProvider.isLoading,
@@ -207,23 +218,23 @@ class _HomeBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
         ],
         Text(
-          'Quick actions',
+          'Thao tác nhanh',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
-          title: 'Students',
-          subtitle: 'View and update student records',
+          title: 'Trẻ',
+          subtitle: 'Xem và cập nhật hồ sơ trẻ',
           icon: Icons.child_care_outlined,
           onTap:
               onOpenStudents ?? () => Navigator.pushNamed(context, '/students'),
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
-          title: 'Classes',
-          subtitle: 'Check class rooms and teachers',
+          title: 'Lớp học',
+          subtitle: 'Xem phòng học và giáo viên phụ trách',
           icon: Icons.class_outlined,
           onTap:
               onOpenClasses ?? () => Navigator.pushNamed(context, '/classes'),
@@ -231,8 +242,8 @@ class _HomeBody extends StatelessWidget {
         if (isPrincipal) ...[
           const SizedBox(height: AppSpacing.sm),
           _QuickActionCard(
-            title: 'Teachers',
-            subtitle: 'Open teacher management',
+            title: 'Giáo viên',
+            subtitle: 'Mở chức năng quản lý giáo viên',
             icon: Icons.badge_outlined,
             onTap:
                 onOpenTeachers ??
@@ -241,8 +252,8 @@ class _HomeBody extends StatelessWidget {
         ],
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
-          title: 'Transfers',
-          subtitle: 'Review class and school transfers',
+          title: 'Chuyển lớp',
+          subtitle: 'Xem yêu cầu chuyển lớp và chuyển trường',
           icon: Icons.swap_horiz,
           onTap:
               onOpenTransfers ??
@@ -268,20 +279,20 @@ class _RoleDashboardBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = switch (role) {
       'PRINCIPAL' => (
-        title: 'Principal dashboard',
+        title: 'Tổng quan Ban Giám Hiệu',
         message:
-            'Review school overview, pending transfers, and management shortcuts.',
+            'Theo dõi toàn trường, yêu cầu chờ duyệt và các thao tác quản lý.',
         icon: Icons.admin_panel_settings_outlined,
       ),
       'TEACHER' => (
-        title: 'Teacher dashboard',
+        title: 'Công việc giáo viên',
         message:
-            'Assigned classes: $classCount. Quick entry is ready for daily health and nutrition.',
+            'Lớp được phân công: $classCount. Có thể nhập nhanh sức khỏe và dinh dưỡng hằng ngày.',
         icon: Icons.school_outlined,
       ),
       _ => (
-        title: 'Dashboard',
-        message: 'Follow daily school activity and important actions.',
+        title: 'Tổng quan',
+        message: 'Theo dõi hoạt động hằng ngày và các việc quan trọng.',
         icon: Icons.dashboard_outlined,
       ),
     };
@@ -318,7 +329,7 @@ class _RoleDashboardBanner extends StatelessWidget {
               ),
             ),
             if (role == 'PRINCIPAL')
-              _MiniCounter(label: 'Pending', value: '$pendingTransfers'),
+              _MiniCounter(label: 'Chờ duyệt', value: '$pendingTransfers'),
           ],
         ),
       ),
@@ -342,25 +353,25 @@ class _PrincipalDashboardSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DashboardSection(
-      title: 'Principal actions',
+      title: 'Thao tác Ban Giám Hiệu',
       children: [
         _QuickActionCard(
-          title: 'Pending transfers',
-          subtitle: '$pendingTransfers request(s) waiting for review',
+          title: 'Yêu cầu chuyển lớp chờ duyệt',
+          subtitle: '$pendingTransfers yêu cầu đang chờ xử lý',
           icon: Icons.pending_actions_outlined,
           onTap: onOpenTransfers,
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
-          title: 'Accounts',
-          subtitle: 'Manage staff and parent account access',
+          title: 'Tài khoản',
+          subtitle: 'Quản lý quyền truy cập của cán bộ và phụ huynh',
           icon: Icons.manage_accounts_outlined,
           onTap: onOpenAccounts,
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
-          title: 'Teachers',
-          subtitle: 'Open teacher management',
+          title: 'Giáo viên',
+          subtitle: 'Mở chức năng quản lý giáo viên',
           icon: Icons.badge_outlined,
           onTap: onOpenTeachers,
         ),
@@ -387,37 +398,37 @@ class _TeacherDashboardSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DashboardSection(
-      title: 'Teacher quick work',
+      title: 'Thao tác nhanh cho giáo viên',
       children: [
         Row(
           children: [
             Expanded(
-              child: _MiniCounter(label: 'Classes', value: '$classCount'),
+              child: _MiniCounter(label: 'Lớp học', value: '$classCount'),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: _MiniCounter(label: 'Students', value: '$studentCount'),
+              child: _MiniCounter(label: 'Trẻ', value: '$studentCount'),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
-          title: 'Assigned classes',
-          subtitle: 'Review your classes before daily entry',
+          title: 'Lớp được phân công',
+          subtitle: 'Kiểm tra lớp trước khi nhập liệu hằng ngày',
           icon: Icons.class_outlined,
           onTap: onOpenClasses,
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
-          title: 'Quick health entry',
-          subtitle: 'Enter height, weight and health notes',
+          title: 'Nhập nhanh sức khỏe',
+          subtitle: 'Nhập chiều cao, cân nặng và ghi chú sức khỏe',
           icon: Icons.favorite_outline,
           onTap: onOpenHealth,
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
-          title: 'Quick nutrition entry',
-          subtitle: 'Update nutrition status by student or class',
+          title: 'Nhập nhanh dinh dưỡng',
+          subtitle: 'Cập nhật tình trạng dinh dưỡng theo trẻ hoặc lớp',
           icon: Icons.restaurant_outlined,
           onTap: onOpenNutrition,
         ),

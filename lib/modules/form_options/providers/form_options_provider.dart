@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/app_options.dart';
+import '../../../core/network/api_exception.dart';
 import '../../academic_years/models/academic_year.dart';
 import '../../classes/models/school_class.dart';
 import '../../students/models/student.dart';
@@ -100,7 +101,7 @@ class FormOptionsProvider extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
     } finally {
       _setLoading(false);
     }
@@ -133,7 +134,7 @@ class FormOptionsProvider extends ChangeNotifier {
       await _loadStudentsForSelectedClass();
       _errorMessage = null;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
     } finally {
       _setLoading(false);
     }
@@ -151,7 +152,7 @@ class FormOptionsProvider extends ChangeNotifier {
       await _loadStudentsForSelectedClass();
       _errorMessage = null;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
     } finally {
       _setLoading(false);
     }

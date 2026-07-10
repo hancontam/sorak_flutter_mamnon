@@ -50,7 +50,7 @@ class NutritionAssessmentRepository
     int? schoolYearId,
     String? period,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
@@ -81,7 +81,7 @@ class NutritionAssessmentRepository
     required int schoolYearId,
     required String period,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems
           .where(
             (item) =>
@@ -122,7 +122,7 @@ class NutritionAssessmentRepository
       throw StateError('Cần ít nhất một dòng đánh giá');
     }
 
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       for (final row in rows) {
         await create({
           ...row,
@@ -148,7 +148,7 @@ class NutritionAssessmentRepository
 
   @override
   Future<NutritionAssessment?> getById(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final matches = _mockItems.where((item) => item.id == id);
       return matches.isEmpty ? null : matches.first;
     }
@@ -158,7 +158,7 @@ class NutritionAssessmentRepository
 
   @override
   Future<NutritionAssessment> create(Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final item = NutritionAssessment(
         id: _nextId(),
         studentId: int.tryParse('${data['student_id']}') ?? 0,
@@ -213,7 +213,7 @@ class NutritionAssessmentRepository
 
   @override
   Future<NutritionAssessment> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
       final item = current.copyWith(
@@ -247,10 +247,7 @@ class NutritionAssessmentRepository
       schoolYearId: schoolYearId,
       period: period,
       rows: [
-        {
-          ...data,
-          'student_id': data['student_id'] ?? id,
-        },
+        {...data, 'student_id': data['student_id'] ?? id},
       ],
     );
 
@@ -275,7 +272,7 @@ class NutritionAssessmentRepository
   /// Live intentionally fails so UI never fakes bulk-clear as Delete.
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       if (index >= 0) {
         _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
@@ -291,7 +288,7 @@ class NutritionAssessmentRepository
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       if (index >= 0) {
         _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);

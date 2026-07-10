@@ -18,41 +18,41 @@ class NutritionAssessmentFormScreen extends StatelessWidget {
         .selectedYearId;
     return SimpleFormScreen(
       title: assessment == null
-          ? 'Create Nutrition Record'
-          : 'Update Nutrition Record',
+          ? 'Tạo đánh giá nuôi dưỡng'
+          : 'Cập nhật đánh giá nuôi dưỡng',
       fields: const [
         FormFieldConfig(
           name: 'student_id',
-          label: 'Student ID',
+          label: 'Mã trẻ',
           keyboardType: TextInputType.number,
         ),
-        FormFieldConfig(name: 'student_name', label: 'Student name'),
+        FormFieldConfig(name: 'student_name', label: 'Tên trẻ'),
         FormFieldConfig(
           name: 'class_id',
-          label: 'Class ID',
+          label: 'Mã lớp',
           keyboardType: TextInputType.number,
         ),
-        FormFieldConfig(name: 'class_name', label: 'Class name'),
+        FormFieldConfig(name: 'class_name', label: 'Tên lớp'),
         FormFieldConfig(
           name: 'school_year_id',
-          label: 'School year ID',
+          label: 'Mã năm học',
           keyboardType: TextInputType.number,
         ),
-        FormFieldConfig(name: 'period', label: 'Period code'),
+        FormFieldConfig(name: 'period', label: 'Mã giai đoạn'),
         FormFieldConfig(
           name: 'weight_channel',
-          label: 'Weight channel',
+          label: 'Kênh cân nặng',
           isRequired: false,
         ),
-        FormFieldConfig(name: 'is_stunting', label: 'Stunting (true/false)'),
+        FormFieldConfig(name: 'is_stunting', label: 'Thấp còi (true/false)'),
         FormFieldConfig(
           name: 'is_severe_stunting',
-          label: 'Severe stunting (true/false)',
+          label: 'Thấp còi nặng (true/false)',
         ),
-        FormFieldConfig(name: 'is_obese', label: 'Obese (true/false)'),
+        FormFieldConfig(name: 'is_obese', label: 'Béo phì (true/false)'),
         FormFieldConfig(
           name: 'note',
-          label: 'Note',
+          label: 'Ghi chú',
           maxLines: 3,
           isRequired: false,
         ),

@@ -105,18 +105,18 @@ class _HealthSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = switch (section) {
       HealthSection.health => _SectionContent(
-        title: 'Health assessment',
-        subtitle: 'Quick entry for height, weight, BMI and health notes.',
+        title: 'Đánh giá sức khỏe',
+        subtitle: 'Nhập nhanh chiều cao, cân nặng, BMI và ghi chú sức khỏe.',
         icon: Icons.favorite_outline,
       ),
       HealthSection.nutrition => _SectionContent(
-        title: 'Nutrition',
-        subtitle: 'Track meals and nutrition notes for assigned classes.',
+        title: 'Nuôi dưỡng',
+        subtitle: 'Theo dõi dinh dưỡng và ghi chú theo lớp được phân công.',
         icon: Icons.restaurant_outlined,
       ),
       HealthSection.growth => _SectionContent(
-        title: 'WHO growth',
-        subtitle: 'View growth status and WHO chart summary for each child.',
+        title: 'Tăng trưởng WHO',
+        subtitle: 'Xem tình trạng và biểu đồ tăng trưởng WHO của từng trẻ.',
         icon: Icons.trending_up,
       ),
     };

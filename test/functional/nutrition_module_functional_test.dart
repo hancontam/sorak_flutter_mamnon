@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/widgets/app_shell.dart';
 
@@ -15,21 +15,21 @@ void main() {
       Navigator.of(shellContext).pushNamed('/nutrition');
       await tester.pumpAndSettle();
 
-      expect(find.text('Nutrition'), findsOneWidget);
-      expect(find.text('Nguyen Minh An'), findsOneWidget);
-      expect(find.text('Tran Bao Ngoc'), findsOneWidget);
+      expect(find.text('Đánh giá nuôi dưỡng'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsOneWidget);
+      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField).first, 'Ngoc');
       await tester.pumpAndSettle();
 
-      expect(find.text('Tran Bao Ngoc'), findsOneWidget);
-      expect(find.text('Nguyen Minh An'), findsNothing);
+      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsNothing);
 
-      await tester.tap(find.text('Tran Bao Ngoc'));
+      await tester.tap(find.text('Trần Bảo Ngọc'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Nutrition status'), findsOneWidget);
-      expect(find.text('Latest BMI'), findsOneWidget);
+      expect(find.text('Tình trạng dinh dưỡng'), findsOneWidget);
+      expect(find.text('BMI gần nhất'), findsOneWidget);
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -37,9 +37,9 @@ void main() {
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
 
-      expect(find.text('Create Nutrition Record'), findsOneWidget);
-      expect(find.text('Period code'), findsOneWidget);
-      expect(find.text('Weight channel'), findsOneWidget);
+      expect(find.text('Tạo đánh giá nuôi dưỡng'), findsOneWidget);
+      expect(find.text('Mã giai đoạn'), findsOneWidget);
+      expect(find.text('Kênh cân nặng'), findsOneWidget);
     });
   });
 }

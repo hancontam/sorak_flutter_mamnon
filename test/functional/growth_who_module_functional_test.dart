@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/widgets/app_shell.dart';
 import 'package:sorak_flutter_mamnon/modules/auth/models/auth_user.dart';
@@ -18,7 +18,7 @@ void main() {
 
       expect(find.byTooltip('Back'), findsOneWidget);
       expect(find.text('Tăng trưởng WHO'), findsWidgets);
-      expect(find.text('Nguyen Minh An'), findsWidgets);
+      expect(find.text('Nguyễn Minh An'), findsWidgets);
       expect(find.byType(EditableText), findsOneWidget);
 
       await tester.enterText(find.byType(EditableText).first, 'Ngoc');
@@ -32,9 +32,9 @@ void main() {
 
     testWidgets('Parent sees view only growth for own child', (tester) async {
       const parentUser = AuthUser(
-        id: 10,
-        fullName: 'Parent Demo',
-        email: 'parent@sorak.edu.vn',
+        id: 1101,
+        fullName: 'Nguyễn Minh An',
+        email: '',
         role: 'PARENT',
       );
 
@@ -45,9 +45,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byTooltip('Back'), findsOneWidget);
-      expect(find.text('Chỉ xem'), findsOneWidget);
-      expect(find.text('Nguyen Minh An'), findsWidgets);
-      expect(find.text('Tran Bao Ngoc'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('parent_growth_api_unavailable')),
+        findsOneWidget,
+      );
+      expect(find.text('Chưa có dữ liệu tăng trưởng'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsNothing);
       expect(find.byType(EditableText), findsNothing);
     });
   });

@@ -13,7 +13,8 @@ Teacher _$TeacherFromJson(Map<String, dynamic> json) => Teacher(
   position: json['position'] as String,
   phone: json['phone'] as String? ?? '',
   gender: json['gender'] as String? ?? '',
-  workStatus: json['work_status'] as String? ?? 'Dang lam viec',
+  accountId: (Teacher._readAccountId(json, 'account_id') as num?)?.toInt() ?? 0,
+  workStatus: json['work_status'] as String? ?? 'Đang làm việc',
   isDeleted: Teacher._readIsDeleted(json, 'is_deleted') as bool? ?? false,
 );
 
@@ -24,6 +25,7 @@ Map<String, dynamic> _$TeacherToJson(Teacher instance) => <String, dynamic>{
   'position': instance.position,
   'phone': instance.phone,
   'gender': instance.gender,
+  'account_id': instance.accountId,
   'work_status': instance.workStatus,
   'is_deleted': instance.isDeleted,
 };

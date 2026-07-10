@@ -19,7 +19,12 @@ class AuthRepository {
 
   Future<AuthUser?> restoreSession() async {
     if (AppConfig.useMockApi) {
-      return getSavedUser();
+      final savedUser = await getSavedUser();
+      if (savedUser == null) return null;
+      _apiClient.configureMockSession(
+        role: savedUser.role,
+        accountId: savedUser.id,
+      );
     }
 
     try {
@@ -58,97 +63,31 @@ class AuthRepository {
   }
 
   Future<Map<String, dynamic>> getProfile() async {
-    if (!AppConfig.useMockApi) {
-      final response = await _apiClient.dio.get(ApiEndpoints.authMe);
-      return ApiResponse.object(response.data);
-    }
-
-    final user = await getSavedUser();
-    if (user == null) {
-      return <String, dynamic>{};
-    }
-
-    if (user.role.toUpperCase() == 'PARENT') {
-      return {
-        'account_id': user.id,
-        'full_name': 'Nguyen Minh An',
-        'role': 'PARENT',
-        'student_id': 1,
-        'student_id_card_number': 'NBA2024.001',
-        'student_status': 'Dang hoc',
-        'enrollments': [
-          {
-            'class': {
-              'class_name': 'Mam 1A',
-              'school_year': {'name': '2025-2026'},
-            },
-          },
-        ],
-      };
-    }
-
-    return {
-      'account_id': user.id,
-      'full_name': user.fullName,
-      'email': user.email,
-      'role': user.role,
-      'phone': '0900000000',
-      'gender': 'Female',
-      'position': user.role.toUpperCase() == 'PRINCIPAL'
-          ? 'Principal'
-          : 'Teacher',
-      'work_status': 'Dang lam viec',
-    };
+    final response = await _apiClient.dio.get(ApiEndpoints.authMe);
+    return ApiResponse.object(response.data);
   }
 
   Future<void> changePassword({
     required String oldPassword,
     required String newPassword,
   }) async {
-    if (!AppConfig.useMockApi) {
-      await _apiClient.dio.post(
-        ApiEndpoints.authChangePassword,
-        data: {'old_password': oldPassword, 'new_password': newPassword},
-      );
-      return;
-    }
-
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    if (oldPassword.trim().isEmpty) {
-      throw Exception('Old password is required');
-    }
+    await _apiClient.dio.post(
+      ApiEndpoints.authChangePassword,
+      data: {'old_password': oldPassword, 'new_password': newPassword},
+    );
   }
 
   Future<AuthUser> loginStaff({
     required String email,
     required String password,
   }) async {
-    if (!AppConfig.useMockApi) {
-      final response = await _apiClient.dio.post(
-        ApiEndpoints.authLogin,
-        data: {'email': email, 'password': password},
-      );
-      final data = ApiResponse.object(response.data);
-      final userJson = data['user'] as Map<String, dynamic>? ?? data;
-      final user = AuthUser.fromJson(userJson);
-      await _saveUser(user);
-      _apiClient.markSessionActive();
-      return user;
-    }
-
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-
-    if (email != 'admin@sorak.edu.vn' || password != '123456') {
-      throw Exception('Incorrect username or password');
-    }
-
-    const user = AuthUser(
-      id: 1,
-      fullName: 'Principal Admin',
-      email: 'admin@sorak.edu.vn',
-      role: 'PRINCIPAL',
+    final response = await _apiClient.dio.post(
+      ApiEndpoints.authLogin,
+      data: {'email': email, 'password': password},
     );
-
+    final data = ApiResponse.object(response.data);
+    final userJson = data['user'] as Map<String, dynamic>? ?? data;
+    final user = AuthUser.fromJson(userJson);
     await _saveUser(user);
     _apiClient.markSessionActive();
     return user;
@@ -158,35 +97,13 @@ class AuthRepository {
     required String studentCardNumber,
     required String password,
   }) async {
-    if (!AppConfig.useMockApi) {
-      final response = await _apiClient.dio.post(
-        ApiEndpoints.authParentLogin,
-        data: {
-          'student_id_card_number': studentCardNumber,
-          'password': password,
-        },
-      );
-      final data = ApiResponse.object(response.data);
-      final userJson = data['user'] as Map<String, dynamic>? ?? data;
-      final user = AuthUser.fromJson(userJson);
-      await _saveUser(user);
-      _apiClient.markSessionActive();
-      return user;
-    }
-
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-
-    if (studentCardNumber != 'NBA2024.001' || password != '123456') {
-      throw Exception('Incorrect student card or password');
-    }
-
-    const user = AuthUser(
-      id: 10,
-      fullName: 'Parent Demo',
-      email: 'parent@sorak.edu.vn',
-      role: 'PARENT',
+    final response = await _apiClient.dio.post(
+      ApiEndpoints.authParentLogin,
+      data: {'student_id_card_number': studentCardNumber, 'password': password},
     );
-
+    final data = ApiResponse.object(response.data);
+    final userJson = data['user'] as Map<String, dynamic>? ?? data;
+    final user = AuthUser.fromJson(userJson);
     await _saveUser(user);
     _apiClient.markSessionActive();
     return user;
@@ -194,9 +111,7 @@ class AuthRepository {
 
   Future<void> logout() async {
     try {
-      if (!AppConfig.useMockApi) {
-        await _apiClient.dio.post(ApiEndpoints.authLogout);
-      }
+      await _apiClient.dio.post(ApiEndpoints.authLogout);
     } finally {
       await _clearSession();
     }

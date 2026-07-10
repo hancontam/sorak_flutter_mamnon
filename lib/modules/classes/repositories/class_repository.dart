@@ -40,7 +40,7 @@ class ClassRepository implements CrudRepository<SchoolClass> {
 
   @override
   Future<List<SchoolClass>> getAll({int? schoolYearId}) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems
           .where(
             (item) =>
@@ -61,7 +61,7 @@ class ClassRepository implements CrudRepository<SchoolClass> {
     int? schoolYearId,
     String? ageGroup,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final items = _mockItems
           .where(
             (item) =>
@@ -87,7 +87,7 @@ class ClassRepository implements CrudRepository<SchoolClass> {
 
   @override
   Future<SchoolClass?> getById(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final matches = _mockItems.where((item) => item.id == id);
       return matches.isEmpty ? null : matches.first;
     }
@@ -98,7 +98,7 @@ class ClassRepository implements CrudRepository<SchoolClass> {
 
   @override
   Future<SchoolClass> create(Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final item = SchoolClass(
         id: _nextId(),
         className: data['class_name'] as String,
@@ -113,14 +113,20 @@ class ClassRepository implements CrudRepository<SchoolClass> {
 
     final response = await _apiClient.dio.post(
       ApiEndpoints.classes,
-      data: data,
+      data: _createPayload(data),
     );
-    return SchoolClass.fromJson(ApiResponse.object(response.data));
+    var item = SchoolClass.fromJson(ApiResponse.object(response.data));
+    final accountId = int.tryParse('${data['teacher_account_id'] ?? ''}');
+    if (accountId != null && accountId > 0) {
+      await assignTeacher(classId: item.id, accountId: accountId);
+      item = (await getById(item.id)) ?? item;
+    }
+    return item;
   }
 
   @override
   Future<SchoolClass> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
       final item = current.copyWith(
@@ -136,14 +142,20 @@ class ClassRepository implements CrudRepository<SchoolClass> {
 
     final response = await _apiClient.dio.patch(
       '${ApiEndpoints.classes}/$id',
-      data: data,
+      data: _updatePayload(data),
     );
-    return SchoolClass.fromJson(ApiResponse.object(response.data));
+    var item = SchoolClass.fromJson(ApiResponse.object(response.data));
+    final accountId = int.tryParse('${data['teacher_account_id'] ?? ''}');
+    if (accountId != null && accountId > 0) {
+      await assignTeacher(classId: id, accountId: accountId);
+      item = (await getById(id)) ?? item;
+    }
+    return item;
   }
 
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
       return;
@@ -154,7 +166,7 @@ class ClassRepository implements CrudRepository<SchoolClass> {
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
       return;
@@ -177,6 +189,29 @@ class ClassRepository implements CrudRepository<SchoolClass> {
       pageSize: query.pageSize,
       total: items.length,
       totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
+    );
+  }
+
+  Map<String, dynamic> _createPayload(Map<String, dynamic> data) => {
+    'class_name': data['class_name'],
+    'school_year_id': int.tryParse('${data['school_year_id']}'),
+    if (data['age_group'] != null) 'age_group': data['age_group'],
+    if (data['room'] != null) 'room': data['room'],
+  };
+
+  Map<String, dynamic> _updatePayload(Map<String, dynamic> data) => {
+    if (data['class_name'] != null) 'class_name': data['class_name'],
+    if (data['age_group'] != null) 'age_group': data['age_group'],
+    if (data['room'] != null) 'room': data['room'],
+  };
+
+  Future<void> assignTeacher({
+    required int classId,
+    required int accountId,
+  }) async {
+    await _apiClient.dio.post(
+      '${ApiEndpoints.classes}/$classId/teachers',
+      data: {'account_id': accountId},
     );
   }
 }

@@ -96,69 +96,35 @@ class _AppShellState extends State<AppShell> {
     }
 
     final role = _currentRole();
-    final destination = _destinationsForRole(
-      role,
-    )[_selectedIndex.clamp(0, _destinationsForRole(role).length - 1)];
-
-    switch (destination.key) {
-      case 'home':
-        await Future.wait([
-          context.read<StudentProvider>().loadForAcademicYear(academicYearId),
-          context.read<ClassProvider>().loadForAcademicYear(academicYearId),
-          context.read<TeacherProvider>().loadForAcademicYear(academicYearId),
-          context.read<ClassTransferProvider>().loadForAcademicYear(
-            academicYearId,
-          ),
-        ]);
-        break;
-      case 'students':
-        await context.read<StudentProvider>().loadForAcademicYear(
-          academicYearId,
-        );
-        break;
-      case 'classes':
-        await context.read<ClassProvider>().loadForAcademicYear(academicYearId);
-        break;
-      case 'transfers':
-        await Future.wait([
-          context.read<ClassTransferProvider>().loadForAcademicYear(
-            academicYearId,
-          ),
-          context.read<OutgoingTransferProvider>().loadForAcademicYear(
-            academicYearId,
-          ),
-          context.read<IncomingTransferProvider>().loadForAcademicYear(
-            academicYearId,
-          ),
-        ]);
-        break;
-      case 'health':
-        await Future.wait([
-          context.read<HealthAssessmentProvider>().loadForAcademicYear(
-            academicYearId,
-          ),
-          context.read<NutritionAssessmentProvider>().loadForAcademicYear(
-            academicYearId,
-          ),
-        ]);
-        break;
-      case 'growth':
-        await context.read<GrowthWhoProvider>().load(
-          role: role,
-          academicYearId: academicYearId,
-        );
-        break;
-      case 'child':
-        await Future.wait([
-          context.read<HealthAssessmentProvider>().loadForAcademicYear(
-            academicYearId,
-          ),
-          context.read<NutritionAssessmentProvider>().loadForAcademicYear(
-            academicYearId,
-          ),
-        ]);
-        break;
+    if (role == 'PARENT') {
+      return;
     }
+
+    // Year is global: eagerly invalidate every year-scoped provider so an
+    // unopened tab cannot retain data from the previous academic year.
+    await Future.wait([
+      context.read<StudentProvider>().loadForAcademicYear(academicYearId),
+      context.read<ClassProvider>().loadForAcademicYear(academicYearId),
+      if (role == 'PRINCIPAL')
+        context.read<TeacherProvider>().loadForAcademicYear(academicYearId),
+      context.read<ClassTransferProvider>().loadForAcademicYear(academicYearId),
+      context.read<OutgoingTransferProvider>().loadForAcademicYear(
+        academicYearId,
+      ),
+      context.read<IncomingTransferProvider>().loadForAcademicYear(
+        academicYearId,
+      ),
+      context.read<HealthAssessmentProvider>().loadForAcademicYear(
+        academicYearId,
+      ),
+      context.read<NutritionAssessmentProvider>().loadForAcademicYear(
+        academicYearId,
+      ),
+      context.read<GrowthWhoProvider>().load(
+        role: role,
+        academicYearId: academicYearId,
+      ),
+    ]);
 
     if (mounted) {
       setState(() => _yearRevision++);
@@ -333,7 +299,7 @@ class _AppShellState extends State<AppShell> {
           },
         ),
         actions: [
-          const _ActiveYearDropdown(),
+          if (role != 'PARENT') const _ActiveYearDropdown(),
           const SizedBox(width: AppSpacing.sm),
         ],
       ),

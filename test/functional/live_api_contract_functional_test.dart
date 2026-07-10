@@ -184,10 +184,7 @@ void main() {
         apiClient.dio.httpClientAdapter = adapter;
 
         final health = HealthAssessmentRepository(apiClient: apiClient);
-        await health.getByClassDate(
-          classId: 5,
-          assessmentDate: '2026-07-10',
-        );
+        await health.getByClassDate(classId: 5, assessmentDate: '2026-07-10');
         await health.bulkSave(
           schoolYearId: 2,
           classId: 5,
@@ -203,11 +200,7 @@ void main() {
         );
 
         final nutrition = NutritionAssessmentRepository(apiClient: apiClient);
-        await nutrition.getGrid(
-          classId: 5,
-          schoolYearId: 2,
-          period: 'dau_nam',
-        );
+        await nutrition.getGrid(classId: 5, schoolYearId: 2, period: 'dau_nam');
         await nutrition.bulkSave(
           classId: 5,
           schoolYearId: 2,
@@ -225,17 +218,10 @@ void main() {
         );
 
         // Live archive must not invent DELETE or fake bulk-clear.
-        await expectLater(
-          nutrition.archive(9),
-          throwsA(isA<StateError>()),
-        );
+        await expectLater(nutrition.archive(9), throwsA(isA<StateError>()));
 
         final growth = GrowthWhoRepository(apiClient: apiClient);
-        await growth.getHistory(
-          studentId: 9,
-          role: 'TEACHER',
-          schoolYearId: 2,
-        );
+        await growth.getHistory(studentId: 9, role: 'TEACHER', schoolYearId: 2);
         await growth.getWhoCurves(indicator: 'bmi', gender: 'Nam');
         await growth.getLatest(role: 'TEACHER', schoolYearId: 2);
 
@@ -261,23 +247,15 @@ void main() {
           'school_year_id': '2',
           'period': 'dau_nam',
         });
-        final nutritionBulk = adapter.request(
-          'POST',
-          '/nutrition-assessments/bulk',
-        ).body as Map;
+        final nutritionBulk =
+            adapter.request('POST', '/nutrition-assessments/bulk').body as Map;
         expect(nutritionBulk['class_id'], 5);
         expect(nutritionBulk['school_year_id'], 2);
         expect(nutritionBulk['period'], 'dau_nam');
         expect(nutritionBulk['rows'], isA<List>());
-        expect(
-          (nutritionBulk['rows'] as List).first['student_id'],
-          9,
-        );
+        expect((nutritionBulk['rows'] as List).first['student_id'], 9);
         // Live nutrition must never invent a DELETE route.
-        expect(
-          adapter.hasDeleteFor('nutrition-assessments'),
-          isFalse,
-        );
+        expect(adapter.hasDeleteFor('nutrition-assessments'), isFalse);
 
         expect(adapter.query('/health-assessments/history'), {
           'student_id': '9',
@@ -400,11 +378,7 @@ class _ContractAdapter implements HttpClientAdapter {
       return {
         'success': true,
         'data': {
-          'student': {
-            'student_id': 9,
-            'full_name': 'Bé An',
-            'gender': 'Nam',
-          },
+          'student': {'student_id': 9, 'full_name': 'Bé An', 'gender': 'Nam'},
           'records': [
             {
               'assessment_id': 1,
@@ -454,8 +428,7 @@ class _ContractAdapter implements HttpClientAdapter {
     }
 
     final collectionPath = switch (path) {
-      final value when value.contains('class-transfers') =>
-        '/class-transfers',
+      final value when value.contains('class-transfers') => '/class-transfers',
       final value when value.contains('incoming-transfers') =>
         '/incoming-transfers',
       final value when value.contains('outgoing-transfers') =>

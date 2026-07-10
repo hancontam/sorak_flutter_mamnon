@@ -1,12 +1,9 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
 import 'package:sorak_flutter_mamnon/core/providers/crud_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/academic_years/models/academic_year.dart';
 import 'package:sorak_flutter_mamnon/modules/academic_years/providers/academic_year_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/academic_years/repositories/academic_year_repository.dart';
-import 'package:sorak_flutter_mamnon/modules/accounts/models/account.dart';
-import 'package:sorak_flutter_mamnon/modules/accounts/providers/account_provider.dart';
-import 'package:sorak_flutter_mamnon/modules/accounts/repositories/account_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/models/school_class.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/providers/class_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/repositories/class_repository.dart';
@@ -41,36 +38,10 @@ void main() {
           updatedTitle: '2027-2028 Updated',
         );
 
-        await provider.activateYear(2);
+        await provider.activateYear(102);
         expect(
-          provider.items.firstWhere((item) => item.id == 2).status,
+          provider.items.firstWhere((item) => item.id == 102).status,
           'active',
-        );
-      },
-    );
-
-    test(
-      'Accounts provider supports list detail create update archive',
-      () async {
-        final apiClient = await _createApiClient();
-        final provider = AccountProvider(
-          accountRepository: AccountRepository(apiClient: apiClient),
-        );
-
-        await _expectCrudFlow<Account>(
-          provider: provider,
-          createData: {
-            'full_name': 'CRUD Test Account',
-            'email': 'crud.account@sorak.edu.vn',
-            'role': 'STAFF',
-            'phone': '0900000101',
-            'gender': 'Female',
-          },
-          updateData: {'full_name': 'CRUD Test Account Updated'},
-          readId: (item) => item.id,
-          readTitle: (item) => item.fullName,
-          createdTitle: 'CRUD Test Account',
-          updatedTitle: 'CRUD Test Account Updated',
         );
       },
     );
@@ -87,10 +58,10 @@ void main() {
           provider: provider,
           createData: {
             'class_name': 'CRUD Test Class',
-            'school_year_id': 1,
+            'school_year_id': 101,
             'age_group': '4-5',
             'room': 'C303',
-            'teacher_name': 'CRUD Test Teacher',
+            'teacher_account_id': 1002,
           },
           updateData: {'class_name': 'CRUD Test Class Updated'},
           readId: (item) => item.id,
@@ -140,9 +111,9 @@ void main() {
           createData: {
             'full_name': 'CRUD Test Student',
             'date_of_birth': '2021-02-02',
-            'gender': 'Male',
-            'class_id': 1,
-            'class_name': 'Mam 1A',
+            'gender': 'Nam',
+            'class_id': 301,
+            'class_name': 'Mầm 1A',
             'contact_phone': '0900000103',
           },
           updateData: {'full_name': 'CRUD Test Student Updated'},

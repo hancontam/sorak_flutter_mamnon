@@ -32,7 +32,7 @@ class _TransfersScreenState extends State<TransfersScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Transfer Management',
+                'Quản lý chuyển trường',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -43,17 +43,17 @@ class _TransfersScreenState extends State<TransfersScreen> {
                   ButtonSegment<TransferSection>(
                     value: TransferSection.classTransfer,
                     icon: Icon(Icons.swap_horiz),
-                    label: Text('Class'),
+                    label: Text('Chuyển lớp'),
                   ),
                   ButtonSegment<TransferSection>(
                     value: TransferSection.outgoing,
                     icon: Icon(Icons.logout),
-                    label: Text('Outgoing'),
+                    label: Text('Chuyển đi'),
                   ),
                   ButtonSegment<TransferSection>(
                     value: TransferSection.incoming,
                     icon: Icon(Icons.login),
-                    label: Text('Incoming'),
+                    label: Text('Chuyển đến'),
                   ),
                 ],
                 selected: {_selectedSection},

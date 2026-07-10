@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/widgets/app_shell.dart';
 
@@ -15,21 +15,28 @@ void main() {
         Navigator.of(shellContext).pushNamed('/health-assessments');
         await tester.pumpAndSettle();
 
-        expect(find.text('Health Assessments'), findsOneWidget);
-        expect(find.text('Nguyen Minh An'), findsOneWidget);
-        expect(find.text('Tran Bao Ngoc'), findsOneWidget);
+        expect(find.text('Đánh giá sức khỏe'), findsOneWidget);
+        expect(find.text('Nguyễn Minh An'), findsWidgets);
+        expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
+
+        await tester.tap(find.byTooltip('Thao tác khác').first);
+        await tester.pumpAndSettle();
+        expect(find.text('Chỉnh sửa'), findsOneWidget);
+        expect(find.text('Xóa'), findsNothing);
+        await tester.tapAt(const Offset(8, 8));
+        await tester.pumpAndSettle();
 
         await tester.enterText(find.byType(TextField).first, 'Bao');
         await tester.pumpAndSettle();
 
-        expect(find.text('Tran Bao Ngoc'), findsOneWidget);
-        expect(find.text('Nguyen Minh An'), findsNothing);
+        expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
+        expect(find.text('Nguyễn Minh An'), findsNothing);
 
-        await tester.tap(find.text('Tran Bao Ngoc'));
+        await tester.tap(find.text('Trần Bảo Ngọc'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Student code'), findsOneWidget);
-        expect(find.text('Assessment date'), findsOneWidget);
+        expect(find.text('Mã trẻ'), findsOneWidget);
+        expect(find.text('Ngày đánh giá'), findsOneWidget);
 
         await tester.pageBack();
         await tester.pumpAndSettle();
@@ -37,9 +44,9 @@ void main() {
         await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
 
-        expect(find.text('Quick Health Entry'), findsOneWidget);
-        expect(find.text('Assessment date (yyyy-mm-dd)'), findsOneWidget);
-        expect(find.text('Height (cm)'), findsOneWidget);
+        expect(find.text('Nhập nhanh sức khỏe'), findsOneWidget);
+        expect(find.text('Ngày đánh giá (yyyy-mm-dd)'), findsOneWidget);
+        expect(find.text('Chiều cao (cm)'), findsOneWidget);
       },
     );
   });

@@ -9,9 +9,9 @@ import 'package:sorak_flutter_mamnon/modules/students/models/student.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/models/teacher.dart';
 
 const testAuthUser = AuthUser(
-  id: 1,
-  fullName: 'Principal Admin',
-  email: 'admin@sorak.edu.vn',
+  id: 1001,
+  fullName: 'Phan Thị Hòa',
+  email: 'phanthihoa@edu.vn',
   role: 'PRINCIPAL',
 );
 

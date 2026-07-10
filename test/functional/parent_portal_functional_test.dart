@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/modules/auth/models/auth_user.dart';
 
@@ -10,9 +10,9 @@ void main() {
       tester,
     ) async {
       const parentUser = AuthUser(
-        id: 10,
-        fullName: 'Parent Demo',
-        email: 'parent@sorak.edu.vn',
+        id: 1101,
+        fullName: 'Nguyễn Minh An',
+        email: '',
         role: 'PARENT',
       );
 
@@ -23,7 +23,7 @@ void main() {
       expect(find.text('Cổng phụ huynh'), findsOneWidget);
       expect(find.text('Chỉ xem'), findsWidgets);
       expect(find.text('Hồ sơ trẻ'), findsOneWidget);
-      expect(find.text('Nguyen Minh An'), findsWidgets);
+      expect(find.text('Nguyễn Minh An'), findsWidgets);
       expect(find.text('Tình trạng sức khỏe'), findsNothing);
       expect(find.text('Tình trạng nuôi dưỡng'), findsNothing);
 
@@ -31,8 +31,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sức khỏe của trẻ'), findsOneWidget);
-      expect(find.text('Tình trạng sức khỏe'), findsOneWidget);
-      expect(find.text('Tình trạng nuôi dưỡng'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('parent_api_unavailable')),
+        findsOneWidget,
+      );
+      expect(find.text('Chưa có dữ liệu từ nhà trường'), findsOneWidget);
+      expect(find.text('Tình trạng sức khỏe'), findsNothing);
+      expect(find.text('Tình trạng nuôi dưỡng'), findsNothing);
       expect(find.text('Hồ sơ trẻ'), findsNothing);
       expect(find.byType(FloatingActionButton), findsNothing);
       expect(find.byType(EditableText), findsNothing);

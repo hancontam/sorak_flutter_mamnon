@@ -39,23 +39,25 @@ class _HealthAssessmentListScreenState
     return Consumer<HealthAssessmentProvider>(
       builder: (context, provider, _) {
         return ModuleListScreen<HealthAssessment>(
-          title: 'Health Assessments',
+          title: 'Đánh giá sức khỏe',
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,
           onRefresh: provider.loadItems,
           onAdd: () => _openForm(),
-          searchHint: 'Search student, class, or card number',
+          searchHint: 'Tìm trẻ, lớp hoặc mã thẻ',
           itemTitle: (item) => item.studentName,
           itemSubtitle: (item) {
             final date = item.assessmentDate.substring(0, 10);
             return '${item.className} | $date | ${item.heightCm} cm, ${item.weightKg} kg';
           },
           itemStatus: (item) =>
-              item.bmiStatus.isEmpty ? 'No status' : item.bmiStatus,
+              item.bmiStatus.isEmpty ? 'Chưa đánh giá' : item.bmiStatus,
           itemFilterValue: (item) => item.className,
           onEdit: _openForm,
-          onDelete: (item) => provider.archiveItem(item.id),
+          // Backend chỉ có hard delete cho Health nên không hiện nút Xóa.
+          showDelete: false,
+          onDelete: (_) async {},
           onDetail: (item) {
             Navigator.push(
               context,

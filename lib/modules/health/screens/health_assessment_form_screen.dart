@@ -18,49 +18,49 @@ class HealthAssessmentFormScreen extends StatelessWidget {
         .selectedYearId;
     return SimpleFormScreen(
       title: assessment == null
-          ? 'Quick Health Entry'
-          : 'Update Health Assessment',
+          ? 'Nhập nhanh sức khỏe'
+          : 'Cập nhật đánh giá sức khỏe',
       fields: const [
         FormFieldConfig(
           name: 'student_id',
-          label: 'Student ID',
+          label: 'Mã trẻ',
           keyboardType: TextInputType.number,
         ),
-        FormFieldConfig(name: 'student_name', label: 'Student name'),
+        FormFieldConfig(name: 'student_name', label: 'Tên trẻ'),
         FormFieldConfig(
           name: 'class_id',
-          label: 'Class ID',
+          label: 'Mã lớp',
           keyboardType: TextInputType.number,
           isRequired: false,
         ),
         FormFieldConfig(
           name: 'class_name',
-          label: 'Class name',
+          label: 'Tên lớp',
           isRequired: false,
         ),
         FormFieldConfig(
           name: 'school_year_id',
-          label: 'School year ID',
+          label: 'Mã năm học',
           keyboardType: TextInputType.number,
         ),
         FormFieldConfig(
           name: 'assessment_date',
-          label: 'Assessment date (yyyy-mm-dd)',
+          label: 'Ngày đánh giá (yyyy-mm-dd)',
           keyboardType: TextInputType.datetime,
         ),
         FormFieldConfig(
           name: 'height_cm',
-          label: 'Height (cm)',
+          label: 'Chiều cao (cm)',
           keyboardType: TextInputType.numberWithOptions(decimal: true),
         ),
         FormFieldConfig(
           name: 'weight_kg',
-          label: 'Weight (kg)',
+          label: 'Cân nặng (kg)',
           keyboardType: TextInputType.numberWithOptions(decimal: true),
         ),
         FormFieldConfig(
           name: 'note',
-          label: 'Note',
+          label: 'Ghi chú',
           maxLines: 3,
           isRequired: false,
         ),

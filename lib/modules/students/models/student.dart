@@ -11,7 +11,7 @@ class Student {
     required this.gender,
     this.classId = 0,
     this.className = '',
-    this.studentStatus = 'Dang hoc',
+    this.studentStatus = 'Đang học',
     this.contactPhone = '',
     this.isActive = true,
     this.isDeleted = false,
@@ -26,7 +26,7 @@ class Student {
   final int classId;
   @JsonKey(readValue: _readClassName)
   final String className;
-  @JsonKey(defaultValue: 'Dang hoc')
+  @JsonKey(defaultValue: 'Đang học')
   final String studentStatus;
   @JsonKey(defaultValue: '')
   final String contactPhone;

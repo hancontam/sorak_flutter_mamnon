@@ -13,7 +13,7 @@ Student _$StudentFromJson(Map<String, dynamic> json) => Student(
   gender: json['gender'] as String,
   classId: (Student._readClassId(json, 'class_id') as num?)?.toInt() ?? 0,
   className: Student._readClassName(json, 'class_name') as String? ?? '',
-  studentStatus: json['student_status'] as String? ?? 'Dang hoc',
+  studentStatus: json['student_status'] as String? ?? 'Đang học',
   contactPhone: json['contact_phone'] as String? ?? '',
   isActive: Student._readIsActive(json, 'is_active') as bool? ?? true,
   isDeleted: Student._readIsDeleted(json, 'is_deleted') as bool? ?? false,

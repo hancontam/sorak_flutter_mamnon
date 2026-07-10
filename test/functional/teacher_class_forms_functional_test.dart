@@ -79,7 +79,7 @@ void main() {
       await tester.tap(dropdowns.at(2));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Nguyen Thi Lan'), findsWidgets);
+      expect(find.textContaining('Nguyễn Thị Lan'), findsWidgets);
     });
   });
 }

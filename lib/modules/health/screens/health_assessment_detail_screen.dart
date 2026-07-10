@@ -14,27 +14,27 @@ class HealthAssessmentDetailScreen extends StatelessWidget {
       title: assessment.studentName,
       rows: [
         DetailRow(
-          label: 'Student code',
+          label: 'Mã trẻ',
           value: assessment.studentCode,
           icon: Icons.badge_outlined,
         ),
         DetailRow(
-          label: 'Class',
+          label: 'Lớp',
           value: assessment.className,
           icon: Icons.class_outlined,
         ),
         DetailRow(
-          label: 'Assessment date',
+          label: 'Ngày đánh giá',
           value: assessment.assessmentDate.substring(0, 10),
           icon: Icons.event_outlined,
         ),
         DetailRow(
-          label: 'Height',
+          label: 'Chiều cao',
           value: '${assessment.heightCm} cm',
           icon: Icons.height,
         ),
         DetailRow(
-          label: 'Weight',
+          label: 'Cân nặng',
           value: '${assessment.weightKg} kg',
           icon: Icons.monitor_weight_outlined,
         ),
@@ -44,22 +44,22 @@ class HealthAssessmentDetailScreen extends StatelessWidget {
           icon: Icons.favorite_outline,
         ),
         DetailRow(
-          label: 'BMI status',
+          label: 'Tình trạng BMI',
           value: assessment.bmiStatus,
           icon: Icons.insights_outlined,
         ),
         DetailRow(
-          label: 'Height status',
+          label: 'Tình trạng chiều cao',
           value: assessment.heightStatus,
           icon: Icons.trending_up,
         ),
         DetailRow(
-          label: 'Weight status',
+          label: 'Tình trạng cân nặng',
           value: assessment.weightStatus,
           icon: Icons.scale_outlined,
         ),
         DetailRow(
-          label: 'Note',
+          label: 'Ghi chú',
           value: assessment.note,
           icon: Icons.notes_outlined,
         ),

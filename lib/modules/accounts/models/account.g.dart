@@ -14,7 +14,7 @@ Account _$AccountFromJson(Map<String, dynamic> json) => Account(
   teacherId: (Account._readTeacherId(json, 'teacher_id') as num?)?.toInt() ?? 0,
   studentId: (Account._readStudentId(json, 'student_id') as num?)?.toInt() ?? 0,
   email: json['email'] as String? ?? '',
-  phone: json['phone'] as String? ?? '',
+  phone: Account._readPhone(json, 'phone') as String? ?? '',
   gender: json['gender'] as String? ?? '',
   position: json['position'] as String? ?? '',
   workStatus: Account._readWorkStatus(json, 'work_status') as String? ?? '',

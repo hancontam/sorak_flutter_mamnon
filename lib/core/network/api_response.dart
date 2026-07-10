@@ -4,6 +4,7 @@ class ApiResponse {
   const ApiResponse._();
 
   static List<dynamic> list(dynamic body) {
+    _ensureSuccess(body);
     if (body is Map<String, dynamic>) {
       final data = body['data'];
       if (data is List) {
@@ -14,6 +15,7 @@ class ApiResponse {
   }
 
   static Map<String, dynamic> object(dynamic body) {
+    _ensureSuccess(body);
     if (body is Map<String, dynamic>) {
       final data = body['data'];
       if (data is Map<String, dynamic>) {
@@ -28,6 +30,7 @@ class ApiResponse {
     dynamic body,
     T Function(Map<String, dynamic> json) fromJson,
   ) {
+    _ensureSuccess(body);
     final root = body is Map<String, dynamic> ? body : <String, dynamic>{};
     final rawItems = root['data'] is List ? root['data'] as List : const [];
     final meta = root['meta'] is Map<String, dynamic>
@@ -55,5 +58,11 @@ class ApiResponse {
 
   static int _readInt(dynamic value, {required int fallback}) {
     return value is num ? value.toInt() : int.tryParse('$value') ?? fallback;
+  }
+
+  static void _ensureSuccess(dynamic body) {
+    if (body is Map && body['success'] == false) {
+      throw FormatException('${body['message'] ?? 'API trả về lỗi'}');
+    }
   }
 }

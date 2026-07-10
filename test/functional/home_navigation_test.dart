@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/modules/auth/models/auth_user.dart';
 
@@ -18,21 +18,21 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const ValueKey('app_logout_button')), findsNothing);
-      expect(find.text('Welcome, Principal Admin'), findsOneWidget);
-      expect(find.text('Role: PRINCIPAL'), findsOneWidget);
-      expect(find.text('Today overview'), findsOneWidget);
+      expect(find.text('Xin chào, Phan Thị Hòa'), findsOneWidget);
+      expect(find.text('Vai trò: PRINCIPAL'), findsOneWidget);
+      expect(find.text('Tổng quan hôm nay'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Quick actions'),
+        find.text('Thao tác nhanh'),
         80,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Quick actions'), findsOneWidget);
+      expect(find.text('Thao tác nhanh'), findsOneWidget);
 
       for (final destination in _bottomDestinations) {
         expect(find.byKey(ValueKey(destination.navKey)), findsOneWidget);
       }
 
-      for (final label in ['Students', 'Classes', 'Teachers', 'Pending']) {
+      for (final label in ['Trẻ', 'Lớp học', 'Giáo viên', 'Chờ duyệt']) {
         expect(find.text(label), findsWidgets);
       }
 
@@ -59,7 +59,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text(destination.expectedListTitle!), findsWidgets);
-        expect(find.byTooltip('Refresh'), findsOneWidget);
+        expect(find.byTooltip('Làm mới'), findsOneWidget);
         expect(find.byType(FloatingActionButton), findsOneWidget);
       });
     }
@@ -70,21 +70,20 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('nav_transfers')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Transfer Management'), findsOneWidget);
-      expect(find.text('Class'), findsOneWidget);
-      expect(find.text('Outgoing'), findsOneWidget);
-      expect(find.text('Incoming'), findsOneWidget);
-      expect(find.text('Class Transfers'), findsWidgets);
+      expect(find.text('Quản lý chuyển trường'), findsOneWidget);
+      expect(find.text('Chuyển lớp'), findsWidgets);
+      expect(find.text('Chuyển đi'), findsOneWidget);
+      expect(find.text('Chuyển đến'), findsOneWidget);
 
-      await tester.tap(find.text('Outgoing'));
+      await tester.tap(find.text('Chuyển đi'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Outgoing Transfers'), findsWidgets);
+      expect(find.text('Chuyển trường đi'), findsWidgets);
 
-      await tester.tap(find.text('Incoming'));
+      await tester.tap(find.text('Chuyển đến'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Incoming Transfers'), findsWidgets);
+      expect(find.text('Chuyển trường đến'), findsWidgets);
     });
 
     testWidgets('filters a module list with the search field', (tester) async {
@@ -94,8 +93,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('module_search_field')), findsOneWidget);
-      expect(find.text('Nguyen Minh An'), findsOneWidget);
-      expect(find.text('Tran Bao Ngoc'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsOneWidget);
+      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
 
       await tester.enterText(
         find.byKey(const ValueKey('module_search_field')),
@@ -103,8 +102,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Tran Bao Ngoc'), findsOneWidget);
-      expect(find.text('Nguyen Minh An'), findsNothing);
+      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsNothing);
 
       await tester.enterText(
         find.byKey(const ValueKey('module_search_field')),
@@ -112,8 +111,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('No matching records'), findsOneWidget);
-      expect(find.text('Clear filters'), findsOneWidget);
+      expect(find.text('Không tìm thấy dữ liệu'), findsOneWidget);
+      expect(find.text('Xóa bộ lọc'), findsOneWidget);
     });
 
     testWidgets('filters a module list with filter chips', (tester) async {
@@ -128,15 +127,15 @@ void main() {
       );
       expect(find.byKey(const ValueKey('filter_chip_all')), findsOneWidget);
       expect(
-        find.byKey(const ValueKey('filter_chip_Dang hoc')),
+        find.byKey(const ValueKey('filter_chip_Đang học')),
         findsOneWidget,
       );
 
-      await tester.tap(find.byKey(const ValueKey('filter_chip_Dang hoc')));
+      await tester.tap(find.byKey(const ValueKey('filter_chip_Đang học')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Nguyen Minh An'), findsOneWidget);
-      expect(find.text('Tran Bao Ngoc'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsOneWidget);
+      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
 
       await tester.enterText(
         find.byKey(const ValueKey('module_search_field')),
@@ -144,13 +143,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('No matching records'), findsOneWidget);
+      expect(find.text('Không tìm thấy dữ liệu'), findsOneWidget);
 
-      await tester.tap(find.text('Clear filters'));
+      await tester.tap(find.text('Xóa bộ lọc'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Nguyen Minh An'), findsOneWidget);
-      expect(find.text('Tran Bao Ngoc'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsOneWidget);
+      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
     });
 
     testWidgets('opens detail and validates create form', (tester) async {
@@ -159,12 +158,12 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('nav_students')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Nguyen Minh An'));
+      await tester.tap(find.text('Nguyễn Minh An'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Date of birth'), findsOneWidget);
+      expect(find.text('Ngày sinh'), findsOneWidget);
       expect(find.text('2021-03-10'), findsOneWidget);
-      expect(find.text('Phone'), findsOneWidget);
+      expect(find.text('Số điện thoại'), findsOneWidget);
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -184,7 +183,7 @@ void main() {
       await tester.tap(find.text('Hủy'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Students'), findsWidgets);
+      expect(find.text('Trẻ'), findsWidgets);
     });
 
     testWidgets('delete action confirms archive and removes record', (
@@ -195,37 +194,37 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('nav_students')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Nguyen Minh An'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('More actions').first);
+      await tester.tap(find.byTooltip('Thao tác khác').first);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete'));
+      await tester.tap(find.text('Xóa'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Delete record'), findsOneWidget);
+      expect(find.text('Xóa dữ liệu'), findsOneWidget);
       expect(
         find.text(
-          'This will archive the record so it no longer appears in the active list.',
+          'Dữ liệu sẽ được ẩn khỏi danh sách đang hoạt động và không bị xóa vĩnh viễn.',
         ),
         findsOneWidget,
       );
 
-      await tester.tap(find.text('Cancel'));
+      await tester.tap(find.text('Hủy'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Nguyen Minh An'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('More actions').first);
+      await tester.tap(find.byTooltip('Thao tác khác').first);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete'));
+      await tester.tap(find.text('Xóa'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete').last);
+      await tester.tap(find.text('Xóa').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('Record archived'), findsOneWidget);
-      expect(find.text('Nguyen Minh An'), findsNothing);
-      expect(find.text('Tran Bao Ngoc'), findsOneWidget);
+      expect(find.text('Đã xóa dữ liệu khỏi danh sách'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsNothing);
+      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
     });
 
     testWidgets('transfer list actions are grouped in the more menu', (
@@ -236,13 +235,13 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('nav_transfers')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byTooltip('More actions').first);
+      await tester.tap(find.byTooltip('Thao tác khác').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('Approve'), findsOneWidget);
-      expect(find.text('Reject'), findsOneWidget);
-      expect(find.text('Cancel'), findsOneWidget);
-      expect(find.text('Edit'), findsOneWidget);
+      expect(find.text('Duyệt'), findsOneWidget);
+      expect(find.text('Từ chối'), findsOneWidget);
+      expect(find.text('Hủy yêu cầu'), findsOneWidget);
+      expect(find.text('Chỉnh sửa'), findsNothing);
     });
 
     testWidgets('quick actions open Students and Transfers tabs', (
@@ -252,28 +251,28 @@ void main() {
 
       await tester.drag(find.byType(ListView).first, const Offset(0, -450));
       await tester.pumpAndSettle();
-      expect(find.text('Quick actions'), findsOneWidget);
+      expect(find.text('Thao tác nhanh'), findsOneWidget);
 
-      await tester.tap(find.text('Students').last);
+      await tester.tap(find.text('Trẻ').last);
       await tester.pumpAndSettle();
 
-      expect(find.byTooltip('Refresh'), findsOneWidget);
+      expect(find.byTooltip('Làm mới'), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('nav_home')));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text('Transfers'),
+        find.text('Chuyển lớp'),
         80,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.text('Transfers').last);
+      await tester.tap(find.text('Chuyển lớp').last);
       await tester.pumpAndSettle();
 
-      expect(find.text('Transfer Management'), findsOneWidget);
-      expect(find.text('Class Transfers'), findsWidgets);
-      expect(find.text('Outgoing'), findsOneWidget);
-      expect(find.text('Incoming'), findsOneWidget);
+      expect(find.text('Quản lý chuyển trường'), findsOneWidget);
+      expect(find.text('Chuyển lớp'), findsWidgets);
+      expect(find.text('Chuyển đi'), findsOneWidget);
+      expect(find.text('Chuyển đến'), findsOneWidget);
     });
 
     testWidgets('drawer opens Academic Years and Accounts routes', (
@@ -286,8 +285,8 @@ void main() {
       await tester.tap(find.text('Năm học'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Academic Years'), findsWidgets);
-      expect(find.byTooltip('Refresh'), findsOneWidget);
+      expect(find.text('Năm học'), findsWidgets);
+      expect(find.byTooltip('Làm mới'), findsOneWidget);
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -356,19 +355,19 @@ Future<void> _pumpTallHome(
 }
 
 const _bottomDestinations = [
-  _BottomDestination(label: 'Home', navKey: 'nav_home'),
+  _BottomDestination(label: 'Trang chủ', navKey: 'nav_home'),
   _BottomDestination(
-    label: 'Students',
+    label: 'Trẻ',
     navKey: 'nav_students',
-    expectedListTitle: 'Students',
+    expectedListTitle: 'Trẻ',
   ),
   _BottomDestination(
-    label: 'Classes',
+    label: 'Lớp học',
     navKey: 'nav_classes',
-    expectedListTitle: 'Classes',
+    expectedListTitle: 'Lớp học',
   ),
-  _BottomDestination(label: 'Transfers', navKey: 'nav_transfers'),
-  _BottomDestination(label: 'Health', navKey: 'nav_health'),
+  _BottomDestination(label: 'Chuyển lớp', navKey: 'nav_transfers'),
+  _BottomDestination(label: 'Sức khỏe', navKey: 'nav_health'),
 ];
 
 class _BottomDestination {
@@ -384,15 +383,15 @@ class _BottomDestination {
 }
 
 const _teacherUser = AuthUser(
-  id: 2,
-  fullName: 'Teacher User',
-  email: 'teacher@sorak.edu.vn',
+  id: 1002,
+  fullName: 'Nguyễn Thị Lan',
+  email: 'gv01@sorak.local',
   role: 'TEACHER',
 );
 
 const _parentUser = AuthUser(
-  id: 3,
-  fullName: 'Parent User',
-  email: 'parent@sorak.edu.vn',
+  id: 1101,
+  fullName: 'Nguyễn Minh An',
+  email: '',
   role: 'PARENT',
 );

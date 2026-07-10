@@ -2,7 +2,7 @@
 
 ## Thong Tin Chung
 
-Ngay chay: 2026-07-10 (Goals 36-39)
+Ngay chay: 2026-07-10 (Goals 36-49)
 
 Pham vi:
 
@@ -33,16 +33,35 @@ phanthihoa@edu.vn
 | 38 Live smoke + hardening | Pass (HTTP) / Android UI skip | Login/me/refresh/logout/year + Health/Nutrition/Growth reads HTTP 200; no secrets logged |
 | 39 Final regression + commit | Pass | analyze clean, full test 66 pass / 2 skip (live contract needs USE_MOCK_API=false), debug APK attempted |
 
+## Goals 40-49 status
+
+| Goal | Status | Notes |
+| --- | --- | --- |
+| 40 Baseline/defects | Pass | Inventory SORAK-TEST-001..013, known regressions captured |
+| 41 Canonical mock API | Pass | One Dio adapter, live envelopes, pagination, nested Vietnamese fixtures |
+| 42 Mutation contracts | Pass automated | Exact Class/Student/Transfer DTOs; live Android mutation still pending |
+| 43 Global year | Pass | Three datasets, all-tab invalidation, empty year, stale response race |
+| 44 Principal journeys | Pass automated | Accounts, CRUD, transfer, health/nutrition/growth flows |
+| 45 Teacher scope | Pass automated | Assigned class/student data, action visibility, deep-link and API 403 |
+| 46 Parent truthful data | Pass with backend blocker | `/auth/me` profile only; Health/Growth show unavailable, never mock |
+| 47 Health/Nutrition/Growth | Pass automated | Bulk save then reload, missing rows, history and WHO curves |
+| 48 Cross-module integrity | Pass automated | Teacher-account grant and class transfer approve/revert |
+| 49 Live/final regression | Partial | Mock Android role smoke passes; live adapter passes; live Android still pending |
+| 50 UI/UX enhancement | Blocked by quality gate | Do not start while High live/backend gaps remain |
+
 ## Regression Gate Ket Qua
 
 | Command | Ket qua | Ghi chu |
 | --- | --- | --- |
-| `dart run build_runner build` | N/A | WhoCurvePoint is hand-written; no json_serializable model change |
+| `dart run build_runner build` | Pass | Teacher and Account generated parsers updated |
 | `flutter analyze` | Pass | No issues found |
-| `flutter test` | Pass | 66 passed, 2 skipped (live contract skipped when mock default) |
+| `flutter test` | Pass | 83 passed, 2 skipped (live contract skipped when mock default) |
 | Live contract health/nutrition/growth | Pass | `flutter test --dart-define=USE_MOCK_API=false test/functional/live_api_contract_functional_test.dart` |
 | Hard-code/endpoint scan | Pass | No live year-1 fallback in health; no secret prints |
 | Live HTTP smoke | Pass | login/me/refresh/year/health/nutrition/growth/logout all HTTP 200; secrets not logged |
+| Android mock UI smoke | Pass | Pixel 7 Pro emulator, Android 16/API 36; Principal, Teacher, Parent and staff Health |
+| Android live UI smoke | Pending | Requires explicit live run; no live mutation was performed |
+| Debug APK | Pass | `build/app/outputs/flutter-apk/app-debug.apk` |
 
 ## Automated Functional Test Files
 
@@ -54,6 +73,11 @@ phanthihoa@edu.vn
 | `test/functional/home_navigation_test.dart` | Home menu va navigation toi 8 module | Pass |
 | `test/functional/crud_modules_functional_test.dart` | CRUD provider flow cho Academic Year, Accounts, Classes, Teachers, Students | Pass |
 | `test/functional/transfer_modules_functional_test.dart` | Transfer provider flow cho Class, Outgoing, Incoming transfers | Pass |
+| `test/functional/canonical_mock_api_functional_test.dart` | Envelope, parser, pagination, year dataset, Teacher scope | Pass |
+| `test/functional/mutation_contract_functional_test.dart` | Exact mutation body and Teacher-Accounts integrity | Pass |
+| `test/functional/academic_year_race_functional_test.dart` | Old request cannot overwrite selected year | Pass |
+| `test/functional/role_permission_functional_test.dart` | Teacher/Parent visibility and API permission | Pass |
+| `test/functional/health_data_journey_functional_test.dart` | Health/Nutrition/Growth persistence and class transfer integrity | Pass |
 
 ## Automated Test Coverage Theo Module
 
@@ -100,6 +124,27 @@ Lenh chay live API:
 flutter run --dart-define=USE_MOCK_API=false --dart-define=API_BASE_URL=http://103.69.191.210:8082/api
 ```
 
+## Android Evidence
+
+Evidence generated on Pixel 7 Pro emulator (Android 16/API 36):
+
+- `docs/evidence/android_login.png`
+- `docs/evidence/android_principal.png`
+- `docs/evidence/android_principal_health.png`
+- `docs/evidence/android_teacher.png`
+- `docs/evidence/android_parent.png`
+- `docs/evidence/android_parent_health.png`
+
+Observed:
+
+- No `FATAL EXCEPTION`, `E/flutter`, Dart error, or ANR in the checked logs.
+- Principal has global active-year selector and whole-school dashboard.
+- Teacher sees one assigned class/student and own transfer counts, not the
+  whole-school teacher count.
+- Parent has no staff year selector and Health displays unavailable state
+  instead of fixture data.
+- Staff Health content remains above the Material 3 bottom navigation.
+
 Quy tac:
 
 - Chi create/update/archive record test co prefix `MOBILE_TEST_`.
@@ -109,8 +154,13 @@ Quy tac:
 
 ## Ket Luan
 
-Trang thai automated regression: Pass.
+Trang thai automated regression: Pass (83 pass, 2 conditional skip).
 
 Trang thai live API smoke read-only: Pass.
 
-Trang thai manual UI live API: Chua chay tren emulator/device trong Goal 7, can tester thuc hien theo checklist.
+Trang thai Android mock UI: Pass cho Principal, Teacher va Parent.
+
+Trang thai Android live API: Chua chay. Khong duoc ket luan live UI on dinh truoc khi lap lai read smoke theo role voi `USE_MOCK_API=false`.
+
+Definition of Done tong the: Chua dat. Con blocker Parent Health/Growth API,
+live mutation `MOBILE_TEST_` va Android live role smoke.

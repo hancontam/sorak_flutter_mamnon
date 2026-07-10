@@ -14,11 +14,11 @@ class StudentDetailScreen extends StatelessWidget {
       title: student.fullName,
       rows: [
         DetailRow(label: 'ID', value: '${student.id}'),
-        DetailRow(label: 'Date of birth', value: student.dateOfBirth),
+        DetailRow(label: 'Ngày sinh', value: student.dateOfBirth),
         DetailRow(label: 'Gender', value: student.gender),
         DetailRow(label: 'Class', value: student.className),
         DetailRow(label: 'Status', value: student.studentStatus),
-        DetailRow(label: 'Phone', value: student.contactPhone),
+        DetailRow(label: 'Số điện thoại', value: student.contactPhone),
       ],
     );
   }

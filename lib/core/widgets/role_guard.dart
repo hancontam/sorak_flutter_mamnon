@@ -31,7 +31,7 @@ class AccessDeniedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Access denied')),
+      appBar: AppBar(title: const Text('Không có quyền truy cập')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -46,14 +46,14 @@ class AccessDeniedScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'Access denied',
+                'Không có quyền truy cập',
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Your account role cannot open this module.',
+                'Vai trò hiện tại không được phép mở chức năng này.',
                 textAlign: TextAlign.center,
                 style: Theme.of(
                   context,
@@ -67,7 +67,7 @@ class AccessDeniedScreen extends StatelessWidget {
                   (_) => false,
                 ),
                 icon: const Icon(Icons.home_outlined),
-                label: const Text('Back home'),
+                label: const Text('Về trang chủ'),
               ),
             ],
           ),

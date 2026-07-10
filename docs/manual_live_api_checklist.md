@@ -19,7 +19,7 @@ Tai khoan can bo:
 
 ```text
 Email: phanthihoa@edu.vn
-Password: Hoa@12345
+Password: <nhap tu password manager cuc bo>
 ```
 
 Chay app live API bang terminal:

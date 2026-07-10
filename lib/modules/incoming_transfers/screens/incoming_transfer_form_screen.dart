@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../transfers/widgets/school_transfer_form.dart';
 import '../models/incoming_transfer.dart';
 import '../providers/incoming_transfer_provider.dart';
@@ -29,6 +30,9 @@ class IncomingTransferFormScreen extends StatelessWidget {
         final provider = context.read<IncomingTransferProvider>();
         final data = formData.toJson('previous_school');
         if (incomingTransfer == null) {
+          data['school_year_id'] = context
+              .read<ActiveAcademicYearProvider>()
+              .selectedYearId;
           return provider.createItem(data);
         }
         return provider.updateItem(incomingTransfer!.id, data);

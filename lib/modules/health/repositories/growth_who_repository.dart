@@ -127,12 +127,17 @@ class GrowthWhoRepository {
 
   /// Latest assessment per student.
   /// Staff live: GET /health-assessments?latest=true&school_year_id=
-  /// Parent: staff endpoints are Principal/Teacher only — keep view-only mock data.
+  /// Parent endpoints do not exist yet. Never substitute fixture data in live mode.
   Future<List<HealthAssessment>> getLatest({
     required String role,
     int? schoolYearId,
   }) async {
-    if (AppConfig.useMockApi || role.toUpperCase() == 'PARENT') {
+    if (role.toUpperCase() == 'PARENT') {
+      throw UnsupportedError(
+        'Backend chưa hỗ trợ dữ liệu tăng trưởng dành cho phụ huynh.',
+      );
+    }
+    if (AppConfig.useLegacyRepositoryMocks) {
       final latest = <int, HealthAssessment>{};
       for (final item in _mockHistory) {
         final current = latest[item.studentId];
@@ -143,20 +148,12 @@ class GrowthWhoRepository {
       }
       final items = latest.values.toList()
         ..sort((a, b) => a.studentName.compareTo(b.studentName));
-      if (role.toUpperCase() == 'PARENT') {
-        return items
-            .where((item) => item.studentCode == 'NBA2024.001')
-            .toList();
-      }
       return items;
     }
 
     final response = await _apiClient.dio.get(
       ApiEndpoints.healthAssessments,
-      queryParameters: {
-        'latest': 'true',
-        'school_year_id': ?schoolYearId,
-      },
+      queryParameters: {'latest': 'true', 'school_year_id': ?schoolYearId},
     );
     return _readList(response.data)
         .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
@@ -170,7 +167,12 @@ class GrowthWhoRepository {
     required String role,
     int? schoolYearId,
   }) async {
-    if (AppConfig.useMockApi || role.toUpperCase() == 'PARENT') {
+    if (role.toUpperCase() == 'PARENT') {
+      throw UnsupportedError(
+        'Backend chưa hỗ trợ lịch sử tăng trưởng dành cho phụ huynh.',
+      );
+    }
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockHistory.where((item) => item.studentId == studentId).toList()
         ..sort((a, b) => a.assessmentDate.compareTo(b.assessmentDate));
     }
@@ -199,16 +201,13 @@ class GrowthWhoRepository {
     required String indicator,
     required String gender,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return List<WhoCurvePoint>.from(_mockCurves);
     }
 
     final response = await _apiClient.dio.get(
       '${ApiEndpoints.healthAssessments}/who-curves',
-      queryParameters: {
-        'indicator': indicator,
-        'gender': gender,
-      },
+      queryParameters: {'indicator': indicator, 'gender': gender},
     );
     return ApiResponse.list(response.data)
         .map((json) => WhoCurvePoint.fromJson(json as Map<String, dynamic>))

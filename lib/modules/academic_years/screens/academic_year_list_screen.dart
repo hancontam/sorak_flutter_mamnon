@@ -37,7 +37,7 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
     return Consumer<AcademicYearProvider>(
       builder: (context, provider, _) {
         return ModuleListScreen<AcademicYear>(
-          title: 'Academic Years',
+          title: 'Năm học',
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,

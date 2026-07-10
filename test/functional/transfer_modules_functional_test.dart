@@ -1,4 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
 import 'package:sorak_flutter_mamnon/modules/class_transfers/models/class_transfer.dart';
 import 'package:sorak_flutter_mamnon/modules/class_transfers/providers/class_transfer_provider.dart';
@@ -31,17 +31,17 @@ void main() {
         expect(provider.selectedItem, isA<ClassTransfer>());
 
         final created = await provider.createItem({
-          'student_id': 10,
+          'student_id': 401,
           'student_name': 'CRUD Transfer Student',
-          'from_class_name': 'Mam 1A',
-          'to_class_id': 2,
-          'to_class_name': 'Choi 2B',
+          'from_class_name': 'Mầm 1A',
+          'to_class_id': 302,
+          'to_class_name': 'Chồi 2B',
           'reason': 'Family request',
           'effective_date': '2026-09-01',
         });
         expect(created, isTrue);
         expect(provider.items, hasLength(initialCount + 1));
-        expect(provider.items.last.studentName, 'CRUD Transfer Student');
+        expect(provider.items.last.studentName, 'Nguyễn Minh An');
         expect(provider.items.last.status, 'Pending');
 
         final createdId = provider.items.last.id;
@@ -80,8 +80,9 @@ void main() {
         expect(provider.selectedItem, isA<OutgoingTransfer>());
 
         final created = await provider.createItem({
-          'student_id': 11,
+          'student_id': 402,
           'student_name': 'Outgoing Test Student',
+          'school_year_id': 101,
           'destination_school': 'New Kindergarten',
           'transfer_date': '2026-10-01',
           'reason': 'Move house',
@@ -130,8 +131,9 @@ void main() {
         expect(provider.selectedItem, isA<IncomingTransfer>());
 
         final created = await provider.createItem({
-          'student_id': 12,
+          'student_id': 401,
           'student_name': 'Incoming Test Student',
+          'school_year_id': 101,
           'previous_school': 'Old Kindergarten',
           'transfer_date': '2026-09-15',
           'reason': 'Move to Sorak',

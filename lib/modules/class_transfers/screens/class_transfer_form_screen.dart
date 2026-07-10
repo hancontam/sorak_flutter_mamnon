@@ -328,8 +328,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     return optionsProvider.classes
         .where((schoolClass) {
           return schoolClass.id != fromClass.id &&
-              schoolClass.schoolYearId == fromClass.schoolYearId &&
-              schoolClass.ageGroup == fromClass.ageGroup;
+              schoolClass.schoolYearId == fromClass.schoolYearId;
         })
         .map(
           (schoolClass) => AppOption(

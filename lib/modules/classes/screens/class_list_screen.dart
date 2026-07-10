@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/module_list_screen.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/school_class.dart';
 import '../providers/class_provider.dart';
 import 'class_detail_screen.dart';
@@ -32,10 +33,13 @@ class _ClassListScreenState extends State<ClassListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isPrincipal =
+        context.watch<AuthProvider>().currentUser?.role.toUpperCase() ==
+        'PRINCIPAL';
     return Consumer<ClassProvider>(
       builder: (context, provider, _) {
         return ModuleListScreen<SchoolClass>(
-          title: 'Classes',
+          title: 'Lớp học',
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,
@@ -43,10 +47,13 @@ class _ClassListScreenState extends State<ClassListScreen> {
           onAdd: () => _openForm(),
           itemTitle: (item) => item.className,
           itemSubtitle: (item) =>
-              'Room ${item.room} | ${item.ageGroup} | ${item.teacherName}',
+              'Phòng ${item.room} | ${item.ageGroup} | ${item.teacherName}',
           itemFilterValue: (item) => item.ageGroup,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
+          showAdd: isPrincipal,
+          showEdit: isPrincipal,
+          showDelete: isPrincipal,
           onDetail: (item) {
             Navigator.push(
               context,

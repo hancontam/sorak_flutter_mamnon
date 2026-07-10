@@ -5,9 +5,9 @@ import '../theme/app_spacing.dart';
 
 Future<bool> showConfirmArchiveDialog({
   required BuildContext context,
-  String title = 'Delete record',
+  String title = 'Xóa dữ liệu',
   String message =
-      'This will archive the record so it no longer appears in the active list.',
+      'Dữ liệu sẽ được ẩn khỏi danh sách đang hoạt động và không bị xóa vĩnh viễn.',
 }) async {
   final result = await showDialog<bool>(
     context: context,
@@ -25,7 +25,7 @@ Future<bool> showConfirmArchiveDialog({
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('Hủy'),
           ),
           FilledButton.icon(
             style: FilledButton.styleFrom(
@@ -34,7 +34,7 @@ Future<bool> showConfirmArchiveDialog({
             ),
             onPressed: () => Navigator.pop(context, true),
             icon: const Icon(Icons.delete_outline),
-            label: const Text('Delete'),
+            label: const Text('Xóa'),
           ),
         ],
       );

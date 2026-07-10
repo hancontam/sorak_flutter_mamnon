@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
@@ -39,23 +39,22 @@ void main() {
 
       await tester.tap(dropdowns.at(0));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('Mam 1A').last);
+      await tester.tap(find.textContaining('Mầm 1A').last);
       await tester.pumpAndSettle();
 
       await tester.tap(dropdowns.at(1));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Nguyen Minh An'), findsWidgets);
-      expect(find.textContaining('Tran Bao Ngoc'), findsNothing);
+      expect(find.textContaining('Nguyễn Minh An'), findsWidgets);
+      expect(find.textContaining('Trần Bảo Ngọc'), findsNothing);
 
-      await tester.tap(find.textContaining('Nguyen Minh An').last);
+      await tester.tap(find.textContaining('Nguyễn Minh An').last);
       await tester.pumpAndSettle();
 
       await tester.tap(dropdowns.at(2));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Mam 1B'), findsWidgets);
-      expect(find.textContaining('Choi 2B'), findsNothing);
+      expect(find.textContaining('Chồi 2B'), findsWidgets);
     });
 
     testWidgets('outgoing transfer uses class student and status dropdowns', (
@@ -74,16 +73,16 @@ void main() {
 
       await tester.tap(dropdowns.at(0));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('Choi 2B').last);
+      await tester.tap(find.textContaining('Chồi 2B').last);
       await tester.pumpAndSettle();
 
       await tester.tap(dropdowns.at(1));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Tran Bao Ngoc'), findsWidgets);
-      expect(find.textContaining('Nguyen Minh An'), findsNothing);
+      expect(find.textContaining('Trần Bảo Ngọc'), findsWidgets);
+      expect(find.textContaining('Nguyễn Minh An'), findsNothing);
 
-      await tester.tap(find.textContaining('Tran Bao Ngoc').last);
+      await tester.tap(find.textContaining('Trần Bảo Ngọc').last);
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(

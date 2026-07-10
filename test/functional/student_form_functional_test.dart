@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
@@ -42,10 +42,10 @@ void main() {
       await tester.tap(dropdowns.at(2));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Mam 1A'), findsWidgets);
-      expect(find.textContaining('Choi 2B'), findsNothing);
+      expect(find.textContaining('Mầm 1A'), findsWidgets);
+      expect(find.textContaining('Chồi 2B'), findsNothing);
 
-      await tester.tap(find.textContaining('Mam 1A').last);
+      await tester.tap(find.textContaining('Mầm 1A').last);
       await tester.pumpAndSettle();
 
       await tester.tap(dropdowns.at(1));
@@ -56,8 +56,8 @@ void main() {
       await tester.tap(dropdowns.at(2));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Choi 2B'), findsWidgets);
-      expect(find.textContaining('Mam 1A'), findsNothing);
+      expect(find.textContaining('Chồi 2B'), findsWidgets);
+      expect(find.textContaining('Mầm 1A'), findsNothing);
     });
   });
 }

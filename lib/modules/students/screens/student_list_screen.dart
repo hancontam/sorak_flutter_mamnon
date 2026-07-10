@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/module_list_screen.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/student.dart';
 import '../providers/student_provider.dart';
 import 'student_detail_screen.dart';
@@ -32,10 +33,13 @@ class _StudentListScreenState extends State<StudentListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isPrincipal =
+        context.watch<AuthProvider>().currentUser?.role.toUpperCase() ==
+        'PRINCIPAL';
     return Consumer<StudentProvider>(
       builder: (context, provider, _) {
         return ModuleListScreen<Student>(
-          title: 'Students',
+          title: 'Trẻ',
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,
@@ -46,6 +50,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
           itemStatus: (item) => item.studentStatus,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
+          showDelete: isPrincipal,
           onDetail: (item) {
             Navigator.push(
               context,

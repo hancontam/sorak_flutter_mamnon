@@ -1,4 +1,4 @@
-import '../../../core/constants/api_endpoints.dart';
+﻿import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_page.dart';
@@ -30,7 +30,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   @override
   Future<List<AcademicYear>> getAll() async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
@@ -40,7 +40,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
   Future<ApiPage<AcademicYear>> getPage({
     ApiListQuery query = const ApiListQuery(),
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final items = _mockItems.where((item) => !item.isDeleted).toList();
       return _mockPage(items, query);
     }
@@ -51,7 +51,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   @override
   Future<AcademicYear?> getById(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final matches = _mockItems.where((item) => item.id == id);
       return matches.isEmpty ? null : matches.first;
     }
@@ -64,7 +64,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   @override
   Future<AcademicYear> create(Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final item = AcademicYear(
         id: _nextId(),
         name: data['name'] as String,
@@ -84,7 +84,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   @override
   Future<AcademicYear> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
       final item = current.copyWith(
@@ -104,7 +104,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
   }
 
   Future<void> activate(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       for (var i = 0; i < _mockItems.length; i++) {
         final item = _mockItems[i];
         _mockItems[i] = item.copyWith(
@@ -119,7 +119,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
       return;
@@ -130,7 +130,7 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
       return;

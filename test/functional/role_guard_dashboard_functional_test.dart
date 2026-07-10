@@ -17,7 +17,7 @@ void main() {
       Navigator.of(shellContext).pushNamed('/accounts');
       await tester.pumpAndSettle();
 
-      expect(find.text('Access denied'), findsWidgets);
+      expect(find.text('Không có quyền truy cập'), findsWidgets);
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -25,7 +25,7 @@ void main() {
       Navigator.of(shellContext).pushNamed('/teachers');
       await tester.pumpAndSettle();
 
-      expect(find.text('Access denied'), findsWidgets);
+      expect(find.text('Không có quyền truy cập'), findsWidgets);
     });
 
     testWidgets('parent cannot open staff modules by deep link', (
@@ -37,7 +37,7 @@ void main() {
       Navigator.of(shellContext).pushNamed('/students');
       await tester.pumpAndSettle();
 
-      expect(find.text('Access denied'), findsWidgets);
+      expect(find.text('Không có quyền truy cập'), findsWidgets);
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -45,7 +45,7 @@ void main() {
       Navigator.of(shellContext).pushNamed('/health');
       await tester.pumpAndSettle();
 
-      expect(find.text('Access denied'), findsWidgets);
+      expect(find.text('Không có quyền truy cập'), findsWidgets);
     });
 
     testWidgets('principal can open admin routes by deep link', (tester) async {
@@ -56,7 +56,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Quản lý tài khoản'), findsWidgets);
-      expect(find.text('Access denied'), findsNothing);
+      expect(find.text('Không có quyền truy cập'), findsNothing);
     });
   });
 
@@ -66,10 +66,10 @@ void main() {
     ) async {
       await _pumpTall(tester, testAuthUser);
 
-      expect(find.text('Principal dashboard'), findsOneWidget);
-      expect(find.text('Principal actions'), findsOneWidget);
-      expect(find.text('Pending transfers'), findsOneWidget);
-      expect(find.text('Accounts'), findsWidgets);
+      expect(find.text('Tổng quan Ban Giám Hiệu'), findsOneWidget);
+      expect(find.text('Thao tác Ban Giám Hiệu'), findsOneWidget);
+      expect(find.text('Yêu cầu chuyển lớp chờ duyệt'), findsOneWidget);
+      expect(find.text('Tài khoản'), findsWidgets);
     });
 
     testWidgets('teacher dashboard shows assigned classes and quick entry', (
@@ -77,11 +77,11 @@ void main() {
     ) async {
       await _pumpTall(tester, _teacherUser);
 
-      expect(find.text('Teacher dashboard'), findsOneWidget);
-      expect(find.text('Teacher quick work'), findsOneWidget);
-      expect(find.text('Assigned classes'), findsOneWidget);
-      expect(find.text('Quick health entry'), findsOneWidget);
-      expect(find.text('Quick nutrition entry'), findsOneWidget);
+      expect(find.text('Công việc giáo viên'), findsOneWidget);
+      expect(find.text('Thao tác nhanh cho giáo viên'), findsOneWidget);
+      expect(find.text('Lớp được phân công'), findsOneWidget);
+      expect(find.text('Nhập nhanh sức khỏe'), findsOneWidget);
+      expect(find.text('Nhập nhanh dinh dưỡng'), findsOneWidget);
     });
 
     testWidgets('parent dashboard shows child profile then health tab', (
@@ -98,8 +98,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sức khỏe của trẻ'), findsOneWidget);
-      expect(find.text('Tình trạng sức khỏe'), findsOneWidget);
-      expect(find.text('Tình trạng nuôi dưỡng'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('parent_api_unavailable')),
+        findsOneWidget,
+      );
+      expect(find.text('Chưa có dữ liệu từ nhà trường'), findsOneWidget);
       expect(find.text('Hồ sơ trẻ'), findsNothing);
     });
   });
@@ -112,15 +115,15 @@ Future<void> _pumpTall(WidgetTester tester, AuthUser user) async {
 }
 
 const _teacherUser = AuthUser(
-  id: 2,
-  fullName: 'Teacher User',
-  email: 'teacher@sorak.edu.vn',
+  id: 1002,
+  fullName: 'Nguyễn Thị Lan',
+  email: 'gv01@sorak.local',
   role: 'TEACHER',
 );
 
 const _parentUser = AuthUser(
-  id: 3,
-  fullName: 'Parent User',
-  email: 'parent@sorak.edu.vn',
+  id: 1101,
+  fullName: 'Nguyễn Minh An',
+  email: '',
   role: 'PARENT',
 );

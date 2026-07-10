@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../network/api_exception.dart';
 import '../repositories/crud_repository.dart';
 
 class CrudProvider<T> extends ChangeNotifier {
@@ -12,6 +13,7 @@ class CrudProvider<T> extends ChangeNotifier {
   T? _selectedItem;
   bool _isLoading = false;
   String? _errorMessage;
+  int _loadRevision = 0;
 
   List<T> get items => _items;
   T? get selectedItem => _selectedItem;
@@ -23,14 +25,20 @@ class CrudProvider<T> extends ChangeNotifier {
   }
 
   Future<void> loadItemsWith(Future<List<T>> Function() loader) async {
+    final revision = ++_loadRevision;
     _setLoading(true);
     try {
-      _items = await loader();
+      final items = await loader();
+      if (revision != _loadRevision) return;
+      _items = items;
       _errorMessage = null;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      if (revision != _loadRevision) return;
+      _errorMessage = apiErrorMessage(error);
     } finally {
-      _setLoading(false);
+      if (revision == _loadRevision) {
+        _setLoading(false);
+      }
     }
   }
 
@@ -40,7 +48,7 @@ class CrudProvider<T> extends ChangeNotifier {
       _selectedItem = await _repository.getById(id);
       _errorMessage = null;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
     } finally {
       _setLoading(false);
     }
@@ -53,7 +61,7 @@ class CrudProvider<T> extends ChangeNotifier {
       await loadItems();
       return true;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
       _setLoading(false);
       return false;
     }
@@ -66,7 +74,7 @@ class CrudProvider<T> extends ChangeNotifier {
       await loadItems();
       return true;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
       _setLoading(false);
       return false;
     }
@@ -78,7 +86,7 @@ class CrudProvider<T> extends ChangeNotifier {
       await _repository.archive(id);
       await loadItems();
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
       _setLoading(false);
     }
   }
@@ -89,7 +97,7 @@ class CrudProvider<T> extends ChangeNotifier {
       await _repository.restore(id);
       await loadItems();
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
       _setLoading(false);
     }
   }

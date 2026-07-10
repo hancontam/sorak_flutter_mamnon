@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/module_list_screen.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/incoming_transfer.dart';
 import '../providers/incoming_transfer_provider.dart';
 import 'incoming_transfer_detail_screen.dart';
@@ -36,10 +37,13 @@ class _IncomingTransferListScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isPrincipal =
+        context.watch<AuthProvider>().currentUser?.role.toUpperCase() ==
+        'PRINCIPAL';
     return Consumer<IncomingTransferProvider>(
       builder: (context, provider, _) {
         return ModuleListScreen<IncomingTransfer>(
-          title: 'Incoming Transfers',
+          title: 'Chuyển trường đến',
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,
@@ -50,6 +54,9 @@ class _IncomingTransferListScreenState
           itemStatus: (item) => item.status,
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
+          showAdd: isPrincipal,
+          showEdit: isPrincipal,
+          showDelete: isPrincipal,
           onDetail: (item) {
             Navigator.push(
               context,
@@ -59,14 +66,16 @@ class _IncomingTransferListScreenState
               ),
             );
           },
-          extraActions: (item) => [
-            ModuleListAction(
-              label: 'Cancel',
-              icon: Icons.cancel_outlined,
-              onSelected: () => provider.cancelTransfer(item.id),
-              isDestructive: true,
-            ),
-          ],
+          extraActions: (item) => isPrincipal && item.status != 'Cancelled'
+              ? [
+                  ModuleListAction(
+                    label: 'Hủy hồ sơ',
+                    icon: Icons.cancel_outlined,
+                    onSelected: () => provider.cancelTransfer(item.id),
+                    isDestructive: true,
+                  ),
+                ]
+              : const [],
         );
       },
     );

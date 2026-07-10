@@ -12,11 +12,11 @@ void main() {
     testWidgets('shows login form when no session is saved', (tester) async {
       await tester.pumpSorakApp();
 
-      expect(find.text('Sorak Mam Non'), findsOneWidget);
+      expect(find.text('Sorak Mầm non'), findsOneWidget);
       expect(find.text('Phụ huynh'), findsOneWidget);
       expect(find.text('Cán bộ'), findsOneWidget);
       expect(find.text('Mã thẻ học sinh'), findsOneWidget);
-      expect(find.text('Password'), findsOneWidget);
+      expect(find.text('Mật khẩu'), findsOneWidget);
     });
 
     testWidgets('staff login success opens home and saves session', (
@@ -26,13 +26,21 @@ void main() {
 
       await tester.tap(find.text('Cán bộ'));
       await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('staff_email_field')),
+        'phanthihoa@edu.vn',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('staff_password_field')),
+        '123456',
+      );
       await tester.ensureVisible(find.byKey(const ValueKey('login_button')));
       await tester.tap(find.byKey(const ValueKey('login_button')));
       await tester.pumpAndSettle();
 
       expect(find.text('Sorak Mầm non'), findsOneWidget);
-      expect(find.text('Welcome, Principal Admin'), findsOneWidget);
-      expect(localStorage.getEmail(), 'admin@sorak.edu.vn');
+      expect(find.text('Xin chào, Phan Thị Hòa'), findsOneWidget);
+      expect(localStorage.getEmail(), 'phanthihoa@edu.vn');
       expect(localStorage.getRole(), 'PRINCIPAL');
     });
 
@@ -41,13 +49,22 @@ void main() {
     ) async {
       final localStorage = await tester.pumpSorakApp();
 
+      await tester.enterText(
+        find.byKey(const ValueKey('parent_card_field')),
+        'NMA2025.001',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('parent_password_field')),
+        '123456',
+      );
+
       await tester.ensureVisible(find.byKey(const ValueKey('login_button')));
       await tester.tap(find.byKey(const ValueKey('login_button')));
       await tester.pumpAndSettle();
 
       expect(find.text('Cổng phụ huynh'), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_child')), findsOneWidget);
-      expect(localStorage.getEmail(), 'parent@sorak.edu.vn');
+      expect(localStorage.getEmail(), '');
       expect(localStorage.getRole(), 'PARENT');
     });
 
@@ -77,10 +94,13 @@ void main() {
           .read<AuthProvider>();
 
       expect(find.text('Cán bộ'), findsOneWidget);
-      expect(find.text('Welcome, Principal Admin'), findsNothing);
+      expect(find.text('Xin chào, Phan Thị Hòa'), findsNothing);
       expect(authProvider.isLoggedIn, isFalse);
       expect(authProvider.isLoading, isFalse);
-      expect(authProvider.errorMessage, 'Incorrect username or password');
+      expect(
+        authProvider.errorMessage,
+        contains('Email hoặc mật khẩu không đúng'),
+      );
     });
 
     testWidgets('parent login fail stays on login and stores error', (
@@ -110,15 +130,18 @@ void main() {
       expect(find.text('Child overview'), findsNothing);
       expect(authProvider.isLoggedIn, isFalse);
       expect(authProvider.isLoading, isFalse);
-      expect(authProvider.errorMessage, 'Incorrect student card or password');
+      expect(
+        authProvider.errorMessage,
+        contains('Mã thẻ hoặc mật khẩu không đúng'),
+      );
     });
 
     testWidgets('saved session opens home directly', (tester) async {
       await tester.pumpLoggedInSorakApp();
 
       expect(find.text('Sorak Mầm non'), findsOneWidget);
-      expect(find.text('Welcome, Principal Admin'), findsOneWidget);
-      expect(find.text('Role: PRINCIPAL'), findsOneWidget);
+      expect(find.text('Xin chào, Phan Thị Hòa'), findsOneWidget);
+      expect(find.text('Vai trò: PRINCIPAL'), findsOneWidget);
     });
 
     testWidgets('logout clears session and returns to login', (tester) async {

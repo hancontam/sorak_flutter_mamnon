@@ -651,7 +651,8 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
             rows: [
               {
                 'student_id': widget.student.id,
-                'weight_channel': _weightChannel == NutritionOptions.weightNormal
+                'weight_channel':
+                    _weightChannel == NutritionOptions.weightNormal
                     ? ''
                     : _weightChannel,
                 'is_stunting': _isStunting,

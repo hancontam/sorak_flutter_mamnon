@@ -1,4 +1,4 @@
-import '../../../core/constants/api_endpoints.dart';
+﻿import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_page.dart';
@@ -32,7 +32,7 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<List<Teacher>> getAll({int? schoolYearId}) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
@@ -50,7 +50,7 @@ class TeacherRepository implements CrudRepository<Teacher> {
     String? role,
     String? workStatus,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final items = _mockItems
           .where(
             (item) =>
@@ -80,7 +80,7 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<Teacher?> getById(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final matches = _mockItems.where((item) => item.id == id);
       return matches.isEmpty ? null : matches.first;
     }
@@ -91,7 +91,7 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<Teacher> create(Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final item = Teacher(
         id: _nextId(),
         fullName: data['full_name'] as String,
@@ -114,7 +114,7 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<Teacher> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
       final item = current.copyWith(
@@ -138,7 +138,7 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
       return;
@@ -149,7 +149,7 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
       return;

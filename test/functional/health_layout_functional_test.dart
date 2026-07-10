@@ -24,13 +24,10 @@ void main() {
         expect(find.byType(SafeArea), findsWidgets);
 
         final listViews = tester.widgetList<ListView>(find.byType(ListView));
-        final healthList = listViews.firstWhere(
-          (view) {
-            final padding = view.padding?.resolve(TextDirection.ltr);
-            return padding != null && padding.bottom > 16;
-          },
-          orElse: () => listViews.first,
-        );
+        final healthList = listViews.firstWhere((view) {
+          final padding = view.padding?.resolve(TextDirection.ltr);
+          return padding != null && padding.bottom > 16;
+        }, orElse: () => listViews.first);
         final padding = healthList.padding?.resolve(TextDirection.ltr);
         expect(padding, isNotNull);
         // Dynamic bottom padding must clear nav + safe inset (not a tiny fixed pad).
@@ -46,12 +43,15 @@ void main() {
 
         // Roster last student remains scrollable into view on small screen.
         await _selectMam1A(tester);
-        expect(find.text('Nguyen Minh An'), findsOneWidget);
+        expect(find.text('Nguyễn Minh An'), findsOneWidget);
 
-        await tester.tap(find.text('Nguyen Minh An'));
+        await tester.tap(find.text('Nguyễn Minh An'));
         await tester.pumpAndSettle();
 
-        expect(find.byKey(const Key('health_roster_save_button')), findsOneWidget);
+        expect(
+          find.byKey(const Key('health_roster_save_button')),
+          findsOneWidget,
+        );
         await tester.ensureVisible(find.text('Lưu sức khỏe'));
         await tester.pumpAndSettle();
         expect(find.text('Lưu sức khỏe'), findsOneWidget);
@@ -64,9 +64,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Tăng trưởng WHO'), findsWidgets);
         expect(
-          tester.widgetList<SizedBox>(find.byType(SizedBox)).any(
-            (box) => box.height == 720,
-          ),
+          tester
+              .widgetList<SizedBox>(find.byType(SizedBox))
+              .any((box) => box.height == 720),
           isFalse,
         );
       },
@@ -77,6 +77,6 @@ void main() {
 Future<void> _selectMam1A(WidgetTester tester) async {
   await tester.tap(find.byType(DropdownButtonFormField<String>).first);
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Mam 1A - A101').last);
+  await tester.tap(find.text('Mầm 1A - A101').last);
   await tester.pumpAndSettle();
 }

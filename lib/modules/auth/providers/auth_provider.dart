@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../models/auth_user.dart';
 import '../repositories/auth_repository.dart';
 
@@ -44,7 +45,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _profile = await _authRepository.getProfile();
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -66,7 +67,7 @@ class AuthProvider extends ChangeNotifier {
       );
       return true;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
       return false;
     } finally {
       _isSavingPassword = false;
@@ -89,7 +90,7 @@ class AuthProvider extends ChangeNotifier {
       );
       return true;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
       return false;
     } finally {
       _isLoading = false;
@@ -112,7 +113,7 @@ class AuthProvider extends ChangeNotifier {
       );
       return true;
     } catch (error) {
-      _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      _errorMessage = apiErrorMessage(error);
       return false;
     } finally {
       _isLoading = false;

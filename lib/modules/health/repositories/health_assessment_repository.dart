@@ -51,15 +51,13 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
   @override
   Future<List<HealthAssessment>> getAll({int? schoolYearId}) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems.where((item) => !item.isDeleted).toList();
     }
 
     final response = await _apiClient.dio.get(
       ApiEndpoints.healthAssessments,
-      queryParameters: {
-        'school_year_id': ?schoolYearId,
-      },
+      queryParameters: {'school_year_id': ?schoolYearId},
     );
     return _readList(response.data)
         .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
@@ -72,7 +70,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
     required int classId,
     required String assessmentDate,
   }) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       return _mockItems
           .where(
             (item) =>
@@ -85,10 +83,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
     final response = await _apiClient.dio.get(
       '${ApiEndpoints.healthAssessments}/by-class-date',
-      queryParameters: {
-        'class_id': classId,
-        'assessment_date': assessmentDate,
-      },
+      queryParameters: {'class_id': classId, 'assessment_date': assessmentDate},
     );
     return ApiResponse.list(response.data)
         .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
@@ -107,7 +102,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
       throw StateError('Cần ít nhất một dòng đánh giá');
     }
 
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       for (final row in rows) {
         await create({
           ...row,
@@ -138,7 +133,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
   @override
   Future<HealthAssessment?> getById(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final matches = _mockItems.where((item) => item.id == id);
       return matches.isEmpty ? null : matches.first;
     }
@@ -151,7 +146,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
   @override
   Future<HealthAssessment> create(Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final item = HealthAssessment(
         id: _nextId(),
         studentId: int.tryParse('${data['student_id']}') ?? 0,
@@ -183,7 +178,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
   @override
   Future<HealthAssessment> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       final current = _mockItems[index];
       final item = current.copyWith(
@@ -208,7 +203,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
   /// Live DELETE is hard delete (backend has no soft archive).
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
       return;
@@ -219,7 +214,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useMockApi) {
+    if (AppConfig.useLegacyRepositoryMocks) {
       final index = _mockItems.indexWhere((item) => item.id == id);
       _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
       return;

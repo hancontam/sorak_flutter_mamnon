@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/widgets/app_shell.dart';
 
@@ -20,10 +20,10 @@ void main() {
         expect(find.text('Ngày đánh giá'), findsOneWidget);
         await _selectMam1A(tester);
 
-        expect(find.text('Nguyen Minh An'), findsOneWidget);
-        expect(find.text('Tran Bao Ngoc'), findsNothing);
+        expect(find.text('Nguyễn Minh An'), findsOneWidget);
+        expect(find.text('Trần Bảo Ngọc'), findsNothing);
 
-        await tester.tap(find.text('Nguyen Minh An'));
+        await tester.tap(find.text('Nguyễn Minh An'));
         await tester.pumpAndSettle();
 
         expect(find.text('Preview sức khỏe'), findsOneWidget);
@@ -66,9 +66,9 @@ void main() {
         expect(find.text('Giai đoạn'), findsOneWidget);
         await _selectMam1A(tester);
 
-        expect(find.text('Nguyen Minh An'), findsOneWidget);
+        expect(find.text('Nguyễn Minh An'), findsOneWidget);
 
-        await tester.tap(find.text('Nguyen Minh An'));
+        await tester.tap(find.text('Nguyễn Minh An'));
         await tester.pumpAndSettle();
 
         expect(find.text('Preview nuôi dưỡng'), findsOneWidget);
@@ -84,6 +84,6 @@ void main() {
 Future<void> _selectMam1A(WidgetTester tester) async {
   await tester.tap(find.byType(DropdownButtonFormField<String>).first);
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Mam 1A - A101').last);
+  await tester.tap(find.text('Mầm 1A - A101').last);
   await tester.pumpAndSettle();
 }
