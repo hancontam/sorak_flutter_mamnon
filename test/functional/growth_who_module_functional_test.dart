@@ -16,17 +16,18 @@ void main() {
       Navigator.of(shellContext).pushNamed('/growth');
       await tester.pumpAndSettle();
 
-      expect(find.text('Growth WHO'), findsOneWidget);
+      expect(find.byTooltip('Back'), findsOneWidget);
+      expect(find.text('Tăng trưởng WHO'), findsWidgets);
       expect(find.text('Nguyen Minh An'), findsWidgets);
       expect(find.byType(EditableText), findsOneWidget);
 
       await tester.enterText(find.byType(EditableText).first, 'Ngoc');
       await tester.pumpAndSettle();
 
-      expect(find.text('Growth WHO'), findsOneWidget);
+      expect(find.text('Tăng trưởng WHO'), findsWidgets);
       await tester.drag(find.byType(ListView).last, const Offset(0, -500));
       await tester.pumpAndSettle();
-      expect(find.text('Mobile BMI chart'), findsOneWidget);
+      expect(find.text('Biểu đồ BMI'), findsOneWidget);
     });
 
     testWidgets('Parent sees view only growth for own child', (tester) async {
@@ -44,7 +45,8 @@ void main() {
       Navigator.of(shellContext).pushNamed('/growth');
       await tester.pumpAndSettle();
 
-      expect(find.text('View only'), findsOneWidget);
+      expect(find.byTooltip('Back'), findsOneWidget);
+      expect(find.text('Chỉ xem'), findsOneWidget);
       expect(find.text('Nguyen Minh An'), findsWidgets);
       expect(find.text('Tran Bao Ngoc'), findsNothing);
       expect(find.byType(EditableText), findsNothing);

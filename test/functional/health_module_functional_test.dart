@@ -28,8 +28,8 @@ void main() {
         await tester.tap(find.text('Tran Bao Ngoc'));
         await tester.pumpAndSettle();
 
-      expect(find.text('Student code'), findsOneWidget);
-      expect(find.text('Assessment date'), findsOneWidget);
+        expect(find.text('Student code'), findsOneWidget);
+        expect(find.text('Assessment date'), findsOneWidget);
 
         await tester.pageBack();
         await tester.pumpAndSettle();
@@ -37,9 +37,9 @@ void main() {
         await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
 
-      expect(find.text('Quick Health Entry'), findsOneWidget);
-      expect(find.text('Assessment date (yyyy-mm-dd)'), findsOneWidget);
-      expect(find.text('Height (cm)'), findsOneWidget);
+        expect(find.text('Quick Health Entry'), findsOneWidget);
+        expect(find.text('Assessment date (yyyy-mm-dd)'), findsOneWidget);
+        expect(find.text('Height (cm)'), findsOneWidget);
       },
     );
   });

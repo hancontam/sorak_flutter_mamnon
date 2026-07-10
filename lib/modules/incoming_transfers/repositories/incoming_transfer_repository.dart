@@ -58,6 +58,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
         transferDate: data['transfer_date'] as String,
         reason: data['reason'] as String? ?? '',
         note: data['note'] as String? ?? '',
+        status: data['status'] as String? ?? 'Recorded',
       );
       _mockItems.add(item);
       return item;
@@ -80,6 +81,7 @@ class IncomingTransferRepository implements CrudRepository<IncomingTransfer> {
         transferDate: data['transfer_date'] as String?,
         reason: data['reason'] as String?,
         note: data['note'] as String?,
+        status: data['status'] as String?,
       );
       _mockItems[index] = item;
       return item;

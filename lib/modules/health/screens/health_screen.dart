@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import 'growth_who_screen.dart';
-import 'health_assessment_list_screen.dart';
-import 'nutrition_assessment_list_screen.dart';
+import 'health_roster_dashboard.dart';
 
 enum HealthSection { health, nutrition, growth }
 
@@ -44,17 +43,17 @@ class _HealthScreenState extends State<HealthScreen> {
             ButtonSegment<HealthSection>(
               value: HealthSection.health,
               icon: Icon(Icons.favorite_outline),
-              label: Text('Health'),
+              label: Text('Sức khỏe'),
             ),
             ButtonSegment<HealthSection>(
               value: HealthSection.nutrition,
               icon: Icon(Icons.restaurant_outlined),
-              label: Text('Nutrition'),
+              label: Text('Nuôi dưỡng'),
             ),
             ButtonSegment<HealthSection>(
               value: HealthSection.growth,
               icon: Icon(Icons.trending_up),
-              label: Text('Growth'),
+              label: Text('Tăng trưởng'),
             ),
           ],
           selected: {_selectedSection},
@@ -66,9 +65,9 @@ class _HealthScreenState extends State<HealthScreen> {
         ),
         const SizedBox(height: AppSpacing.md),
         if (_selectedSection == HealthSection.health)
-          const SizedBox(height: 520, child: HealthAssessmentListScreen())
+          const HealthRosterDashboard(mode: HealthRosterMode.health)
         else if (_selectedSection == HealthSection.nutrition)
-          const SizedBox(height: 520, child: NutritionAssessmentListScreen())
+          const HealthRosterDashboard(mode: HealthRosterMode.nutrition)
         else if (_selectedSection == HealthSection.growth)
           const SizedBox(height: 720, child: GrowthWhoScreen())
         else

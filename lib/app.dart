@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'core/widgets/app_shell.dart';
 import 'core/widgets/role_guard.dart';
 import 'modules/academic_years/providers/academic_year_provider.dart';
+import 'modules/academic_years/providers/active_academic_year_provider.dart';
 import 'modules/academic_years/repositories/academic_year_repository.dart';
 import 'modules/academic_years/screens/academic_year_list_screen.dart';
 import 'modules/accounts/providers/account_provider.dart';
@@ -21,6 +22,8 @@ import 'modules/class_transfers/screens/class_transfer_list_screen.dart';
 import 'modules/classes/providers/class_provider.dart';
 import 'modules/classes/repositories/class_repository.dart';
 import 'modules/classes/screens/class_list_screen.dart';
+import 'modules/form_options/providers/form_options_provider.dart';
+import 'modules/form_options/repositories/form_options_repository.dart';
 import 'modules/health/providers/growth_who_provider.dart';
 import 'modules/health/screens/health_screen.dart';
 import 'modules/health/providers/health_assessment_provider.dart';
@@ -85,6 +88,13 @@ class SorakApp extends StatelessWidget {
             ),
           ),
         ),
+        ChangeNotifierProvider<ActiveAcademicYearProvider>(
+          create: (context) => ActiveAcademicYearProvider(
+            academicYearRepository: AcademicYearRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
         ChangeNotifierProvider<ClassProvider>(
           create: (context) => ClassProvider(
             classRepository: ClassRepository(
@@ -103,6 +113,24 @@ class SorakApp extends StatelessWidget {
           create: (context) => StudentProvider(
             studentRepository: StudentRepository(
               apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
+        ChangeNotifierProvider<FormOptionsProvider>(
+          create: (context) => FormOptionsProvider(
+            formOptionsRepository: FormOptionsRepository(
+              academicYearRepository: AcademicYearRepository(
+                apiClient: context.read<ApiClient>(),
+              ),
+              classRepository: ClassRepository(
+                apiClient: context.read<ApiClient>(),
+              ),
+              teacherRepository: TeacherRepository(
+                apiClient: context.read<ApiClient>(),
+              ),
+              studentRepository: StudentRepository(
+                apiClient: context.read<ApiClient>(),
+              ),
             ),
           ),
         ),
@@ -203,8 +231,13 @@ class SorakApp extends StatelessWidget {
             allowedRoles: _staffRoles,
             child: TransfersScreen(),
           ),
-          '/health': (_) =>
-              const RoleGuard(allowedRoles: _staffRoles, child: HealthScreen()),
+          '/health': (_) => RoleGuard(
+            allowedRoles: _staffRoles,
+            child: Scaffold(
+              appBar: AppBar(title: Text('Sức khỏe')),
+              body: const HealthScreen(showTitle: false),
+            ),
+          ),
           '/health-assessments': (_) => const RoleGuard(
             allowedRoles: _staffRoles,
             child: HealthAssessmentListScreen(),
@@ -213,9 +246,15 @@ class SorakApp extends StatelessWidget {
             allowedRoles: _staffRoles,
             child: NutritionAssessmentListScreen(),
           ),
-          '/growth': (_) => const RoleGuard(
+          '/growth': (_) => RoleGuard(
             allowedRoles: _allRoles,
-            child: GrowthWhoScreen(),
+            child: Scaffold(
+              appBar: AppBar(title: Text('Tăng trưởng WHO')),
+              body: const Padding(
+                padding: EdgeInsets.all(16),
+                child: GrowthWhoScreen(),
+              ),
+            ),
           ),
           '/parent-portal': (_) => const RoleGuard(
             allowedRoles: _parentOnly,

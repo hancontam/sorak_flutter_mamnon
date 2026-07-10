@@ -61,6 +61,7 @@ class ClassTransferRepository implements CrudRepository<ClassTransfer> {
         toClassName: data['to_class_name'] as String? ?? '',
         reason: data['reason'] as String,
         effectiveDate: data['effective_date'] as String,
+        status: data['status'] as String? ?? 'Pending',
       );
       _mockItems.add(item);
       return item;

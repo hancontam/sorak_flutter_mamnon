@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../modules/academic_years/providers/active_academic_year_provider.dart';
 import '../../modules/auth/providers/auth_provider.dart';
 import '../../modules/classes/screens/class_list_screen.dart';
 import '../../modules/health/screens/growth_who_screen.dart';
@@ -43,12 +44,12 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  void _selectDestinationByLabel(
+  void _selectDestinationByKey(
     List<_ShellDestination> destinations,
-    String label,
+    String key,
   ) {
     final index = destinations.indexWhere(
-      (destination) => destination.label == label,
+      (destination) => destination.key == key,
     );
     if (index == -1) {
       return;
@@ -60,22 +61,25 @@ class _AppShellState extends State<AppShell> {
     if (role == 'PARENT') {
       return const [
         _ShellDestination(
-          label: 'Child',
+          key: 'child',
+          label: 'Trẻ',
           icon: Icons.child_care_outlined,
           selectedIcon: Icons.child_care,
-          screen: ParentPortalScreen(),
+          screen: ParentPortalScreen(section: ParentPortalSection.child),
         ),
         _ShellDestination(
-          label: 'Growth',
+          key: 'growth',
+          label: 'Tăng trưởng',
           icon: Icons.trending_up_outlined,
           selectedIcon: Icons.trending_up,
           screen: GrowthWhoScreen(),
         ),
         _ShellDestination(
-          label: 'Health',
+          key: 'health',
+          label: 'Sức khỏe',
           icon: Icons.favorite_outline,
           selectedIcon: Icons.favorite,
-          screen: ParentPortalScreen(),
+          screen: ParentPortalScreen(section: ParentPortalSection.health),
         ),
       ];
     }
@@ -84,25 +88,29 @@ class _AppShellState extends State<AppShell> {
       return [
         _homeDestination(),
         const _ShellDestination(
-          label: 'Classes',
+          key: 'classes',
+          label: 'Lớp học',
           icon: Icons.class_outlined,
           selectedIcon: Icons.class_,
           screen: ClassListScreen(),
         ),
         const _ShellDestination(
-          label: 'Students',
+          key: 'students',
+          label: 'Học sinh',
           icon: Icons.child_care_outlined,
           selectedIcon: Icons.child_care,
           screen: StudentListScreen(),
         ),
         const _ShellDestination(
-          label: 'Transfers',
+          key: 'transfers',
+          label: 'Chuyển lớp',
           icon: Icons.swap_horiz_outlined,
           selectedIcon: Icons.swap_horiz,
           screen: TransfersScreen(),
         ),
         const _ShellDestination(
-          label: 'Health',
+          key: 'health',
+          label: 'Sức khỏe',
           icon: Icons.favorite_outline,
           selectedIcon: Icons.favorite,
           screen: HealthScreen(),
@@ -113,25 +121,29 @@ class _AppShellState extends State<AppShell> {
     return [
       _homeDestination(),
       const _ShellDestination(
-        label: 'Students',
+        key: 'students',
+        label: 'Học sinh',
         icon: Icons.child_care_outlined,
         selectedIcon: Icons.child_care,
         screen: StudentListScreen(),
       ),
       const _ShellDestination(
-        label: 'Classes',
+        key: 'classes',
+        label: 'Lớp học',
         icon: Icons.class_outlined,
         selectedIcon: Icons.class_,
         screen: ClassListScreen(),
       ),
       const _ShellDestination(
-        label: 'Transfers',
+        key: 'transfers',
+        label: 'Chuyển lớp',
         icon: Icons.swap_horiz_outlined,
         selectedIcon: Icons.swap_horiz,
         screen: TransfersScreen(),
       ),
       const _ShellDestination(
-        label: 'Health',
+        key: 'health',
+        label: 'Sức khỏe',
         icon: Icons.favorite_outline,
         selectedIcon: Icons.favorite,
         screen: HealthScreen(),
@@ -141,7 +153,8 @@ class _AppShellState extends State<AppShell> {
 
   _ShellDestination _homeDestination() {
     return _ShellDestination(
-      label: 'Home',
+      key: 'home',
+      label: 'Trang chủ',
       icon: Icons.home_outlined,
       selectedIcon: Icons.home,
       screen: Builder(
@@ -152,13 +165,12 @@ class _AppShellState extends State<AppShell> {
           return HomeScreen(
             showAppBar: false,
             onOpenStudents: () =>
-                _selectDestinationByLabel(destinations, 'Students'),
+                _selectDestinationByKey(destinations, 'students'),
             onOpenClasses: () =>
-                _selectDestinationByLabel(destinations, 'Classes'),
+                _selectDestinationByKey(destinations, 'classes'),
             onOpenTransfers: () =>
-                _selectDestinationByLabel(destinations, 'Transfers'),
-            onOpenHealth: () =>
-                _selectDestinationByLabel(destinations, 'Health'),
+                _selectDestinationByKey(destinations, 'transfers'),
+            onOpenHealth: () => _selectDestinationByKey(destinations, 'health'),
           );
         },
       ),
@@ -180,8 +192,8 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          selectedDestination.label == 'Home'
-              ? 'Sorak Mam Non'
+          selectedDestination.key == 'home'
+              ? 'Sorak Mầm non'
               : selectedDestination.label,
         ),
         leading: Builder(
@@ -195,12 +207,8 @@ class _AppShellState extends State<AppShell> {
           },
         ),
         actions: [
-          IconButton(
-            key: const ValueKey('app_logout_button'),
-            tooltip: 'Logout',
-            onPressed: _logout,
-            icon: const Icon(Icons.power_settings_new),
-          ),
+          const _ActiveYearDropdown(),
+          const SizedBox(width: AppSpacing.sm),
         ],
       ),
       drawer: _AppDrawer(
@@ -220,13 +228,113 @@ class _AppShellState extends State<AppShell> {
         destinations: [
           for (final destination in destinations)
             NavigationDestination(
-              key: ValueKey('nav_${destination.label.toLowerCase()}'),
+              key: ValueKey('nav_${destination.key}'),
               icon: Icon(destination.icon),
               selectedIcon: Icon(destination.selectedIcon),
               label: destination.label,
             ),
         ],
       ),
+    );
+  }
+}
+
+class _ActiveYearDropdown extends StatefulWidget {
+  const _ActiveYearDropdown();
+
+  @override
+  State<_ActiveYearDropdown> createState() => _ActiveYearDropdownState();
+}
+
+class _ActiveYearDropdownState extends State<_ActiveYearDropdown> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<ActiveAcademicYearProvider>().loadYears();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ActiveAcademicYearProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading && provider.years.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.only(right: AppSpacing.xs),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+
+        if (provider.years.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final values = provider.years.map((year) => year.id).toSet();
+        final selectedValue = values.contains(provider.selectedYearId)
+            ? provider.selectedYearId
+            : null;
+
+        return Container(
+          constraints: const BoxConstraints(maxWidth: 148),
+          margin: const EdgeInsets.only(right: AppSpacing.xs),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(999),
+            color: AppColors.surface,
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              key: const ValueKey('active_year_dropdown'),
+              value: selectedValue,
+              isDense: true,
+              isExpanded: true,
+              icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+              hint: const Text('Năm học'),
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                provider.selectYear(value);
+              },
+              items: [
+                for (final year in provider.years)
+                  DropdownMenuItem<int>(
+                    value: year.id,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (year.status.toLowerCase() == 'active') ...[
+                          const Icon(
+                            Icons.check_circle,
+                            size: 14,
+                            color: AppColors.success,
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Flexible(
+                          child: Text(
+                            year.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -309,7 +417,7 @@ class _AppDrawer extends StatelessWidget {
         const Divider(height: 1),
         ListTile(
           leading: const Icon(Icons.power_settings_new),
-          title: const Text('Logout'),
+          title: const Text('Đăng xuất'),
           onTap: onLogout,
         ),
       ],
@@ -320,25 +428,29 @@ class _AppDrawer extends StatelessWidget {
     if (role == 'PRINCIPAL') {
       return [
         _DrawerItem(
-          label: 'Academic Years',
+          key: 'academic_years',
+          label: 'Năm học',
           icon: Icons.calendar_month_outlined,
           selectedIcon: Icons.calendar_month,
           onTap: onOpenAcademicYears,
         ),
         _DrawerItem(
-          label: 'Accounts',
+          key: 'accounts',
+          label: 'Tài khoản',
           icon: Icons.manage_accounts_outlined,
           selectedIcon: Icons.manage_accounts,
           onTap: onOpenAccounts,
         ),
         _DrawerItem(
-          label: 'Teachers',
+          key: 'teachers',
+          label: 'Cán bộ',
           icon: Icons.badge_outlined,
           selectedIcon: Icons.badge,
           onTap: onOpenTeachers,
         ),
         _DrawerItem(
-          label: 'Growth',
+          key: 'growth',
+          label: 'Tăng trưởng WHO',
           icon: Icons.trending_up_outlined,
           selectedIcon: Icons.trending_up,
           onTap: onOpenGrowth,
@@ -351,7 +463,8 @@ class _AppDrawer extends StatelessWidget {
     if (role == 'TEACHER') {
       return [
         _DrawerItem(
-          label: 'Growth',
+          key: 'growth',
+          label: 'Tăng trưởng WHO',
           icon: Icons.trending_up_outlined,
           selectedIcon: Icons.trending_up,
           onTap: onOpenGrowth,
@@ -366,7 +479,8 @@ class _AppDrawer extends StatelessWidget {
 
   _DrawerItem _commonProfileItem() {
     return _DrawerItem(
-      label: 'Profile',
+      key: 'profile',
+      label: 'Hồ sơ',
       icon: Icons.person_outline,
       selectedIcon: Icons.person,
       onTap: onOpenProfile,
@@ -375,7 +489,8 @@ class _AppDrawer extends StatelessWidget {
 
   _DrawerItem _commonSettingsItem() {
     return _DrawerItem(
-      label: 'Settings',
+      key: 'settings',
+      label: 'Cài đặt',
       icon: Icons.settings_outlined,
       selectedIcon: Icons.settings,
       onTap: onOpenSettings,
@@ -385,11 +500,11 @@ class _AppDrawer extends StatelessWidget {
   String _roleLabel(String role) {
     switch (role) {
       case 'PRINCIPAL':
-        return 'Principal';
+        return 'Ban Giám Hiệu';
       case 'TEACHER':
-        return 'Teacher';
+        return 'Giáo viên';
       case 'PARENT':
-        return 'Parent';
+        return 'Phụ huynh';
       default:
         return role;
     }
@@ -398,12 +513,14 @@ class _AppDrawer extends StatelessWidget {
 
 class _ShellDestination {
   const _ShellDestination({
+    required this.key,
     required this.label,
     required this.icon,
     required this.selectedIcon,
     required this.screen,
   });
 
+  final String key;
   final String label;
   final IconData icon;
   final IconData selectedIcon;
@@ -412,14 +529,15 @@ class _ShellDestination {
 
 class _DrawerItem {
   const _DrawerItem({
+    required this.key,
     required this.label,
     required this.icon,
     required this.selectedIcon,
     required this.onTap,
   });
 
+  final String key;
   final String label;
-  String get key => label.toLowerCase().replaceAll(' ', '_');
   final IconData icon;
   final IconData selectedIcon;
   final VoidCallback onTap;

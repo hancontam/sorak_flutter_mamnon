@@ -55,7 +55,7 @@ void main() {
       Navigator.of(shellContext).pushNamed('/accounts');
       await tester.pumpAndSettle();
 
-      expect(find.text('Accounts'), findsWidgets);
+      expect(find.text('Quản lý tài khoản'), findsWidgets);
       expect(find.text('Access denied'), findsNothing);
     });
   });
@@ -84,16 +84,23 @@ void main() {
       expect(find.text('Quick nutrition entry'), findsOneWidget);
     });
 
-    testWidgets('parent dashboard shows child health and growth summary', (
+    testWidgets('parent dashboard shows child profile then health tab', (
       tester,
     ) async {
       await _pumpTall(tester, _parentUser);
 
-      expect(find.text('Parent Portal'), findsOneWidget);
-      expect(find.text('Parent dashboard'), findsOneWidget);
-      expect(find.text('Child profile'), findsOneWidget);
-      expect(find.text('Health status'), findsOneWidget);
-      expect(find.text('Nutrition status'), findsOneWidget);
+      expect(find.text('Cổng phụ huynh'), findsOneWidget);
+      expect(find.text('Thông tin trẻ'), findsOneWidget);
+      expect(find.text('Hồ sơ trẻ'), findsOneWidget);
+      expect(find.text('Tình trạng sức khỏe'), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('nav_health')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sức khỏe của trẻ'), findsOneWidget);
+      expect(find.text('Tình trạng sức khỏe'), findsOneWidget);
+      expect(find.text('Tình trạng nuôi dưỡng'), findsOneWidget);
+      expect(find.text('Hồ sơ trẻ'), findsNothing);
     });
   });
 }

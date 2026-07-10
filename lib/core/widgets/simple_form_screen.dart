@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_options.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import 'app_date_field.dart';
+import 'app_dropdown_field.dart';
+import 'app_readonly_field.dart';
 import 'app_text_field.dart';
+
+enum SimpleFormFieldType { text, dropdown, date, readonly }
 
 class FormFieldConfig {
   const FormFieldConfig({
@@ -11,6 +17,9 @@ class FormFieldConfig {
     this.keyboardType,
     this.maxLines = 1,
     this.isRequired = true,
+    this.type = SimpleFormFieldType.text,
+    this.options = const [],
+    this.hintText,
   });
 
   final String name;
@@ -18,6 +27,9 @@ class FormFieldConfig {
   final TextInputType? keyboardType;
   final int maxLines;
   final bool isRequired;
+  final SimpleFormFieldType type;
+  final List<AppOption<String>> options;
+  final String? hintText;
 }
 
 class SimpleFormScreen extends StatefulWidget {
@@ -70,8 +82,11 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
     setState(() => _isSaving = true);
 
     final data = <String, dynamic>{};
-    for (final entry in _controllers.entries) {
-      data[entry.key] = entry.value.text.trim();
+    for (final field in widget.fields) {
+      if (field.type == SimpleFormFieldType.readonly) {
+        continue;
+      }
+      data[field.name] = _controllers[field.name]?.text.trim() ?? '';
     }
 
     final success = await widget.onSave(data);
@@ -85,13 +100,26 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
     if (success) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Saved successfully')));
+      ).showSnackBar(const SnackBar(content: Text('Đã lưu thành công')));
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not save. Please check again.')),
+        const SnackBar(content: Text('Chưa thể lưu. Vui lòng kiểm tra lại.')),
       );
     }
+  }
+
+  FormFieldValidator<String>? _validatorFor(FormFieldConfig field) {
+    if (!field.isRequired || field.type == SimpleFormFieldType.readonly) {
+      return null;
+    }
+
+    return (value) {
+      if (value == null || value.trim().isEmpty) {
+        return 'Vui lòng nhập ${field.label.toLowerCase()}';
+      }
+      return null;
+    };
   }
 
   @override
@@ -112,19 +140,10 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
               const SizedBox(height: AppSpacing.sm),
           itemBuilder: (context, index) {
             final field = widget.fields[index];
-            return AppTextField(
+            return _FieldBuilder(
+              field: field,
               controller: _controllers[field.name]!,
-              label: field.label,
-              keyboardType: field.keyboardType,
-              maxLines: field.maxLines,
-              validator: field.isRequired
-                  ? (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return '${field.label} is required';
-                      }
-                      return null;
-                    }
-                  : null,
+              validator: _validatorFor(field),
             );
           },
         ),
@@ -142,7 +161,7 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: _isSaving ? null : () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: const Text('Hủy'),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -159,7 +178,7 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
                           ),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: const Text('Save'),
+                  label: const Text('Lưu'),
                 ),
               ),
             ],
@@ -167,5 +186,49 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
         ),
       ),
     );
+  }
+}
+
+class _FieldBuilder extends StatelessWidget {
+  const _FieldBuilder({
+    required this.field,
+    required this.controller,
+    required this.validator,
+  });
+
+  final FormFieldConfig field;
+  final TextEditingController controller;
+  final FormFieldValidator<String>? validator;
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (field.type) {
+      SimpleFormFieldType.dropdown => AppDropdownField<String>(
+        label: field.label,
+        hintText: field.hintText,
+        options: field.options,
+        value: controller.text.trim().isEmpty ? null : controller.text.trim(),
+        validator: validator,
+        onChanged: (value) {
+          controller.text = value ?? '';
+        },
+      ),
+      SimpleFormFieldType.date => AppDateField(
+        controller: controller,
+        label: field.label,
+        validator: validator,
+      ),
+      SimpleFormFieldType.readonly => AppReadonlyField(
+        label: field.label,
+        value: controller.text,
+      ),
+      SimpleFormFieldType.text => AppTextField(
+        controller: controller,
+        label: field.label,
+        keyboardType: field.keyboardType,
+        maxLines: field.maxLines,
+        validator: validator,
+      ),
+    };
   }
 }

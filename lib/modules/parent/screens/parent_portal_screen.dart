@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,12 +7,18 @@ import '../../../core/widgets/status_chip.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../health/models/health_assessment.dart';
 import '../../health/models/nutrition_assessment.dart';
-import '../../health/providers/growth_who_provider.dart';
 import '../../health/providers/health_assessment_provider.dart';
 import '../../health/providers/nutrition_assessment_provider.dart';
 
+enum ParentPortalSection { child, health }
+
 class ParentPortalScreen extends StatefulWidget {
-  const ParentPortalScreen({super.key});
+  const ParentPortalScreen({
+    super.key,
+    this.section = ParentPortalSection.child,
+  });
+
+  final ParentPortalSection section;
 
   @override
   State<ParentPortalScreen> createState() => _ParentPortalScreenState();
@@ -29,7 +33,6 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HealthAssessmentProvider>().loadItems();
       context.read<NutritionAssessmentProvider>().loadItems();
-      context.read<GrowthWhoProvider>().load(role: 'PARENT');
     });
   }
 
@@ -38,18 +41,16 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
     final user = context.watch<AuthProvider>().currentUser;
     final healthProvider = context.watch<HealthAssessmentProvider>();
     final nutritionProvider = context.watch<NutritionAssessmentProvider>();
-    final growthProvider = context.watch<GrowthWhoProvider>();
 
     final latestHealth = _findHealth(healthProvider.items);
     final nutrition = _findNutrition(nutritionProvider.items);
-    final history = growthProvider.history;
+    final isChildSection = widget.section == ParentPortalSection.child;
 
     return RefreshIndicator(
       onRefresh: () async {
         await Future.wait([
           context.read<HealthAssessmentProvider>().loadItems(),
           context.read<NutritionAssessmentProvider>().loadItems(),
-          context.read<GrowthWhoProvider>().load(role: 'PARENT'),
         ]);
       },
       child: ListView(
@@ -60,15 +61,28 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
           96,
         ),
         children: [
-          _PortalHeader(parentName: user?.fullName ?? 'Parent account'),
+          _PortalHeader(
+            parentName: user?.fullName ?? 'Tài khoản phụ huynh',
+            section: widget.section,
+          ),
           const SizedBox(height: AppSpacing.md),
-          _ChildProfileCard(health: latestHealth),
-          const SizedBox(height: AppSpacing.sm),
-          _HealthStatusCard(health: latestHealth),
-          const SizedBox(height: AppSpacing.sm),
-          _NutritionStatusCard(nutrition: nutrition),
-          const SizedBox(height: AppSpacing.sm),
-          _GrowthViewOnlyCard(history: history, latestHealth: latestHealth),
+          if (isChildSection) ...[
+            _ChildProfileCard(health: latestHealth),
+            const SizedBox(height: AppSpacing.sm),
+            const _ReadOnlyNote(
+              message:
+                  'Thông tin trẻ chỉ dùng để theo dõi. Nếu có sai lệch, phụ huynh vui lòng liên hệ nhà trường.',
+            ),
+          ] else ...[
+            _HealthStatusCard(health: latestHealth),
+            const SizedBox(height: AppSpacing.sm),
+            _NutritionStatusCard(nutrition: nutrition),
+            const SizedBox(height: AppSpacing.sm),
+            const _ReadOnlyNote(
+              message:
+                  'Màn hình này chỉ xem dữ liệu sức khỏe và nuôi dưỡng của trẻ. Giáo viên hoặc cán bộ nhà trường sẽ cập nhật khi có đánh giá mới.',
+            ),
+          ],
         ],
       ),
     );
@@ -94,12 +108,15 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
 }
 
 class _PortalHeader extends StatelessWidget {
-  const _PortalHeader({required this.parentName});
+  const _PortalHeader({required this.parentName, required this.section});
 
   final String parentName;
+  final ParentPortalSection section;
 
   @override
   Widget build(BuildContext context) {
+    final isChildSection = section == ParentPortalSection.child;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -108,7 +125,9 @@ class _PortalHeader extends StatelessWidget {
             CircleAvatar(
               backgroundColor: AppColors.accent.withValues(alpha: 0.18),
               foregroundColor: AppColors.primary,
-              child: const Icon(Icons.family_restroom),
+              child: Icon(
+                isChildSection ? Icons.child_care : Icons.favorite_outline,
+              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -116,14 +135,14 @@ class _PortalHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Parent Portal',
+                    isChildSection ? 'Cổng phụ huynh' : 'Sức khỏe của trẻ',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Parent dashboard',
+                    isChildSection ? 'Thông tin trẻ' : 'Theo dõi sức khỏe',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -141,7 +160,7 @@ class _PortalHeader extends StatelessWidget {
                 ],
               ),
             ),
-            const StatusChip(label: 'View only'),
+            const StatusChip(label: 'Chỉ xem'),
           ],
         ),
       ),
@@ -157,26 +176,26 @@ class _ChildProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      title: 'Child profile',
+      title: 'Hồ sơ trẻ',
       icon: Icons.child_care_outlined,
       child: Column(
         children: [
           _InfoRow(
-            label: 'Student',
+            label: 'Trẻ',
             value: health?.studentName ?? 'Nguyen Minh An',
           ),
           _InfoRow(
-            label: 'Student card',
+            label: 'Mã trẻ',
             value: health?.studentCode ?? 'NBA2024.001',
           ),
-          _InfoRow(label: 'Class', value: health?.className ?? 'Mam 1A'),
+          _InfoRow(label: 'Lớp', value: health?.className ?? 'Mam 1A'),
           _InfoRow(
-            label: 'School year',
+            label: 'Năm học',
             value: health?.schoolYearName.isEmpty ?? true
                 ? '2025-2026'
                 : health!.schoolYearName,
           ),
-          const _InfoRow(label: 'Status', value: 'Dang hoc'),
+          const _InfoRow(label: 'Trạng thái', value: 'Đang học'),
         ],
       ),
     );
@@ -191,23 +210,23 @@ class _HealthStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      title: 'Health status',
+      title: 'Tình trạng sức khỏe',
       icon: Icons.favorite_outline,
-      trailing: StatusChip(label: health?.bmiStatus ?? 'No data'),
+      trailing: StatusChip(label: health?.bmiStatus ?? 'Chưa có dữ liệu'),
       child: Column(
         children: [
           Row(
             children: [
               Expanded(
                 child: _MetricTile(
-                  label: 'Height',
+                  label: 'Chiều cao',
                   value: health == null ? '-' : '${health!.heightCm} cm',
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _MetricTile(
-                  label: 'Weight',
+                  label: 'Cân nặng',
                   value: health == null ? '-' : '${health!.weightKg} kg',
                 ),
               ),
@@ -222,14 +241,14 @@ class _HealthStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           _InfoRow(
-            label: 'Last measured',
+            label: 'Lần đo gần nhất',
             value: health == null
                 ? '-'
                 : health!.assessmentDate.substring(0, 10),
           ),
-          _InfoRow(label: 'Height status', value: health?.heightStatus ?? '-'),
-          _InfoRow(label: 'Weight status', value: health?.weightStatus ?? '-'),
-          _InfoRow(label: 'Note', value: health?.note ?? '-'),
+          _InfoRow(label: 'Chiều cao', value: health?.heightStatus ?? '-'),
+          _InfoRow(label: 'Cân nặng', value: health?.weightStatus ?? '-'),
+          _InfoRow(label: 'Ghi chú', value: health?.note ?? '-'),
         ],
       ),
     );
@@ -244,89 +263,64 @@ class _NutritionStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      title: 'Nutrition status',
+      title: 'Tình trạng nuôi dưỡng',
       icon: Icons.restaurant_outlined,
-      trailing: StatusChip(label: nutrition?.statusSummary ?? 'No data'),
+      trailing: StatusChip(
+        label: nutrition?.statusSummary ?? 'Chưa có dữ liệu',
+      ),
       child: Column(
         children: [
-          _InfoRow(label: 'Period', value: nutrition?.period ?? 'dau_nam'),
+          _InfoRow(label: 'Giai đoạn', value: nutrition?.period ?? 'dau_nam'),
           _InfoRow(
-            label: 'Weight channel',
+            label: 'Kênh cân nặng',
             value: nutrition?.weightChannel.isEmpty ?? true
-                ? 'Binh thuong'
+                ? 'Bình thường'
                 : nutrition!.weightChannel,
           ),
           _InfoRow(
-            label: 'Stunting',
-            value: nutrition?.isStunting ?? false ? 'Yes' : 'No',
+            label: 'SDD thấp còi',
+            value: nutrition?.isStunting ?? false ? 'Có' : 'Không',
           ),
           _InfoRow(
-            label: 'Severe stunting',
-            value: nutrition?.isSevereStunting ?? false ? 'Yes' : 'No',
+            label: 'SDD còi cọc',
+            value: nutrition?.isSevereStunting ?? false ? 'Có' : 'Không',
           ),
           _InfoRow(
-            label: 'Obese',
-            value: nutrition?.isObese ?? false ? 'Yes' : 'No',
+            label: 'Béo phì',
+            value: nutrition?.isObese ?? false ? 'Có' : 'Không',
           ),
-          _InfoRow(label: 'Note', value: nutrition?.note ?? '-'),
+          _InfoRow(label: 'Ghi chú', value: nutrition?.note ?? '-'),
         ],
       ),
     );
   }
 }
 
-class _GrowthViewOnlyCard extends StatelessWidget {
-  const _GrowthViewOnlyCard({
-    required this.history,
-    required this.latestHealth,
-  });
+class _ReadOnlyNote extends StatelessWidget {
+  const _ReadOnlyNote({required this.message});
 
-  final List<HealthAssessment> history;
-  final HealthAssessment? latestHealth;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return _SectionCard(
-      title: 'Growth WHO view-only',
-      icon: Icons.trending_up,
-      trailing: const StatusChip(label: 'WHO'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: 180,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _ParentGrowthChartPainter(history),
-              child: history.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No growth history yet',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textGray,
-                        ),
-                      ),
-                    )
-                  : null,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.visibility_outlined, color: AppColors.primary),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                message,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _InfoRow(label: 'BMI/age', value: latestHealth?.bmiStatus ?? '-'),
-          _InfoRow(
-            label: 'Height/age',
-            value: latestHealth?.heightStatus ?? '-',
-          ),
-          _InfoRow(
-            label: 'Weight/age',
-            value: latestHealth?.weightStatus ?? '-',
-          ),
-          Text(
-            'This portal is read-only. Please contact the school if any information looks incorrect.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -451,76 +445,5 @@ class _MetricTile extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _ParentGrowthChartPainter extends CustomPainter {
-  const _ParentGrowthChartPainter(this.history);
-
-  final List<HealthAssessment> history;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = AppColors.border
-      ..strokeWidth = 1;
-    final linePaint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    final pointPaint = Paint()
-      ..color = AppColors.accent
-      ..style = PaintingStyle.fill;
-
-    const left = 28.0;
-    const top = 12.0;
-    const bottom = 26.0;
-    const right = 12.0;
-    final chart = Rect.fromLTRB(
-      left,
-      top,
-      size.width - right,
-      size.height - bottom,
-    );
-
-    for (var i = 0; i <= 4; i++) {
-      final y = chart.top + chart.height * i / 4;
-      canvas.drawLine(Offset(chart.left, y), Offset(chart.right, y), gridPaint);
-    }
-
-    if (history.isEmpty) {
-      return;
-    }
-
-    final values = history.map((item) => item.bmi).where((value) => value > 0);
-    final minValue = values.isEmpty ? 0.0 : values.reduce(math.min) - 1;
-    final maxValue = values.isEmpty ? 1.0 : values.reduce(math.max) + 1;
-    final range = (maxValue - minValue).abs() < 0.1 ? 1.0 : maxValue - minValue;
-    final path = Path();
-
-    for (var i = 0; i < history.length; i++) {
-      final item = history[i];
-      final x =
-          chart.left +
-          (history.length == 1
-              ? chart.width / 2
-              : chart.width * i / (history.length - 1));
-      final y = chart.bottom - ((item.bmi - minValue) / range) * chart.height;
-      final point = Offset(x, y);
-      if (i == 0) {
-        path.moveTo(point.dx, point.dy);
-      } else {
-        path.lineTo(point.dx, point.dy);
-      }
-      canvas.drawCircle(point, 5, pointPaint);
-    }
-
-    canvas.drawPath(path, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ParentGrowthChartPainter oldDelegate) {
-    return oldDelegate.history != history;
   }
 }

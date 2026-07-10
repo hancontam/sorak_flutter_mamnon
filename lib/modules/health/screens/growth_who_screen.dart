@@ -66,8 +66,8 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
         }
         if (provider.students.isEmpty) {
           return const EmptyView(
-            title: 'No growth data yet',
-            message: 'Health measurements will appear here after entry.',
+            title: 'Chưa có dữ liệu tăng trưởng',
+            message: 'Các lần đo sức khỏe sẽ hiển thị tại đây sau khi nhập.',
             icon: Icons.trending_up,
           );
         }
@@ -87,7 +87,7 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   AppSearchBar(
                     controller: _searchController,
-                    hintText: 'Search student, class, or card number',
+                    hintText: 'Tìm trẻ, lớp hoặc mã trẻ',
                     onChanged: (value) {
                       setState(() {
                         _query = value;
@@ -195,7 +195,7 @@ class _GrowthHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Growth WHO',
+                    'Tăng trưởng WHO',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -203,8 +203,8 @@ class _GrowthHeader extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     isParent
-                        ? 'View-only growth summary for your child.'
-                        : 'Filter by class or student to review growth trends.',
+                        ? 'Phụ huynh chỉ xem biểu đồ tăng trưởng của trẻ.'
+                        : 'Lọc theo lớp hoặc trẻ để xem xu hướng tăng trưởng.',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
@@ -214,7 +214,7 @@ class _GrowthHeader extends StatelessWidget {
             ),
             if (isParent)
               const Chip(
-                label: Text('View only'),
+                label: Text('Chỉ xem'),
                 avatar: Icon(Icons.visibility_outlined, size: 18),
               ),
           ],
@@ -252,15 +252,15 @@ class _SummaryGrid extends StatelessWidget {
           icon: Icons.favorite_outline,
         ),
         _MetricCard(
-          label: 'Height',
+          label: 'Chiều cao',
           value: '${selected.heightCm} cm',
           helper: selected.heightStatus,
           icon: Icons.height,
         ),
         _MetricCard(
-          label: 'Records',
+          label: 'Số lần đo',
           value: '$historyCount',
-          helper: 'WHO history',
+          helper: 'Lịch sử WHO',
           icon: Icons.timeline_outlined,
         ),
       ],
@@ -342,14 +342,14 @@ class _GrowthChartCard extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Mobile BMI chart',
+                    'Biểu đồ BMI',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
                 Text(
-                  'WHO summary',
+                  'Tóm tắt WHO',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
@@ -365,7 +365,7 @@ class _GrowthChartCard extends StatelessWidget {
                 child: history.isEmpty
                     ? Center(
                         child: Text(
-                          'No chart data',
+                          'Chưa có dữ liệu biểu đồ',
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: AppColors.textGray),
                         ),
@@ -465,8 +465,8 @@ class _StudentPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     if (students.isEmpty) {
       return const EmptyView(
-        title: 'No matching students',
-        message: 'Try another keyword or class filter.',
+        title: 'Không có trẻ phù hợp',
+        message: 'Thử từ khóa hoặc bộ lọc lớp khác.',
         icon: Icons.search_off,
       );
     }
@@ -475,7 +475,7 @@ class _StudentPicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Students',
+          'Danh sách trẻ',
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -510,7 +510,7 @@ class _HistoryList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Assessment history',
+          'Lịch sử đánh giá',
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),

@@ -30,7 +30,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('login_button')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Sorak Mam Non'), findsOneWidget);
+      expect(find.text('Sorak Mầm non'), findsOneWidget);
       expect(find.text('Welcome, Principal Admin'), findsOneWidget);
       expect(localStorage.getToken(), 'demo-token-admin');
       expect(localStorage.getEmail(), 'admin@sorak.edu.vn');
@@ -46,7 +46,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('login_button')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Parent Portal'), findsOneWidget);
+      expect(find.text('Cổng phụ huynh'), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_child')), findsOneWidget);
       expect(localStorage.getToken(), 'demo-token-parent');
       expect(localStorage.getEmail(), 'parent@sorak.edu.vn');
@@ -118,7 +118,7 @@ void main() {
     testWidgets('saved session opens home directly', (tester) async {
       await tester.pumpLoggedInSorakApp();
 
-      expect(find.text('Sorak Mam Non'), findsOneWidget);
+      expect(find.text('Sorak Mầm non'), findsOneWidget);
       expect(find.text('Welcome, Principal Admin'), findsOneWidget);
       expect(find.text('Role: PRINCIPAL'), findsOneWidget);
     });
@@ -126,7 +126,9 @@ void main() {
     testWidgets('logout clears session and returns to login', (tester) async {
       final localStorage = await tester.pumpLoggedInSorakApp();
 
-      await tester.tap(find.byIcon(Icons.power_settings_new));
+      await tester.tap(find.byKey(const ValueKey('open_drawer_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Đăng xuất'));
       await tester.pumpAndSettle();
 
       expect(find.text('Phụ huynh'), findsOneWidget);

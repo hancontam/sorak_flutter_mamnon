@@ -27,6 +27,14 @@ class ClassRepository implements CrudRepository<SchoolClass> {
       room: 'B202',
       teacherName: 'Co Hoa',
     ),
+    const SchoolClass(
+      id: 3,
+      className: 'Mam 1B',
+      schoolYearId: 1,
+      ageGroup: '3-4',
+      room: 'A102',
+      teacherName: 'Co Hoa',
+    ),
   ];
 
   @override

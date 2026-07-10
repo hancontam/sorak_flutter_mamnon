@@ -410,3 +410,181 @@ Definition of Done:
 - Cac thao tac Delete tren UI goi archive/soft delete theo backend.
 - Khong co loi `flutter analyze`.
 - `flutter test` pass.
+
+## Web Parity Fix Context
+
+Can bam sat web repo `toanthienla/sorak-mamnonhontre`, dac biet:
+
+```text
+sorak-web/src/app/layouts/AppLayout.jsx
+sorak-web/src/features/auth/LoginPage.jsx
+sorak-web/src/features/accounts
+sorak-web/src/features/teachers/TeachersPage.jsx
+sorak-web/src/features/classes/ClassesPage.jsx
+sorak-web/src/features/students/StudentsPage.jsx
+sorak-web/src/features/transfers
+sorak-web/src/features/health
+sorak-web/src/features/growth
+sorak-web/src/shared/components/year-selector.jsx
+```
+
+Quy tac wording UI:
+
+- Toan bo text hien thi tren Flutter phai dung tieng Viet co dau nhu web.
+- Module parent/child tren mobile dung tu `Trẻ`, khong dung `Con`.
+- Parent bottom tab chot: `Trẻ`, `Sức khỏe`, `Tăng trưởng`.
+- Drawer/Profile role label:
+  - `PRINCIPAL` -> `Ban Giám Hiệu`
+  - `TEACHER` -> `Giáo viên`
+  - `PARENT` -> `Phụ huynh`
+- App label/module label nen dung:
+  - `Trang chủ`
+  - `Học sinh`
+  - `Lớp học`
+  - `Chuyển lớp / trường`
+  - `Sức khỏe`
+  - `Tăng trưởng WHO`
+  - `Năm học`
+  - `Tài khoản`
+  - `Cán bộ`
+  - `Hồ sơ`
+  - `Cài đặt`
+  - `Đăng xuất`
+
+Quy tac form input theo web:
+
+- Khong de nguoi dung nhap string tu do cho field co tap gia tri co dinh.
+- Dung `DropdownButtonFormField` hoac `DropdownMenu` cho:
+  - role
+  - status
+  - gender
+  - academic year
+  - class
+  - grade/age group
+  - teacher
+  - student
+  - transfer status
+  - nutrition period
+  - nutrition status/channel
+- Option lay tu Provider/repository. Mock truoc, sau noi API that.
+- Neu option phu thuoc nhau thi load theo thu tu:
+  - chon nam hoc -> load lop cua nam hoc
+  - chon khoi -> filter lop theo khoi
+  - chon lop -> load hoc sinh cua lop
+  - chon lop hien tai -> filter lop dich cung khoi/cung nam hoc
+
+Option co dinh can dung dung tieng Viet:
+
+```text
+Gender student: Nam, Nữ
+Gender teacher: Nam, Nữ, Khác
+Grade/Age group: Nhà trẻ, Mầm, Chồi, Lá
+Teacher work status:
+  Đang làm việc
+  Chuyển đến
+  Đã chuyển đi
+  Đã điều động
+  Chờ nghỉ hưu
+  Đã nghỉ hưu
+  Đã biệt phái
+  Thôi việc
+Student status:
+  Đang học
+  Chuyển đến kỳ 1
+  Nghỉ học xin học lại kỳ 1
+  Chuyển đi kỳ 1
+  Thôi học kỳ 1
+  Chuyển đến kỳ 2
+  Nghỉ học xin học lại kỳ 2
+  Chuyển đi kỳ 2
+  Thôi học kỳ 2
+  Chuyển đến trong hè
+  Chuyển đi trong hè
+  Thôi học trong hè
+Staff account role:
+  PRINCIPAL -> BGH — Ban Giám Hiệu
+  TEACHER -> GV — Giáo viên
+Transfer status:
+  Pending -> Chờ duyệt
+  Approved -> Đã duyệt
+  Rejected -> Từ chối
+  Cancelled -> Đã hủy
+  Expired -> Quá hạn
+  Recorded -> Đã ghi nhận
+```
+
+Accounts va Teachers phai tach dung nhu web:
+
+- `Teachers` la CRUD ho so can bo/giao vien.
+- Tao giao vien trong `Teachers` khong mac dinh tao account dang nhap.
+- Giao vien moi tao se hien trong `Accounts` tab can bo voi trang thai `Chưa cấp tài khoản`.
+- `Accounts` phai co 2 tab:
+  - `Tài khoản cán bộ`
+  - `Tài khoản phụ huynh`
+- `Tài khoản cán bộ` hien danh sach teacher-centric:
+  - teacher co `account == null` -> `Chưa cấp tài khoản`
+  - teacher co account -> hien role, active/inactive
+  - action: `Cấp tài khoản`, `Đổi vai trò`, `Khóa tài khoản`, `Mở khóa tài khoản`, `Đổi mật khẩu`
+- `Tài khoản phụ huynh` hien student-centric:
+  - ma the hoc sinh
+  - ho ten hoc sinh
+  - trang thai hoc sinh
+  - trang thai tai khoan phu huynh
+  - action: `Khóa/Mở khóa`, `Đổi mật khẩu PH`
+- Khong bien Accounts thanh CRUD account don gian nua neu muon giong web.
+
+Academic year selector:
+
+- Web dat `YearSelector` o duoi sidebar, canh user menu/logout.
+- Mobile chot dat dropdown nam hoc active tren AppBar/action area, thay vi icon logout ngoai.
+- Logout giu trong Drawer/Profile menu, khong dat icon power ngoai AppBar.
+- Khi app load, neu chua chon nam hoc thi auto chon nam hoc `active`.
+- Cac list/form co lien quan phai doc selected academic year tu provider chung.
+
+Health/Nutrition/Growth flow theo web:
+
+- Health tab khong nen chi la list CRUD roi bam child khong ro luong.
+- Staff flow:
+  - chon lop
+  - chon ngay danh gia hoac giai doan
+  - hien roster hoc sinh cua lop
+  - nhap nhanh chieu cao/can nang/dinh duong it cham
+  - tap hoc sinh de xem preview/history
+- Nutrition flow:
+  - chon lop
+  - chon giai doan
+  - tap hoc sinh mo preview tang truong WHO va danh gia dinh duong
+- Growth WHO:
+  - Principal/Teacher loc theo lop/hoc sinh
+  - Parent chi view-only tre cua minh
+  - Drawer mo Growth nhu route rieng phai co back button nhu cac screen khac
+
+Live API notes:
+
+- Flutter mac dinh dang chay mock vi `AppConfig.useMockApi` default la `true`.
+- Muon chay live API thi dung:
+
+```powershell
+flutter run --dart-define=USE_MOCK_API=false --dart-define=API_BASE_URL=http://103.69.191.210:8082/api
+```
+
+- Tai khoan principal test:
+
+```text
+phanthihoa@edu.vn / Hoa@12345
+```
+
+- Tai khoan teacher test da verify tren live API:
+
+```text
+gv01@sorak.local / changeme@123
+gv03@sorak.local / changeme@123
+gv04@sorak.local / changeme@123
+maint@edu.vn / changeme@123
+```
+
+Goal planning rule:
+
+- Khong tach goal qua nho chi de doi label/tab.
+- Cac viec nho nhu doi `Con` -> `Trẻ` phai gom vao goal AppShell/Parent tuong ung.
+- Moi goal nen la mot khoi thay doi co the test duoc, vi du: foundation, AppShell/year selector, Teachers form, Students form, Accounts web flow.

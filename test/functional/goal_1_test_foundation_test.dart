@@ -23,7 +23,7 @@ void main() {
     testWidgets('can pump Sorak app with saved user', (tester) async {
       await tester.pumpLoggedInSorakApp();
 
-      expect(find.text('Sorak Mam Non'), findsOneWidget);
+      expect(find.text('Sorak Mầm non'), findsOneWidget);
       expect(find.text('Welcome, Principal Admin'), findsOneWidget);
       expect(find.byKey(const ValueKey('open_drawer_button')), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);

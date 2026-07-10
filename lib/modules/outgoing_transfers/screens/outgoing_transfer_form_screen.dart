@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/widgets/simple_form_screen.dart';
+import '../../transfers/widgets/school_transfer_form.dart';
 import '../models/outgoing_transfer.dart';
 import '../providers/outgoing_transfer_provider.dart';
 
@@ -12,38 +12,22 @@ class OutgoingTransferFormScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SimpleFormScreen(
+    return SchoolTransferForm(
       title: outgoingTransfer == null
-          ? 'Create Outgoing Transfer'
-          : 'Update Outgoing Transfer',
-      fields: const [
-        FormFieldConfig(
-          name: 'student_id',
-          label: 'Student ID',
-          keyboardType: TextInputType.number,
-        ),
-        FormFieldConfig(name: 'student_name', label: 'Student name'),
-        FormFieldConfig(
-          name: 'destination_school',
-          label: 'Destination school',
-        ),
-        FormFieldConfig(
-          name: 'transfer_date',
-          label: 'Transfer date (YYYY-MM-DD)',
-        ),
-        FormFieldConfig(name: 'reason', label: 'Reason', maxLines: 2),
-        FormFieldConfig(name: 'note', label: 'Note', maxLines: 2),
-      ],
-      initialValues: {
-        'student_id': '${outgoingTransfer?.studentId ?? 1}',
-        'student_name': outgoingTransfer?.studentName ?? '',
-        'destination_school': outgoingTransfer?.destinationSchool ?? '',
-        'transfer_date': outgoingTransfer?.transferDate ?? '',
-        'reason': outgoingTransfer?.reason ?? '',
-        'note': outgoingTransfer?.note ?? '',
-      },
-      onSave: (data) {
+          ? 'Ghi nhận chuyển trường đi'
+          : 'Cập nhật chuyển trường đi',
+      schoolLabel: 'Trường chuyển đến',
+      schoolField: 'destination_school',
+      defaultStatus: 'Recorded',
+      initialStudentId: outgoingTransfer?.studentId,
+      initialSchool: outgoingTransfer?.destinationSchool ?? '',
+      initialTransferDate: outgoingTransfer?.transferDate ?? '',
+      initialReason: outgoingTransfer?.reason ?? '',
+      initialNote: outgoingTransfer?.note ?? '',
+      initialStatus: outgoingTransfer?.status,
+      onSave: (formData) {
         final provider = context.read<OutgoingTransferProvider>();
+        final data = formData.toJson('destination_school');
         if (outgoingTransfer == null) {
           return provider.createItem(data);
         }

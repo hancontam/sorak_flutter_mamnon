@@ -12,12 +12,20 @@ void main() {
     ) async {
       await _pumpTallHome(tester);
 
-      expect(find.text('Sorak Mam Non'), findsWidgets);
+      expect(find.text('Sorak Mầm non'), findsWidgets);
+      expect(
+        find.byKey(const ValueKey('active_year_dropdown')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('app_logout_button')), findsNothing);
       expect(find.text('Welcome, Principal Admin'), findsOneWidget);
       expect(find.text('Role: PRINCIPAL'), findsOneWidget);
       expect(find.text('Today overview'), findsOneWidget);
-      await tester.drag(find.byType(ListView).first, const Offset(0, -450));
-      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Quick actions'),
+        80,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Quick actions'), findsOneWidget);
 
       for (final destination in _bottomDestinations) {
@@ -31,11 +39,11 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('open_drawer_button')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Academic Years'), findsOneWidget);
+      expect(find.text('Năm học'), findsOneWidget);
       expect(find.byKey(const ValueKey('drawer_accounts')), findsOneWidget);
-      expect(find.text('Profile'), findsOneWidget);
-      expect(find.text('Settings'), findsOneWidget);
-      expect(find.text('Logout'), findsOneWidget);
+      expect(find.text('Hồ sơ'), findsOneWidget);
+      expect(find.text('Cài đặt'), findsOneWidget);
+      expect(find.text('Đăng xuất'), findsOneWidget);
       expect(find.text('Manual Tests'), findsNothing);
     });
 
@@ -164,16 +172,16 @@ void main() {
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
 
-      expect(find.text('Create Student'), findsOneWidget);
-      expect(find.text('Cancel'), findsOneWidget);
-      expect(find.text('Save'), findsOneWidget);
+      expect(find.text('Tạo hồ sơ học sinh'), findsOneWidget);
+      expect(find.text('Hủy'), findsOneWidget);
+      expect(find.text('Lưu'), findsOneWidget);
 
-      await tester.tap(find.text('Save'));
+      await tester.tap(find.text('Lưu'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Full name is required'), findsOneWidget);
+      expect(find.text('Vui lòng nhập họ tên'), findsOneWidget);
 
-      await tester.tap(find.text('Cancel'));
+      await tester.tap(find.text('Hủy'));
       await tester.pumpAndSettle();
 
       expect(find.text('Students'), findsWidgets);
@@ -242,6 +250,10 @@ void main() {
     ) async {
       await _pumpTallHome(tester);
 
+      await tester.drag(find.byType(ListView).first, const Offset(0, -450));
+      await tester.pumpAndSettle();
+      expect(find.text('Quick actions'), findsOneWidget);
+
       await tester.tap(find.text('Students').last);
       await tester.pumpAndSettle();
 
@@ -250,6 +262,11 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('nav_home')));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Transfers'),
+        80,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('Transfers').last);
       await tester.pumpAndSettle();
 
@@ -266,7 +283,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('open_drawer_button')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Academic Years'));
+      await tester.tap(find.text('Năm học'));
       await tester.pumpAndSettle();
 
       expect(find.text('Academic Years'), findsWidgets);
@@ -279,7 +296,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_accounts')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Accounts'), findsWidgets);
+      expect(find.text('Quản lý tài khoản'), findsWidgets);
       expect(find.byTooltip('Refresh'), findsOneWidget);
     });
 
@@ -309,7 +326,7 @@ void main() {
     ) async {
       await _pumpTallHome(tester, savedUser: _parentUser);
 
-      expect(find.text('Parent Portal'), findsOneWidget);
+      expect(find.text('Cổng phụ huynh'), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_child')), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_growth')), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_health')), findsOneWidget);
@@ -322,7 +339,7 @@ void main() {
       expect(find.byKey(const ValueKey('drawer_profile')), findsOneWidget);
       expect(find.byKey(const ValueKey('drawer_settings')), findsOneWidget);
       expect(find.byKey(const ValueKey('drawer_accounts')), findsNothing);
-      expect(find.text('Logout'), findsOneWidget);
+      expect(find.text('Đăng xuất'), findsOneWidget);
       expect(find.text('Manual Tests'), findsNothing);
     });
   });
