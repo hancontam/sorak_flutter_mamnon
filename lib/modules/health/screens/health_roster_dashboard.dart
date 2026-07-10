@@ -181,45 +181,50 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
           const SizedBox(height: AppSpacing.sm),
           if (isLoading)
             const Center(child: CircularProgressIndicator())
-          else if (errorMessage != null && students.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                children: [
-                  Text(
-                    errorMessage,
-                    style: const TextStyle(color: AppColors.error),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  OutlinedButton(
-                    onPressed: _reloadRoster,
-                    child: const Text('Thử lại'),
-                  ),
-                ],
-              ),
-            )
-          else if (students.isEmpty)
-            const _EmptyRoster()
-          else
-            for (final student in students) ...[
-              _StudentRosterCard(
-                student: student,
-                mode: widget.mode,
-                health: _latestHealth(student.id, healthProvider.items),
-                nutrition: _latestNutrition(
-                  student.id,
-                  nutritionProvider.items,
-                ),
-                onTap: () => _openStudentPreview(
-                  context,
-                  student,
-                  healthProvider.items,
-                  nutritionProvider.items,
+          else ...[
+            // Always surface roster API errors, even when FormOptions still
+            // has students (otherwise failed by-class-date/grid looks empty).
+            if (errorMessage != null)
+              Padding(
+                key: const Key('health_roster_error_banner'),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Column(
+                  children: [
+                    Text(
+                      errorMessage,
+                      style: const TextStyle(color: AppColors.error),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    OutlinedButton(
+                      onPressed: _reloadRoster,
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
+            if (students.isEmpty)
+              const _EmptyRoster()
+            else
+              for (final student in students) ...[
+                _StudentRosterCard(
+                  student: student,
+                  mode: widget.mode,
+                  health: _latestHealth(student.id, healthProvider.items),
+                  nutrition: _latestNutrition(
+                    student.id,
+                    nutritionProvider.items,
+                  ),
+                  onTap: () => _openStudentPreview(
+                    context,
+                    student,
+                    healthProvider.items,
+                    nutritionProvider.items,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+          ],
         ],
       ),
     );
