@@ -1,5 +1,4 @@
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_response.dart';
 import '../../../core/repositories/crud_repository.dart';
@@ -13,47 +12,12 @@ class NutritionAssessmentRepository
   final ApiClient _apiClient;
   final String _defaultPeriod = 'dau_nam';
 
-  final List<NutritionAssessment> _mockItems = [
-    const NutritionAssessment(
-      id: 1,
-      studentId: 1,
-      classId: 1,
-      schoolYearId: 1,
-      period: 'dau_nam',
-      studentName: 'Nguyen Minh An',
-      studentCode: 'NBA2024.001',
-      className: 'Mam 1A',
-      latestBmi: 15.86,
-      latestBmiStatus: 'Binh thuong',
-      note: 'Eat well at school',
-    ),
-    const NutritionAssessment(
-      id: 2,
-      studentId: 2,
-      classId: 2,
-      schoolYearId: 1,
-      period: 'dau_nam',
-      studentName: 'Tran Bao Ngoc',
-      studentCode: 'TBN2024.002',
-      className: 'Choi 2B',
-      weightChannel: 'Can nang cao hon tuoi',
-      isObese: true,
-      latestBmi: 17.8,
-      latestBmiStatus: 'Can theo doi',
-      note: 'Need parent follow up',
-    ),
-  ];
-
   /// Year-wide list via grid-all. Prefer [getGrid] for roster class flow.
   @override
   Future<List<NutritionAssessment>> getAll({
     int? schoolYearId,
     String? period,
   }) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      return _mockItems.where((item) => !item.isDeleted).toList();
-    }
-
     if (schoolYearId == null) {
       throw StateError('Chưa chọn năm học');
     }
@@ -81,17 +45,6 @@ class NutritionAssessmentRepository
     required int schoolYearId,
     required String period,
   }) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      return _mockItems
-          .where(
-            (item) =>
-                !item.isDeleted &&
-                item.classId == classId &&
-                item.period == period,
-          )
-          .toList();
-    }
-
     final response = await _apiClient.dio.get(
       '${ApiEndpoints.nutritionAssessments}/grid',
       queryParameters: {
@@ -122,18 +75,6 @@ class NutritionAssessmentRepository
       throw StateError('Cần ít nhất một dòng đánh giá');
     }
 
-    if (AppConfig.useLegacyRepositoryMocks) {
-      for (final row in rows) {
-        await create({
-          ...row,
-          'class_id': classId,
-          'school_year_id': schoolYearId,
-          'period': period,
-        });
-      }
-      return {'saved': rows.length, 'cleared': 0, 'skipped': 0};
-    }
-
     final response = await _apiClient.dio.post(
       '${ApiEndpoints.nutritionAssessments}/bulk',
       data: {
@@ -148,38 +89,12 @@ class NutritionAssessmentRepository
 
   @override
   Future<NutritionAssessment?> getById(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final matches = _mockItems.where((item) => item.id == id);
-      return matches.isEmpty ? null : matches.first;
-    }
     // Live backend has no GET-by-id; only grid/grid-all.
     return null;
   }
 
   @override
   Future<NutritionAssessment> create(Map<String, dynamic> data) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final item = NutritionAssessment(
-        id: _nextId(),
-        studentId: int.tryParse('${data['student_id']}') ?? 0,
-        classId: int.tryParse('${data['class_id']}') ?? 0,
-        schoolYearId: int.tryParse('${data['school_year_id']}') ?? 0,
-        period: data['period'] as String? ?? _defaultPeriod,
-        studentName: data['student_name'] as String? ?? 'New student',
-        studentCode: data['student_code'] as String? ?? '',
-        className: data['class_name'] as String? ?? '',
-        weightChannel: data['weight_channel'] as String? ?? '',
-        isStunting: _readBool(data['is_stunting']),
-        isSevereStunting: _readBool(data['is_severe_stunting']),
-        isObese: _readBool(data['is_obese']),
-        latestBmi: double.tryParse('${data['latest_bmi']}') ?? 0,
-        latestBmiStatus: data['latest_bmi_status'] as String? ?? '',
-        note: data['note'] as String? ?? '',
-      );
-      _mockItems.add(item);
-      return item;
-    }
-
     final classId = int.tryParse('${data['class_id']}');
     final schoolYearId = _requiredSchoolYearId(data);
     final period = data['period'] as String? ?? _defaultPeriod;
@@ -213,28 +128,6 @@ class NutritionAssessmentRepository
 
   @override
   Future<NutritionAssessment> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      final current = _mockItems[index];
-      final item = current.copyWith(
-        classId: int.tryParse('${data['class_id']}'),
-        schoolYearId: int.tryParse('${data['school_year_id']}'),
-        period: data['period'] as String?,
-        studentName: data['student_name'] as String?,
-        studentCode: data['student_code'] as String?,
-        className: data['class_name'] as String?,
-        weightChannel: data['weight_channel'] as String?,
-        isStunting: _readBool(data['is_stunting']),
-        isSevereStunting: _readBool(data['is_severe_stunting']),
-        isObese: _readBool(data['is_obese']),
-        latestBmi: double.tryParse('${data['latest_bmi']}'),
-        latestBmiStatus: data['latest_bmi_status'] as String?,
-        note: data['note'] as String?,
-      );
-      _mockItems[index] = item;
-      return item;
-    }
-
     final classId = int.tryParse('${data['class_id']}');
     final schoolYearId = _requiredSchoolYearId(data);
     final period = data['period'] as String? ?? _defaultPeriod;
@@ -272,14 +165,6 @@ class NutritionAssessmentRepository
   /// Live intentionally fails so UI never fakes bulk-clear as Delete.
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      if (index >= 0) {
-        _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
-      }
-      return;
-    }
-
     throw StateError(
       'Backend không hỗ trợ xóa đánh giá nuôi dưỡng. '
       'Hãy xóa bằng cách lưu hàng trống trên grid (bulk).',
@@ -288,13 +173,6 @@ class NutritionAssessmentRepository
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      if (index >= 0) {
-        _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
-      }
-      return;
-    }
     throw StateError('Backend không hỗ trợ khôi phục đánh giá nuôi dưỡng');
   }
 
@@ -349,10 +227,5 @@ class NutritionAssessmentRepository
     }
     final text = '$value'.trim();
     return text.isEmpty || text == 'none' ? null : text;
-  }
-
-  int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
-        1;
   }
 }

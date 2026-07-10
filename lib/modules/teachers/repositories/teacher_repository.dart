@@ -1,5 +1,4 @@
-﻿import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_config.dart';
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_page.dart';
 import '../../../core/network/api_response.dart';
@@ -11,31 +10,8 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   final ApiClient _apiClient;
 
-  final List<Teacher> _mockItems = [
-    const Teacher(
-      id: 1,
-      fullName: 'Nguyen Thi Lan',
-      email: 'lan@sorak.edu.vn',
-      position: 'Teacher',
-      phone: '0901000001',
-      gender: 'Nu',
-    ),
-    const Teacher(
-      id: 2,
-      fullName: 'Tran Thi Hoa',
-      email: 'hoa@sorak.edu.vn',
-      position: 'Teacher',
-      phone: '0901000002',
-      gender: 'Nu',
-    ),
-  ];
-
   @override
   Future<List<Teacher>> getAll({int? schoolYearId}) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      return _mockItems.where((item) => !item.isDeleted).toList();
-    }
-
     return (await getPage(
       query: const ApiListQuery(pageSize: 500),
       schoolYearId: schoolYearId,
@@ -50,18 +26,6 @@ class TeacherRepository implements CrudRepository<Teacher> {
     String? role,
     String? workStatus,
   }) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final items = _mockItems
-          .where(
-            (item) =>
-                !item.isDeleted &&
-                (position == null || item.position == position) &&
-                (workStatus == null || item.workStatus == workStatus),
-          )
-          .toList();
-      return _mockPage(items, query);
-    }
-
     final response = await _apiClient.dio.get(
       ApiEndpoints.teachers,
       queryParameters: query.toQueryParameters(
@@ -80,31 +44,12 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<Teacher?> getById(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final matches = _mockItems.where((item) => item.id == id);
-      return matches.isEmpty ? null : matches.first;
-    }
-
     final response = await _apiClient.dio.get('${ApiEndpoints.teachers}/$id');
     return Teacher.fromJson(ApiResponse.object(response.data));
   }
 
   @override
   Future<Teacher> create(Map<String, dynamic> data) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final item = Teacher(
-        id: _nextId(),
-        fullName: data['full_name'] as String,
-        email: data['email'] as String,
-        position: data['position'] as String,
-        phone: data['phone'] as String? ?? '',
-        gender: data['gender'] as String? ?? '',
-        workStatus: data['work_status'] as String? ?? 'Dang lam viec',
-      );
-      _mockItems.add(item);
-      return item;
-    }
-
     final response = await _apiClient.dio.post(
       ApiEndpoints.teachers,
       data: data,
@@ -114,21 +59,6 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<Teacher> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      final current = _mockItems[index];
-      final item = current.copyWith(
-        fullName: data['full_name'] as String?,
-        email: data['email'] as String?,
-        position: data['position'] as String?,
-        phone: data['phone'] as String?,
-        gender: data['gender'] as String?,
-        workStatus: data['work_status'] as String?,
-      );
-      _mockItems[index] = item;
-      return item;
-    }
-
     final response = await _apiClient.dio.patch(
       '${ApiEndpoints.teachers}/$id',
       data: data,
@@ -138,40 +68,11 @@ class TeacherRepository implements CrudRepository<Teacher> {
 
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
-      return;
-    }
-
     await _apiClient.dio.delete('${ApiEndpoints.teachers}/$id');
   }
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
-      return;
-    }
-
     await _apiClient.dio.patch('${ApiEndpoints.teachers}/$id/restore');
-  }
-
-  int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
-        1;
-  }
-
-  ApiPage<Teacher> _mockPage(List<Teacher> items, ApiListQuery query) {
-    final start = (query.page - 1) * query.pageSize;
-    final end = (start + query.pageSize).clamp(0, items.length).toInt();
-    return ApiPage(
-      items: start >= items.length ? const [] : items.sublist(start, end),
-      page: query.page,
-      pageSize: query.pageSize,
-      total: items.length,
-      totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
-    );
   }
 }

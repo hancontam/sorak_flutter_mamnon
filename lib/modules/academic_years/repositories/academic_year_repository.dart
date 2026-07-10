@@ -1,5 +1,4 @@
-﻿import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_config.dart';
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_page.dart';
 import '../../../core/network/api_response.dart';
@@ -12,50 +11,20 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   final ApiClient _apiClient;
 
-  final List<AcademicYear> _mockItems = [
-    const AcademicYear(
-      id: 1,
-      name: '2025-2026',
-      startDate: '2025-08-01',
-      endDate: '2026-05-31',
-      status: 'active',
-    ),
-    const AcademicYear(
-      id: 2,
-      name: '2026-2027',
-      startDate: '2026-08-01',
-      endDate: '2027-05-31',
-    ),
-  ];
-
   @override
   Future<List<AcademicYear>> getAll() async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      return _mockItems.where((item) => !item.isDeleted).toList();
-    }
-
     return (await getPage(query: const ApiListQuery(pageSize: 500))).items;
   }
 
   Future<ApiPage<AcademicYear>> getPage({
     ApiListQuery query = const ApiListQuery(),
   }) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final items = _mockItems.where((item) => !item.isDeleted).toList();
-      return _mockPage(items, query);
-    }
-
     final response = await _apiClient.dio.get(ApiEndpoints.academicYears);
     return ApiResponse.page(response.data, AcademicYear.fromJson);
   }
 
   @override
   Future<AcademicYear?> getById(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final matches = _mockItems.where((item) => item.id == id);
-      return matches.isEmpty ? null : matches.first;
-    }
-
     final response = await _apiClient.dio.get(
       '${ApiEndpoints.academicYears}/$id',
     );
@@ -64,17 +33,6 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   @override
   Future<AcademicYear> create(Map<String, dynamic> data) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final item = AcademicYear(
-        id: _nextId(),
-        name: data['name'] as String,
-        startDate: data['start_date'] as String,
-        endDate: data['end_date'] as String,
-      );
-      _mockItems.add(item);
-      return item;
-    }
-
     final response = await _apiClient.dio.post(
       ApiEndpoints.academicYears,
       data: data,
@@ -84,18 +42,6 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
 
   @override
   Future<AcademicYear> update(int id, Map<String, dynamic> data) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      final current = _mockItems[index];
-      final item = current.copyWith(
-        name: data['name'] as String?,
-        startDate: data['start_date'] as String?,
-        endDate: data['end_date'] as String?,
-      );
-      _mockItems[index] = item;
-      return item;
-    }
-
     final response = await _apiClient.dio.patch(
       '${ApiEndpoints.academicYears}/$id',
       data: data,
@@ -104,58 +50,16 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
   }
 
   Future<void> activate(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      for (var i = 0; i < _mockItems.length; i++) {
-        final item = _mockItems[i];
-        _mockItems[i] = item.copyWith(
-          status: item.id == id ? 'active' : 'inactive',
-        );
-      }
-      return;
-    }
-
     await _apiClient.dio.patch('${ApiEndpoints.academicYears}/$id/activate');
   }
 
   @override
   Future<void> archive(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      _mockItems[index] = _mockItems[index].copyWith(isDeleted: true);
-      return;
-    }
-
     await _apiClient.dio.delete('${ApiEndpoints.academicYears}/$id');
   }
 
   @override
   Future<void> restore(int id) async {
-    if (AppConfig.useLegacyRepositoryMocks) {
-      final index = _mockItems.indexWhere((item) => item.id == id);
-      _mockItems[index] = _mockItems[index].copyWith(isDeleted: false);
-      return;
-    }
-
     await _apiClient.dio.post('${ApiEndpoints.academicYears}/$id/restore');
-  }
-
-  int _nextId() {
-    return _mockItems.map((item) => item.id).reduce((a, b) => a > b ? a : b) +
-        1;
-  }
-
-  ApiPage<AcademicYear> _mockPage(
-    List<AcademicYear> items,
-    ApiListQuery query,
-  ) {
-    final start = (query.page - 1) * query.pageSize;
-    final end = (start + query.pageSize).clamp(0, items.length).toInt();
-    return ApiPage(
-      items: start >= items.length ? const [] : items.sublist(start, end),
-      page: query.page,
-      pageSize: query.pageSize,
-      total: items.length,
-      totalPages: items.isEmpty ? 0 : (items.length / query.pageSize).ceil(),
-    );
   }
 }

@@ -125,6 +125,8 @@ Can lam cac module:
 Nen test hien tai sau Goals 40+:
 
 - Fixture canonical nam trong `lib/core/network/mock_api_backend.dart`.
+- Repository khong duoc co `_mockItems` hoac nhanh mock rieng; mock va live
+  deu phai goi Dio va dung chung parser.
 - Moi fixture phai tra envelope `{success,data,meta}` hoac
   `{success:false,message,errors,traceId}`.
 - ID year/teacher/class/student/transfer/account phai tach dai.

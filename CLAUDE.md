@@ -8,8 +8,8 @@ and `docs/test_regression_report.md` before changing API or role behavior.
 - Mock mode uses one `MockApiBackend` as Dio's `HttpClientAdapter`.
 - Mock and live share `ApiResponse`, `fromJson`, query mapping, DTOs,
   interceptors, and error handling.
-- Do not add repository-local mock branches. The migration-only switch
-  `AppConfig.useLegacyRepositoryMocks` stays `false`.
+- Repository-local mock branches and fixtures have been removed. Do not add
+  `_mockItems` or bypass Dio in a repository.
 - Canonical ID ranges are year 101+, teacher 201+, class 301+, student 401+,
   transfer 501+, and account 1001+.
 - Parent profile comes only from `/auth/me`. Parent Health/Growth APIs do not

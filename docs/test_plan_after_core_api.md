@@ -15,6 +15,8 @@ Baseline date: 2026-07-10
 ## Implemented Evidence
 
 - Canonical HTTP mock envelopes and production `fromJson` parsing.
+- Repository-local legacy fixtures/branches removed; mock and live have one
+  Dio request path.
 - Exact Class, Student, Class Transfer, Incoming and Outgoing DTO assertions.
 - Three-year dataset, global invalidation and stale-response race regression.
 - Principal account flow, Teacher data/action scope and API 403 checks.
