@@ -71,6 +71,22 @@ Read-only HTTP smoke against live deploy (no token/cookie/password logged; statu
 
 Android emulator UI smoke: skipped in this environment (no device/emulator attached). Automated contract tests cover Flutter repository paths with Dio adapter.
 
+### Goal 49 Android live smoke (2026-07-11)
+
+Live flavor was installed on a clean Android 15/API 35 x86_64 AVD.
+
+| Journey | Result | Evidence |
+| --- | --- | --- |
+| Principal login, `/me`, active year | Pass | Dashboard: 49 students, 9 classes, 21 teachers |
+| Teacher login and role scope | Pass | 1 assigned class, 3 assigned students |
+| Teacher Classes/Students/Transfers/Health | Pass | Health roster contains the same 3 students |
+| Principal Teacher create | Pass | Created `MOBILE_TEST_TEACHER_235640`, ID 26 |
+| Delete UI -> soft archive | Pass | Record hidden; detail returns `deleted_at` |
+| Parent login/profile | Blocked | No provisioned/default credential accepted |
+
+No password, cookie or token value was written to the report. Screenshots are
+stored under `docs/evidence/android_live_*.png`.
+
 ## Quy Tac Khi Test DB That
 
 - Khong bam Delete/Archive tren record quan trong.
@@ -88,11 +104,11 @@ MOBILE_TEST_
 
 | ID | Test case | Cach test | Expected result | Result | Note |
 | --- | --- | --- | --- | --- | --- |
-| LIVE-001 | App chay live API | Chay lenh flutter run voi dart-define live API | App mo duoc man Login | Untested | |
-| LIVE-002 | Login can bo | Nhap account can bo va bam Login | Vao Home, hien Welcome va Role | Untested | |
+| LIVE-001 | App chay live API | Chay lenh flutter run voi dart-define live API | App mo duoc man Login | Pass | API 35 AVD |
+| LIVE-002 | Login can bo | Nhap account can bo va bam Login | Vao Home, hien Welcome va Role | Pass | Principal va Teacher |
 | LIVE-003 | Logout | Bam icon logout tren AppBar | Quay lai Login, session duoc xoa | Untested | |
 | LIVE-004 | Mo lai app | Login xong, hot restart/reopen app | Neu session con hop le thi vao Home, neu khong thi Login | Untested | |
-| LIVE-005 | Menu Home | Kiem tra 8 menu module | Du menu: Academic Years, Classes, Teachers, Students, Accounts, Class Transfer, Outgoing Transfer, Incoming Transfer | Untested | |
+| LIVE-005 | Menu Home | Kiem tra navigation theo role | Principal co menu quan ly; Teacher chi co module duoc phep | Pass | Teacher scope dung 1 lop/3 tre |
 
 ## Authentication
 
@@ -139,11 +155,11 @@ MOBILE_TEST_
 
 | ID | Test case | Cach test | Expected result | Result | Note |
 | --- | --- | --- | --- | --- | --- |
-| TCH-001 | View list | Mo Teachers | Hien list giao vien tu backend | Untested | |
-| TCH-002 | View detail | Bam vao 1 giao vien | Hien dung ten/email/position | Untested | |
-| TCH-003 | Create teacher test | Tao giao vien MOBILE_TEST_ | Tao thanh cong | Untested | |
+| TCH-001 | View list | Mo Teachers | Hien list giao vien tu backend | Pass | Live Principal |
+| TCH-002 | View detail | Bam vao 1 giao vien | Hien dung ten/email/position | Pass | Test record ID 26 |
+| TCH-003 | Create teacher test | Tao giao vien MOBILE_TEST_ | Tao thanh cong | Pass | `MOBILE_TEST_TEACHER_235640` |
 | TCH-004 | Update teacher test | Sua phone/position/name | Cap nhat thanh cong | Untested | |
-| TCH-005 | Delete UI archive | Bam Delete giao vien test | Giao vien bi archive/khong con hien | Untested | Chi giao vien test |
+| TCH-005 | Delete UI archive | Bam Delete giao vien test | Giao vien bi archive/khong con hien | Pass | ID 26 has `deleted_at` |
 
 ## Students Management
 

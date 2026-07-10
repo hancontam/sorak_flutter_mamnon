@@ -16,6 +16,7 @@ import 'package:sorak_flutter_mamnon/modules/health/providers/nutrition_assessme
 import 'package:sorak_flutter_mamnon/modules/incoming_transfers/providers/incoming_transfer_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/students/providers/student_provider.dart';
+import 'package:sorak_flutter_mamnon/modules/teachers/providers/teacher_provider.dart';
 
 import 'helpers/test_app.dart';
 
@@ -52,6 +53,10 @@ void main() {
       tester,
     ) async {
       final localStorage = await tester.pumpLoggedInSorakApp();
+
+      final initialShellContext = tester.element(find.byType(AppShell));
+      expect(initialShellContext.read<TeacherProvider>().isLoading, isFalse);
+      expect(initialShellContext.read<TeacherProvider>().items, isNotEmpty);
 
       await tester.tap(find.byKey(const ValueKey('active_year_dropdown')));
       await tester.pumpAndSettle();

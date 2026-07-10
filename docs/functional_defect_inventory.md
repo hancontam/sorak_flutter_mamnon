@@ -13,5 +13,7 @@
 | SORAK-TEST-009 | Critical | Closed | Parent live flow can display mock Health/Growth data | Parent repositories/screens never return fixture Health/Growth | No mock fallback in live mode |
 | SORAK-TEST-010 | High | Closed | Parent profile uses hard-coded student id | Parent profile renders student 401 from `/auth/me` | Student id comes from `/auth/me` profile |
 | SORAK-TEST-011 | High | Contract gap | Parent Health/Growth endpoints do not exist | Backend health routes allow staff only | UI reports unavailable until a real read-only contract exists |
-| SORAK-TEST-012 | High | Partial | Principal UI shows Bad Request | Exact mutation DTO tests and safe backend message pass; live mutation pending | Confirm mutation on `MOBILE_TEST_` record during Android smoke |
-| SORAK-TEST-013 | High | Partial | Android role journeys lacked evidence | Mock Principal/Teacher/Parent pass on API 36; live remains pending | Repeat role smoke with live API build and read-only data |
+| SORAK-TEST-012 | High | Closed | Principal UI shows Bad Request | Android live created Teacher ID 26 with `MOBILE_TEST_` prefix, refreshed list, then soft-archived it; detail has `deleted_at` | Exact DTO tests and live prefixed mutation pass without 400 |
+| SORAK-TEST-013 | High | Partial | Android role journeys lacked evidence | Live Principal and Teacher pass read-only on API 35; no usable Parent live credential | Run Parent profile after a test account is provisioned |
+| SORAK-TEST-014 | High | Closed | Principal dashboard kept Teacher count loading after login | Removed unscoped Home load; AppShell is the only year-scoped loader; live shows 21 teachers | Principal dashboard settles with year 21 and no duplicate initial fetch |
+| SORAK-TEST-015 | Medium | Closed | Clean Android build can stall under 8 GB Gradle heap configuration | Gradle heap reduced to 2 GB; clean and incremental live APK builds pass | Debug APK builds on the project workstation without memory starvation |

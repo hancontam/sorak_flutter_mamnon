@@ -36,10 +36,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
+      if (!mounted || !widget.showAppBar) {
         return;
       }
 
+      // AppShell owns all year-scoped loading. A standalone HomeScreen keeps
+      // this fallback for previews and isolated routes without the shell.
       context.read<StudentProvider>().loadItems();
       context.read<ClassProvider>().loadItems();
       final role = context.read<AuthProvider>().currentUser?.role.toUpperCase();

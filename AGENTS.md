@@ -593,10 +593,11 @@ phanthihoa@edu.vn / <khong luu password trong repo>
 - Tai khoan teacher test da verify tren live API:
 
 ```text
-gv01@sorak.local / changeme@123
-gv03@sorak.local / changeme@123
-gv04@sorak.local / changeme@123
-maint@edu.vn / changeme@123
+gv01@sorak.local
+gv03@sorak.local
+gv04@sorak.local
+maint@edu.vn
+Password: <lay tu seed/password manager cuc bo, khong luu trong repo>
 ```
 
 Goal planning rule:

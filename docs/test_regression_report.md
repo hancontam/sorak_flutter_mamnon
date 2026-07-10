@@ -2,7 +2,7 @@
 
 ## Thong Tin Chung
 
-Ngay chay: 2026-07-10 (Goals 36-49)
+Ngay chay: 2026-07-10 to 2026-07-11 (Goals 36-49)
 
 Pham vi:
 
@@ -39,14 +39,14 @@ phanthihoa@edu.vn
 | --- | --- | --- |
 | 40 Baseline/defects | Pass | Inventory SORAK-TEST-001..013, known regressions captured |
 | 41 Canonical mock API | Pass | One Dio adapter, live envelopes, pagination, nested Vietnamese fixtures |
-| 42 Mutation contracts | Pass automated | Exact Class/Student/Transfer DTOs; live Android mutation still pending |
+| 42 Mutation contracts | Pass | Exact DTOs plus live Teacher create/list refresh/soft archive |
 | 43 Global year | Pass | Three datasets, all-tab invalidation, empty year, stale response race |
 | 44 Principal journeys | Pass automated | Accounts, CRUD, transfer, health/nutrition/growth flows |
 | 45 Teacher scope | Pass automated | Assigned class/student data, action visibility, deep-link and API 403 |
 | 46 Parent truthful data | Pass with backend blocker | `/auth/me` profile only; Health/Growth show unavailable, never mock |
 | 47 Health/Nutrition/Growth | Pass automated | Bulk save then reload, missing rows, history and WHO curves |
 | 48 Cross-module integrity | Pass automated | Teacher-account grant and class transfer approve/revert |
-| 49 Live/final regression | Partial | Mock Android role smoke passes; live adapter passes; live Android still pending |
+| 49 Live/final regression | Partial | Live Principal/Teacher and prefixed mutation pass on API 35; Parent credential pending |
 | 50 UI/UX enhancement | Blocked by quality gate | Do not start while High live/backend gaps remain |
 
 ## Regression Gate Ket Qua
@@ -60,7 +60,7 @@ phanthihoa@edu.vn
 | Hard-code/endpoint scan | Pass | No live year-1 fallback in health; no secret prints |
 | Live HTTP smoke | Pass | login/me/refresh/year/health/nutrition/growth/logout all HTTP 200; secrets not logged |
 | Android mock UI smoke | Pass | Pixel 7 Pro emulator, Android 16/API 36; Principal, Teacher, Parent and staff Health |
-| Android live UI smoke | Pending | Requires explicit live run; no live mutation was performed |
+| Android live UI smoke | Partial | Principal, Teacher and `MOBILE_TEST_` Teacher create/archive pass on API 35; Parent login unavailable |
 | Debug APK | Pass | `build/app/outputs/flutter-apk/app-debug.apk` |
 
 ## Automated Functional Test Files
@@ -112,7 +112,7 @@ Chi test doc du lieu, khong create/update/delete/archive.
 
 ## Manual Test Con Lai
 
-Can mo app that tren emulator/device va check theo file:
+Con lai Parent live profile sau khi co tai khoan test. Thuc hien theo file:
 
 ```text
 docs/manual_live_api_checklist.md
@@ -126,7 +126,7 @@ flutter run --dart-define=USE_MOCK_API=false --dart-define=API_BASE_URL=http://1
 
 ## Android Evidence
 
-Evidence generated on Pixel 7 Pro emulator (Android 16/API 36):
+Mock evidence generated on Pixel 7 Pro emulator (Android 16/API 36):
 
 - `docs/evidence/android_login.png`
 - `docs/evidence/android_principal.png`
@@ -145,6 +145,31 @@ Observed:
   instead of fixture data.
 - Staff Health content remains above the Material 3 bottom navigation.
 
+Live evidence generated with `USE_MOCK_API=false` on clean API 35 x86_64 AVD:
+
+- `docs/evidence/android_live_login.png`
+- `docs/evidence/android_live_principal.png`
+- `docs/evidence/android_live_teacher.png`
+- `docs/evidence/android_live_teacher_health.png`
+
+Live observations:
+
+- Principal login, `/auth/me` and active year 2025-2026 pass. Dashboard settles
+  at 49 students, 9 classes and 21 teachers.
+- Teacher login passes and is scoped to 1 assigned class and 3 students.
+- Teacher Classes, Students, Transfers and Health read flows pass. Health shows
+  the same three assigned students and remains above bottom navigation.
+- No app `FATAL EXCEPTION`, `E/flutter`, `DartError`, `Bad Request` or ANR was
+  observed in the final API 35 runs.
+- Principal created `MOBILE_TEST_TEACHER_235640` through the Flutter form. The
+  list refreshed with Teacher ID 26; Delete then hid it and live detail
+  confirmed `deleted_at` is set, proving soft archive.
+- Parent login remains blocked: default credentials for all 49 active-year
+  students were rejected. No password, cookie or token was logged.
+- API 36 AVD package services became unhealthy during reinstall, so live smoke
+  was repeated on a fresh API 35 AVD. This was an emulator issue before app
+  startup, not a Flutter exception.
+
 Quy tac:
 
 - Chi create/update/archive record test co prefix `MOBILE_TEST_`.
@@ -160,7 +185,8 @@ Trang thai live API smoke read-only: Pass.
 
 Trang thai Android mock UI: Pass cho Principal, Teacher va Parent.
 
-Trang thai Android live API: Chua chay. Khong duoc ket luan live UI on dinh truoc khi lap lai read smoke theo role voi `USE_MOCK_API=false`.
+Trang thai Android live API: Partial. Principal, Teacher va mutation
+`MOBILE_TEST_` pass; Parent login chua co bang chung.
 
-Definition of Done tong the: Chua dat. Con blocker Parent Health/Growth API,
-live mutation `MOBILE_TEST_` va Android live role smoke.
+Definition of Done tong the: Chua dat. Con blocker Parent Health/Growth API va
+Parent Android live role smoke.
