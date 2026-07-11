@@ -30,9 +30,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav_students')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('module_add_button')), findsOneWidget);
-    await tester.tap(find.byTooltip('Thao tác khác').first);
+    await tester.tap(find.byTooltip('Thao tác với học sinh').first);
     await tester.pumpAndSettle();
-    expect(find.text('Chỉnh sửa'), findsOneWidget);
+    expect(find.text('Cập nhật trẻ'), findsWidgets);
     expect(find.text('Xóa'), findsNothing);
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();

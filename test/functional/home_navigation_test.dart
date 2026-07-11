@@ -77,7 +77,7 @@ void main() {
       });
     }
 
-    testWidgets('filters students with search and chips', (tester) async {
+    testWidgets('filters students by name or card number', (tester) async {
       await _pumpTallHome(tester);
 
       await tester.tap(find.byKey(const ValueKey('nav_students')));
@@ -85,7 +85,6 @@ void main() {
 
       expect(find.byKey(const ValueKey('module_search_field')), findsOneWidget);
       expect(find.text('Nguyễn Minh An'), findsOneWidget);
-      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
 
       await tester.enterText(
         find.byKey(const ValueKey('module_search_field')),
@@ -93,7 +92,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
+      expect(find.byKey(const ValueKey('student_card_402')), findsOneWidget);
       expect(find.text('Nguyễn Minh An'), findsNothing);
 
       await tester.enterText(
@@ -102,7 +101,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Không tìm thấy dữ liệu'), findsOneWidget);
+      expect(find.text('Không tìm thấy học sinh'), findsOneWidget);
       expect(find.text('Xóa bộ lọc'), findsOneWidget);
     });
 
@@ -118,7 +117,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Ngày sinh'), findsOneWidget);
-      expect(find.text('2021-03-10'), findsOneWidget);
+      expect(find.text('10/03/2021'), findsOneWidget);
       expect(find.text('Số điện thoại'), findsOneWidget);
 
       await tester.pageBack();
@@ -142,15 +141,15 @@ void main() {
 
       expect(find.text('Nguyễn Minh An'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Thao tác khác').first);
+      await tester.tap(find.byTooltip('Thao tác với học sinh').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Xóa'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Xóa dữ liệu'), findsOneWidget);
+      expect(find.text('Xóa hồ sơ trẻ?'), findsOneWidget);
       expect(
         find.text(
-          'Dữ liệu sẽ được ẩn khỏi danh sách đang hoạt động và không bị xóa vĩnh viễn.',
+          'Hồ sơ trẻ sẽ được ẩn khỏi danh sách đang hoạt động và không bị xóa vĩnh viễn.',
         ),
         findsOneWidget,
       );
@@ -159,7 +158,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('Đã xóa dữ liệu khỏi danh sách'), findsOneWidget);
+      expect(find.text('Đã xóa hồ sơ trẻ khỏi danh sách'), findsOneWidget);
       expect(find.text('Nguyễn Minh An'), findsNothing);
       expect(find.text('Trần Bảo Ngọc'), findsOneWidget);
     });

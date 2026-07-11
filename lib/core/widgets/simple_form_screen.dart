@@ -116,7 +116,8 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
 
     return (value) {
       if (value == null || value.trim().isEmpty) {
-        return 'Vui lòng nhập ${field.label.toLowerCase()}';
+        final fieldName = field.label.replaceAll('*', '').trim().toLowerCase();
+        return 'Vui lòng nhập $fieldName';
       }
       return null;
     };

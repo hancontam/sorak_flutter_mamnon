@@ -383,6 +383,20 @@ class MockApiBackend implements HttpClientAdapter {
       classes.add(item);
       return _object(item);
     }
+    final classTeacherMatch = RegExp(
+      r'^/classes/(\d+)/teachers/(\d+)$',
+    ).firstMatch(path);
+    if (classTeacherMatch != null && method == 'DELETE') {
+      _requirePrincipal();
+      final classId = int.parse(classTeacherMatch.group(1)!);
+      final teacherId = int.parse(classTeacherMatch.group(2)!);
+      final item = _find(classes, 'class_id', classId);
+      (item['teacher_classes'] as List).removeWhere((assignment) {
+        final teacher = (assignment as Map)['teacher'];
+        return teacher is Map && teacher['teacher_id'] == teacherId;
+      });
+      return _object(item);
+    }
     final classId = _pathId(path, '/classes/');
     if (classId != null) {
       _requireStaff();
@@ -407,7 +421,12 @@ class MockApiBackend implements HttpClientAdapter {
         return _object(item);
       }
       if (method == 'PATCH') {
-        _rejectUnknown(body, ['class_name', 'age_group', 'room']);
+        _rejectUnknown(body, [
+          'class_name',
+          'school_year_id',
+          'age_group',
+          'room',
+        ]);
         item.addAll(body);
         return _object(item);
       }

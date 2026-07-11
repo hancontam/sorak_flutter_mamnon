@@ -7,7 +7,9 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_date_field.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../classes/models/school_class.dart';
+import '../../classes/providers/class_provider.dart';
 import '../../form_options/providers/form_options_provider.dart';
 import '../../students/models/student.dart';
 import '../models/class_transfer.dart';
@@ -58,15 +60,19 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     super.dispose();
   }
 
-  Future<void> _save(FormOptionsProvider optionsProvider) async {
+  Future<void> _save(
+    FormOptionsProvider optionsProvider, {
+    required bool isTeacher,
+  }) async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       return;
     }
 
-    final student = _selectedStudent(optionsProvider);
-    final fromClass = _selectedFromClass(optionsProvider);
-    final toClass = _selectedToClass(optionsProvider);
+    final scopedClasses = _scopedClasses(optionsProvider);
+    final student = _selectedStudent(optionsProvider, scopedClasses);
+    final fromClass = _selectedFromClass(scopedClasses);
+    final toClass = _selectedToClass(scopedClasses);
     if (student == null || fromClass == null || toClass == null) {
       return;
     }
@@ -86,7 +92,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
             'status': _status ?? TransferStatusOptions.pending,
           })
         : await provider.updateItem(widget.classTransfer!.id, {
-            'action': _actionFromStatus(_status),
+            'action': isTeacher ? 'cancel' : _actionFromStatus(_status),
           });
 
     if (!mounted) {
@@ -111,11 +117,13 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
   Widget build(BuildContext context) {
     return Consumer<FormOptionsProvider>(
       builder: (context, optionsProvider, _) {
-        _applyInitialValuesAfterOptionsLoaded(optionsProvider);
+        final isTeacher = _isTeacher(context);
+        final scopedClasses = _scopedClasses(optionsProvider);
+        _applyInitialValuesAfterOptionsLoaded(optionsProvider, scopedClasses);
 
-        final sourceClassOptions = _classOptions(optionsProvider.classes);
-        final studentOptions = _studentOptions(optionsProvider);
-        final targetClassOptions = _targetClassOptions(optionsProvider);
+        final sourceClassOptions = _classOptions(scopedClasses);
+        final studentOptions = _studentOptions(optionsProvider, scopedClasses);
+        final targetClassOptions = _targetClassOptions(scopedClasses);
 
         final selectedFromClassId = _valueIfExists(
           _fromClassId,
@@ -147,7 +155,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
               children: [
                 AppDropdownField<String>(
                   key: ValueKey('class_transfer_from_$selectedFromClassId'),
-                  label: 'Lớp hiện tại',
+                  label: 'Lớp hiện tại *',
                   options: sourceClassOptions,
                   value: selectedFromClassId,
                   hintText: 'Chọn lớp hiện tại',
@@ -163,12 +171,16 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
                     );
                   },
                 ),
+                if (scopedClasses.isEmpty) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  const _NoCompatibleClassNotice(),
+                ],
                 const SizedBox(height: AppSpacing.sm),
                 AppDropdownField<String>(
                   key: ValueKey(
                     'class_transfer_student_${selectedFromClassId ?? ''}_${selectedStudentId ?? ''}',
                   ),
-                  label: 'Học sinh',
+                  label: 'Học sinh *',
                   options: studentOptions,
                   value: selectedStudentId,
                   hintText: _fromClassId == null
@@ -185,7 +197,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
                   key: ValueKey(
                     'class_transfer_to_${selectedFromClassId ?? ''}_${selectedToClassId ?? ''}',
                   ),
-                  label: 'Lớp chuyển đến',
+                  label: 'Lớp chuyển đến *',
                   options: targetClassOptions,
                   value: selectedToClassId,
                   hintText: _fromClassId == null
@@ -197,55 +209,65 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
                     setState(() => _toClassId = value);
                   },
                 ),
+                if (_fromClassId != null && targetClassOptions.isEmpty) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  const _NoCompatibleClassNotice(
+                    message: 'Hiện tại không có lớp cùng khối phù hợp.',
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.sm),
                 AppTextField(
                   controller: _reasonController,
-                  label: 'Lý do',
+                  label: 'Lý do *',
                   maxLines: 2,
                   validator: _requiredText('lý do'),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 AppDateField(
                   controller: _effectiveDateController,
-                  label: 'Ngày hiệu lực',
+                  label: 'Ngày hiệu lực *',
                   validator: _requiredText('ngày hiệu lực'),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                AppDropdownField<String>(
-                  key: ValueKey('class_transfer_status_$_status'),
-                  label: 'Trạng thái',
-                  options: const [
-                    AppOption(
-                      value: TransferStatusOptions.pending,
-                      label: 'Chờ duyệt',
-                    ),
-                    AppOption(
-                      value: TransferStatusOptions.approved,
-                      label: 'Đã duyệt',
-                    ),
-                    AppOption(
-                      value: TransferStatusOptions.rejected,
-                      label: 'Từ chối',
-                    ),
-                    AppOption(
-                      value: TransferStatusOptions.cancelled,
-                      label: 'Đã hủy',
-                    ),
-                  ],
-                  value: _status,
-                  hintText: 'Chọn trạng thái',
-                  validator: _requiredDropdown('trạng thái'),
-                  onChanged: (value) {
-                    setState(() => _status = value);
-                  },
-                ),
+                if (!isTeacher)
+                  AppDropdownField<String>(
+                    key: ValueKey('class_transfer_status_$_status'),
+                    label: 'Trạng thái',
+                    options: const [
+                      AppOption(
+                        value: TransferStatusOptions.pending,
+                        label: 'Chờ duyệt',
+                      ),
+                      AppOption(
+                        value: TransferStatusOptions.approved,
+                        label: 'Đã duyệt',
+                      ),
+                      AppOption(
+                        value: TransferStatusOptions.rejected,
+                        label: 'Từ chối',
+                      ),
+                      AppOption(
+                        value: TransferStatusOptions.cancelled,
+                        label: 'Đã hủy',
+                      ),
+                    ],
+                    value: _status,
+                    hintText: 'Chọn trạng thái',
+                    validator: _requiredDropdown('trạng thái'),
+                    onChanged: (value) {
+                      setState(() => _status = value);
+                    },
+                  ),
               ],
             ),
           ),
           bottomNavigationBar: _BottomSaveBar(
             isSaving: _isSaving,
             onCancel: () => Navigator.pop(context),
-            onSave: () => _save(optionsProvider),
+            saveLabel: isTeacher && widget.classTransfer != null
+                ? 'Hủy yêu cầu'
+                : 'Lưu',
+            onSave: () => _save(optionsProvider, isTeacher: isTeacher),
           ),
         );
       },
@@ -254,8 +276,9 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
 
   void _applyInitialValuesAfterOptionsLoaded(
     FormOptionsProvider optionsProvider,
+    List<SchoolClass> scopedClasses,
   ) {
-    if (_didApplyInitialValues || optionsProvider.classes.isEmpty) {
+    if (_didApplyInitialValues || scopedClasses.isEmpty) {
       return;
     }
 
@@ -267,7 +290,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
       final item = widget.classTransfer;
       SchoolClass? fromClass;
       if (item != null) {
-        for (final schoolClass in optionsProvider.classes) {
+        for (final schoolClass in scopedClasses) {
           if (schoolClass.className == item.fromClassName) {
             fromClass = schoolClass;
             break;
@@ -280,7 +303,10 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
         if (fromClass != null) {
           _fromClassId = '${fromClass.id}';
         } else {
-          final selectedStudent = _selectedStudent(optionsProvider);
+          final selectedStudent = _selectedStudent(
+            optionsProvider,
+            scopedClasses,
+          );
           if (selectedStudent != null && selectedStudent.classId != 0) {
             _fromClassId = '${selectedStudent.classId}';
           }
@@ -304,10 +330,20 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
         .toList();
   }
 
-  List<AppOption<String>> _studentOptions(FormOptionsProvider optionsProvider) {
+  List<AppOption<String>> _studentOptions(
+    FormOptionsProvider optionsProvider,
+    List<SchoolClass> scopedClasses,
+  ) {
     final classId = int.tryParse(_fromClassId ?? '');
+    final allowedClassIds = scopedClasses
+        .map((schoolClass) => schoolClass.id)
+        .toSet();
     return optionsProvider.allStudents
-        .where((student) => classId == null || student.classId == classId)
+        .where(
+          (student) =>
+              allowedClassIds.contains(student.classId) &&
+              (classId == null || student.classId == classId),
+        )
         .map(
           (student) => AppOption(
             value: '${student.id}',
@@ -317,18 +353,17 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
         .toList();
   }
 
-  List<AppOption<String>> _targetClassOptions(
-    FormOptionsProvider optionsProvider,
-  ) {
-    final fromClass = _selectedFromClass(optionsProvider);
+  List<AppOption<String>> _targetClassOptions(List<SchoolClass> scopedClasses) {
+    final fromClass = _selectedFromClass(scopedClasses);
     if (fromClass == null) {
       return const [];
     }
 
-    return optionsProvider.classes
+    return scopedClasses
         .where((schoolClass) {
           return schoolClass.id != fromClass.id &&
-              schoolClass.schoolYearId == fromClass.schoolYearId;
+              schoolClass.schoolYearId == fromClass.schoolYearId &&
+              schoolClass.ageGroup == fromClass.ageGroup;
         })
         .map(
           (schoolClass) => AppOption(
@@ -339,21 +374,21 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
         .toList();
   }
 
-  SchoolClass? _selectedFromClass(FormOptionsProvider optionsProvider) {
-    return _findClass(optionsProvider, _fromClassId);
+  SchoolClass? _selectedFromClass(List<SchoolClass> classes) {
+    return _findClass(classes, _fromClassId);
   }
 
-  SchoolClass? _selectedToClass(FormOptionsProvider optionsProvider) {
-    return _findClass(optionsProvider, _toClassId);
+  SchoolClass? _selectedToClass(List<SchoolClass> classes) {
+    return _findClass(classes, _toClassId);
   }
 
-  SchoolClass? _findClass(FormOptionsProvider optionsProvider, String? id) {
+  SchoolClass? _findClass(List<SchoolClass> classes, String? id) {
     final classId = int.tryParse(id ?? '');
     if (classId == null) {
       return null;
     }
 
-    for (final schoolClass in optionsProvider.classes) {
+    for (final schoolClass in classes) {
       if (schoolClass.id == classId) {
         return schoolClass;
       }
@@ -361,14 +396,21 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     return null;
   }
 
-  Student? _selectedStudent(FormOptionsProvider optionsProvider) {
+  Student? _selectedStudent(
+    FormOptionsProvider optionsProvider,
+    List<SchoolClass> scopedClasses,
+  ) {
     final selectedId = int.tryParse(_studentId ?? '');
     if (selectedId == null) {
       return null;
     }
 
+    final allowedClassIds = scopedClasses
+        .map((schoolClass) => schoolClass.id)
+        .toSet();
     for (final student in optionsProvider.allStudents) {
-      if (student.id == selectedId) {
+      if (student.id == selectedId &&
+          allowedClassIds.contains(student.classId)) {
         return student;
       }
     }
@@ -398,6 +440,31 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     };
   }
 
+  bool _isTeacher(BuildContext context) {
+    try {
+      return context.read<AuthProvider>().currentUser?.role.toUpperCase() ==
+          'TEACHER';
+    } on ProviderNotFoundException {
+      // Isolated form tests intentionally omit an auth provider.
+      return false;
+    }
+  }
+
+  List<SchoolClass> _scopedClasses(FormOptionsProvider optionsProvider) {
+    if (!_isTeacher(context)) {
+      return optionsProvider.classes;
+    }
+
+    final assignedIds = context
+        .watch<ClassProvider>()
+        .items
+        .map((schoolClass) => schoolClass.id)
+        .toSet();
+    return optionsProvider.classes
+        .where((schoolClass) => assignedIds.contains(schoolClass.id))
+        .toList();
+  }
+
   FormFieldValidator<String> _requiredText(String label) {
     return (value) {
       if (value == null || value.trim().isEmpty) {
@@ -422,11 +489,13 @@ class _BottomSaveBar extends StatelessWidget {
     required this.isSaving,
     required this.onCancel,
     required this.onSave,
+    this.saveLabel = 'Lưu',
   });
 
   final bool isSaving;
   final VoidCallback onCancel;
   final VoidCallback onSave;
+  final String saveLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -459,11 +528,31 @@ class _BottomSaveBar extends StatelessWidget {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Lưu'),
+                    : Text(saveLabel),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NoCompatibleClassNotice extends StatelessWidget {
+  const _NoCompatibleClassNotice({
+    this.message = 'Hiện tại không có lớp phù hợp.',
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      message,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: AppColors.primary,
+        fontWeight: FontWeight.w600,
+        fontStyle: FontStyle.italic,
       ),
     );
   }

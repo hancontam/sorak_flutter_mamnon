@@ -10,11 +10,13 @@ class SorakAvatar extends StatelessWidget {
     required this.seed,
     this.size = 48,
     this.fallbackLabel,
+    this.diceBearStyle = 'pixel-art',
   });
 
   final Object seed;
   final double size;
   final String? fallbackLabel;
+  final String diceBearStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,8 @@ class SorakAvatar extends StatelessWidget {
     }
 
     final safeSeed = Uri.encodeComponent('account-$seed');
-    final url = 'https://api.dicebear.com/10.x/pixel-art/svg?seed=$safeSeed';
+    final style = Uri.encodeComponent(diceBearStyle);
+    final url = 'https://api.dicebear.com/10.x/$style/svg?seed=$safeSeed';
 
     return _AvatarFrame(
       size: size,

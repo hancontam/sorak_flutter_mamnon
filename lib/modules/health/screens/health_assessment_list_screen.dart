@@ -13,7 +13,9 @@ import '../../../core/widgets/empty_view.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../core/widgets/sorak_avatar.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../classes/models/school_class.dart';
+import '../../classes/providers/class_provider.dart';
 import '../../form_options/providers/form_options_provider.dart';
 import '../models/health_assessment.dart';
 import '../providers/health_assessment_provider.dart';
@@ -68,12 +70,18 @@ class _HealthAssessmentListScreenState
     await context.read<HealthAssessmentProvider>().loadItems();
   }
 
-  List<HealthAssessment> _filtered(List<HealthAssessment> source) {
+  List<HealthAssessment> _filtered(
+    List<HealthAssessment> source,
+    Set<int>? allowedClassIds,
+  ) {
     final query = normalizeVietnamese(_search);
     final classId = int.tryParse(_selectedClassId ?? '');
     final dateFilter = _dateController.text.trim();
 
     final items = source.where((item) {
+      if (allowedClassIds != null && !allowedClassIds.contains(item.classId)) {
+        return false;
+      }
       if (classId != null && item.classId != classId) {
         return false;
       }
@@ -100,8 +108,9 @@ class _HealthAssessmentListScreenState
       if (byDate != 0) {
         return byDate;
       }
-      return normalizeVietnamese(a.studentName)
-          .compareTo(normalizeVietnamese(b.studentName));
+      return normalizeVietnamese(
+        a.studentName,
+      ).compareTo(normalizeVietnamese(b.studentName));
     });
     return items;
   }
@@ -123,7 +132,15 @@ class _HealthAssessmentListScreenState
   Widget build(BuildContext context) {
     final optionsProvider = context.watch<FormOptionsProvider>();
     final healthProvider = context.watch<HealthAssessmentProvider>();
-    final items = _filtered(healthProvider.items);
+    final role = context.watch<AuthProvider>().currentUser?.role.toUpperCase();
+    final isTeacher = role == 'TEACHER';
+    final scopedClasses = isTeacher
+        ? context.watch<ClassProvider>().items
+        : optionsProvider.classes;
+    final allowedClassIds = isTeacher
+        ? scopedClasses.map((schoolClass) => schoolClass.id).toSet()
+        : null;
+    final items = _filtered(healthProvider.items, allowedClassIds);
     final isLoading = healthProvider.isLoading || optionsProvider.isLoading;
     final errorMessage = healthProvider.errorMessage;
 
@@ -150,20 +167,24 @@ class _HealthAssessmentListScreenState
           ),
           children: [
             AppDropdownField<String>(
-              key: ValueKey(
-                'health_history_class_${_selectedClassId ?? ''}',
-              ),
+              key: ValueKey('health_history_class_${_selectedClassId ?? ''}'),
               label: 'Lớp',
-              options: _classOptions(optionsProvider.classes),
+              options: _classOptions(scopedClasses),
               value: _selectedClassId ?? '',
               hintText: 'Chọn lớp',
+              enabled: !optionsProvider.isLoading && scopedClasses.isNotEmpty,
               onChanged: (value) {
                 setState(() {
-                  _selectedClassId =
-                      (value == null || value.isEmpty) ? null : value;
+                  _selectedClassId = (value == null || value.isEmpty)
+                      ? null
+                      : value;
                 });
               },
             ),
+            if (scopedClasses.isEmpty) ...[
+              const SizedBox(height: AppSpacing.xs),
+              const _NoCompatibleClassNotice(),
+            ],
             const SizedBox(height: AppSpacing.sm),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,13 +222,11 @@ class _HealthAssessmentListScreenState
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              items.isEmpty
-                  ? '0 đánh giá'
-                  : '${items.length} đánh giá',
+              items.isEmpty ? '0 đánh giá' : '${items.length} đánh giá',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.mutedForeground,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             if (isLoading && healthProvider.items.isEmpty)
@@ -218,24 +237,24 @@ class _HealthAssessmentListScreenState
             else if (errorMessage != null && healthProvider.items.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: ErrorView(
-                  message: errorMessage,
-                  onRetry: _reload,
-                ),
+                child: ErrorView(message: errorMessage, onRetry: _reload),
               )
             else if (items.isEmpty)
               EmptyView(
-                title: _search.trim().isNotEmpty ||
+                title:
+                    _search.trim().isNotEmpty ||
                         _selectedClassId != null ||
                         _dateController.text.trim().isNotEmpty
                     ? 'Không tìm thấy đánh giá'
                     : 'Chưa có đánh giá sức khỏe',
-                message: _search.trim().isNotEmpty ||
+                message:
+                    _search.trim().isNotEmpty ||
                         _selectedClassId != null ||
                         _dateController.text.trim().isNotEmpty
                     ? 'Thử đổi lớp, ngày hoặc từ khóa tìm kiếm.'
                     : 'Dữ liệu sẽ hiện khi có đánh giá trong năm học.',
-                type: _search.trim().isNotEmpty ||
+                type:
+                    _search.trim().isNotEmpty ||
                         _selectedClassId != null ||
                         _dateController.text.trim().isNotEmpty
                     ? EmptyViewType.search
@@ -243,10 +262,7 @@ class _HealthAssessmentListScreenState
               )
             else
               for (var index = 0; index < items.length; index++) ...[
-                _HealthHistoryCard(
-                  index: index + 1,
-                  assessment: items[index],
-                ),
+                _HealthHistoryCard(index: index + 1, assessment: items[index]),
                 const SizedBox(height: AppSpacing.sm),
               ],
           ],
@@ -256,11 +272,24 @@ class _HealthAssessmentListScreenState
   }
 }
 
+class _NoCompatibleClassNotice extends StatelessWidget {
+  const _NoCompatibleClassNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Hiện tại không có lớp phù hợp.',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: AppColors.primary,
+        fontWeight: FontWeight.w600,
+        fontStyle: FontStyle.italic,
+      ),
+    );
+  }
+}
+
 class _HealthHistoryCard extends StatelessWidget {
-  const _HealthHistoryCard({
-    required this.index,
-    required this.assessment,
-  });
+  const _HealthHistoryCard({required this.index, required this.assessment});
 
   final int index;
   final HealthAssessment assessment;
@@ -273,12 +302,14 @@ class _HealthHistoryCard extends StatelessWidget {
     final bmiText = assessment.bmi <= 0
         ? '—'
         : assessment.bmiStatus.isEmpty
-            ? assessment.bmi.toStringAsFixed(1)
-            : '${assessment.bmi.toStringAsFixed(1)} · ${assessment.bmiStatus}';
-    final heightAge =
-        assessment.heightStatus.isEmpty ? '—' : assessment.heightStatus;
-    final weightAge =
-        assessment.weightStatus.isEmpty ? '—' : assessment.weightStatus;
+        ? assessment.bmi.toStringAsFixed(1)
+        : '${assessment.bmi.toStringAsFixed(1)} · ${assessment.bmiStatus}';
+    final heightAge = assessment.heightStatus.isEmpty
+        ? '—'
+        : assessment.heightStatus;
+    final weightAge = assessment.weightStatus.isEmpty
+        ? '—'
+        : assessment.weightStatus;
 
     return Card(
       elevation: 0,
@@ -300,9 +331,9 @@ class _HealthHistoryCard extends StatelessWidget {
                   child: Text(
                     '$index.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.mutedForeground,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: AppColors.mutedForeground,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 SorakAvatar(
@@ -388,10 +419,7 @@ class _HealthHistoryCard extends StatelessWidget {
 }
 
 class _InfoLine extends StatelessWidget {
-  const _InfoLine({
-    required this.label,
-    required this.value,
-  });
+  const _InfoLine({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -407,9 +435,9 @@ class _InfoLine extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.mutedForeground,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -420,9 +448,9 @@ class _InfoLine extends StatelessWidget {
               textAlign: TextAlign.right,
               softWrap: true,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.foreground,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: AppColors.foreground,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

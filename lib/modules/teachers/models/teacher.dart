@@ -11,6 +11,10 @@ class Teacher {
     required this.position,
     this.phone = '',
     this.gender = '',
+    this.dateOfBirth = '',
+    this.qualification = '',
+    this.workStartDate = '',
+    this.address = '',
     this.accountId = 0,
     this.workStatus = 'Đang làm việc',
     this.isDeleted = false,
@@ -25,6 +29,14 @@ class Teacher {
   final String phone;
   @JsonKey(defaultValue: '')
   final String gender;
+  @JsonKey(defaultValue: '')
+  final String dateOfBirth;
+  @JsonKey(defaultValue: '')
+  final String qualification;
+  @JsonKey(defaultValue: '')
+  final String workStartDate;
+  @JsonKey(defaultValue: '')
+  final String address;
   @JsonKey(readValue: _readAccountId)
   final int accountId;
   @JsonKey(defaultValue: 'Đang làm việc')
@@ -47,6 +59,10 @@ class Teacher {
     String? position,
     String? phone,
     String? gender,
+    String? dateOfBirth,
+    String? qualification,
+    String? workStartDate,
+    String? address,
     int? accountId,
     String? workStatus,
     bool? isDeleted,
@@ -58,6 +74,10 @@ class Teacher {
       position: position ?? this.position,
       phone: phone ?? this.phone,
       gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      qualification: qualification ?? this.qualification,
+      workStartDate: workStartDate ?? this.workStartDate,
+      address: address ?? this.address,
       accountId: accountId ?? this.accountId,
       workStatus: workStatus ?? this.workStatus,
       isDeleted: isDeleted ?? this.isDeleted,

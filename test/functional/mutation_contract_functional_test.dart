@@ -61,7 +61,27 @@ void main() {
           (item) =>
               item.method == 'PATCH' && item.path == '/classes/${created.id}',
         );
-        expect(update.body, {'class_name': 'MOBILE_TEST_Mầm 1C mới'});
+        expect(update.body, {
+          'class_name': 'MOBILE_TEST_Mầm 1C mới',
+          'school_year_id': 103,
+        });
+
+        final assignedTeacherId = created.assignedTeachers.single.id;
+        await repository.removeTeacher(
+          classId: created.id,
+          teacherId: assignedTeacherId,
+        );
+        expect(
+          backend.requests.any(
+            (item) =>
+                item.method == 'DELETE' &&
+                item.path ==
+                    '/classes/${created.id}/teachers/$assignedTeacherId',
+          ),
+          isTrue,
+        );
+        final afterRemoval = await repository.getById(created.id);
+        expect(afterRemoval?.assignedTeachers, isEmpty);
       },
     );
 
