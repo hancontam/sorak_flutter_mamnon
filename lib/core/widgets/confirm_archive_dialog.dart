@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -13,7 +14,18 @@ Future<bool> showConfirmArchiveDialog({
     context: context,
     builder: (context) {
       return AlertDialog(
-        icon: const Icon(Icons.delete_outline, color: AppColors.error),
+        icon: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.destructive,
+            borderRadius: BorderRadius.circular(AppSpacing.radius),
+          ),
+          child: const Icon(
+            LucideIcons.trash2,
+            color: AppColors.primaryForeground,
+          ),
+        ),
         title: Text(title),
         content: Text(message),
         actionsPadding: const EdgeInsets.fromLTRB(
@@ -29,11 +41,11 @@ Future<bool> showConfirmArchiveDialog({
           ),
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.destructive,
+              foregroundColor: AppColors.primaryForeground,
             ),
             onPressed: () => Navigator.pop(context, true),
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(LucideIcons.trash2, size: 18),
             label: const Text('Xóa'),
           ),
         ],

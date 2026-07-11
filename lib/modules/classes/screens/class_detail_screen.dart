@@ -14,13 +14,10 @@ class ClassDetailScreen extends StatelessWidget {
       title: schoolClass.className,
       rows: [
         DetailRow(label: 'ID', value: '${schoolClass.id}'),
-        DetailRow(
-          label: 'Academic year ID',
-          value: '${schoolClass.schoolYearId}',
-        ),
-        DetailRow(label: 'Age group', value: schoolClass.ageGroup),
-        DetailRow(label: 'Room', value: schoolClass.room),
-        DetailRow(label: 'Teacher', value: schoolClass.teacherName),
+        DetailRow(label: 'Mã năm học', value: '${schoolClass.schoolYearId}'),
+        DetailRow(label: 'Khối tuổi', value: schoolClass.ageGroup),
+        DetailRow(label: 'Phòng học', value: schoolClass.room),
+        DetailRow(label: 'Giáo viên phụ trách', value: schoolClass.teacherName),
       ],
     );
   }

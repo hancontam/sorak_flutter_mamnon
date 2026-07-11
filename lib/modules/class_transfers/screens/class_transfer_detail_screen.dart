@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/class_transfer.dart';
 
@@ -14,11 +15,14 @@ class ClassTransferDetailScreen extends StatelessWidget {
       title: classTransfer.studentName,
       rows: [
         DetailRow(label: 'ID', value: '${classTransfer.id}'),
-        DetailRow(label: 'From class', value: classTransfer.fromClassName),
-        DetailRow(label: 'To class', value: classTransfer.toClassName),
-        DetailRow(label: 'Reason', value: classTransfer.reason),
-        DetailRow(label: 'Effective date', value: classTransfer.effectiveDate),
-        DetailRow(label: 'Status', value: classTransfer.status),
+        DetailRow(label: 'Lớp hiện tại', value: classTransfer.fromClassName),
+        DetailRow(label: 'Lớp chuyển đến', value: classTransfer.toClassName),
+        DetailRow(label: 'Lý do', value: classTransfer.reason),
+        DetailRow(label: 'Ngày hiệu lực', value: classTransfer.effectiveDate),
+        DetailRow(
+          label: 'Trạng thái',
+          value: UiLabels.status(classTransfer.status),
+        ),
       ],
     );
   }

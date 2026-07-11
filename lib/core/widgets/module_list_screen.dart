@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -46,6 +47,7 @@ class ModuleListScreen<T> extends StatefulWidget {
     this.showAdd = true,
     this.showEdit = true,
     this.showDelete = true,
+    this.showAppBar = true,
   });
 
   final String title;
@@ -66,6 +68,7 @@ class ModuleListScreen<T> extends StatefulWidget {
   final bool showAdd;
   final bool showEdit;
   final bool showDelete;
+  final bool showAppBar;
 
   @override
   State<ModuleListScreen<T>> createState() => _ModuleListScreenState<T>();
@@ -128,136 +131,138 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
 
   @override
   Widget build(BuildContext context) {
-    Widget body;
-
-    if (widget.isLoading && widget.items.isEmpty) {
-      body = const LoadingView();
-    } else if (widget.errorMessage != null && widget.items.isEmpty) {
-      body = ErrorView(
-        message: widget.errorMessage!,
-        onRetry: widget.onRefresh,
-      );
-    } else if (widget.items.isEmpty) {
-      body = EmptyView(
-        title: 'Chưa có dữ liệu',
-        message: 'Không có dữ liệu phù hợp với năm học và quyền hiện tại.',
-        actionLabel: widget.showAdd ? 'Tạo mới' : null,
-        onAction: widget.showAdd ? widget.onAdd : null,
-      );
-    } else {
-      final filteredItems = _filteredItems;
-      final filterOptions = _filterOptions;
-
-      body = Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.xs,
-            ),
-            child: AppSearchBar(
-              controller: _searchController,
-              hintText: widget.searchHint ?? 'Tìm kiếm ${widget.title}',
-              onChanged: (value) {
-                setState(() {
-                  _query = value;
-                });
-              },
-              onClear: () {
-                _searchController.clear();
-                setState(() {
-                  _query = '';
-                });
-              },
-            ),
-          ),
-          if (filterOptions.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.xs),
-            FilterChipRow(
-              options: filterOptions,
-              selectedOption: _selectedFilter,
-              onSelected: (value) {
-                setState(() {
-                  _selectedFilter = value;
-                });
-              },
-            ),
-            const SizedBox(height: AppSpacing.xs),
-          ],
-          if (widget.isLoading) const LinearProgressIndicator(minHeight: 2),
-          Expanded(
-            child: filteredItems.isEmpty
-                ? EmptyView(
-                    title: 'Không tìm thấy dữ liệu',
-                    message:
-                        'Thử từ khóa khác, đổi bộ lọc hoặc xóa nội dung tìm kiếm.',
-                    icon: Icons.search_off,
-                    type: EmptyViewType.search,
-                    actionLabel: 'Xóa bộ lọc',
-                    onAction: () {
-                      _searchController.clear();
-                      setState(() {
-                        _query = '';
-                        _selectedFilter = null;
-                      });
-                    },
-                  )
-                : RefreshIndicator(
-                    onRefresh: widget.onRefresh,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        AppSpacing.sm,
-                        AppSpacing.md,
-                        88,
-                      ),
-                      itemCount: filteredItems.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: AppSpacing.sm),
-                      itemBuilder: (context, index) {
-                        final item = filteredItems[index];
-                        return _ModuleListCard<T>(
-                          title: widget.itemTitle(item),
-                          subtitle: widget.itemSubtitle(item),
-                          status: widget.itemStatus?.call(item),
-                          extraActions: widget.extraActions?.call(item),
-                          showEdit: widget.showEdit,
-                          showDelete: widget.showDelete,
-                          onTap: widget.onDetail == null
-                              ? null
-                              : () => widget.onDetail!(item),
-                          onEdit: () => widget.onEdit(item),
-                          onDelete: () => _confirmDelete(context, item),
-                        );
-                      },
-                    ),
-                  ),
-          ),
-        ],
-      );
-    }
+    final body = _buildBody(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            tooltip: 'Làm mới',
-            onPressed: widget.onRefresh,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: Text(widget.title),
+              actions: [
+                IconButton(
+                  tooltip: 'Làm mới',
+                  onPressed: widget.onRefresh,
+                  icon: const Icon(LucideIcons.refreshCcw, size: 20),
+                ),
+              ],
+            )
+          : null,
       body: body,
       floatingActionButton: widget.showAdd
           ? FloatingActionButton(
               key: const ValueKey('module_add_button'),
               onPressed: widget.onAdd,
-              child: const Icon(Icons.add),
+              child: const Icon(LucideIcons.plus),
             )
           : null,
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (widget.isLoading && widget.items.isEmpty) {
+      return const LoadingView();
+    }
+
+    if (widget.errorMessage != null && widget.items.isEmpty) {
+      return ErrorView(
+        message: widget.errorMessage!,
+        onRetry: widget.onRefresh,
+      );
+    }
+
+    if (widget.items.isEmpty) {
+      return EmptyView(
+        title: 'Chưa có dữ liệu',
+        message: 'Không có dữ liệu phù hợp với năm học và quyền hiện tại.',
+        actionLabel: widget.showAdd ? 'Tạo mới' : null,
+        onAction: widget.showAdd ? widget.onAdd : null,
+      );
+    }
+
+    final filteredItems = _filteredItems;
+    final filterOptions = _filterOptions;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.xs,
+          ),
+          child: AppSearchBar(
+            controller: _searchController,
+            hintText: widget.searchHint ?? 'Tìm kiếm ${widget.title}',
+            onChanged: (value) {
+              setState(() => _query = value);
+            },
+            onClear: () {
+              _searchController.clear();
+              setState(() => _query = '');
+            },
+          ),
+        ),
+        if (filterOptions.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          FilterChipRow(
+            options: filterOptions,
+            selectedOption: _selectedFilter,
+            onSelected: (value) {
+              setState(() => _selectedFilter = value);
+            },
+          ),
+          const SizedBox(height: AppSpacing.xs),
+        ],
+        if (widget.isLoading) const LinearProgressIndicator(minHeight: 2),
+        Expanded(
+          child: filteredItems.isEmpty
+              ? EmptyView(
+                  title: 'Không tìm thấy dữ liệu',
+                  message:
+                      'Thử từ khóa khác, đổi bộ lọc hoặc xóa nội dung tìm kiếm.',
+                  icon: LucideIcons.searchX,
+                  type: EmptyViewType.search,
+                  actionLabel: 'Xóa bộ lọc',
+                  onAction: () {
+                    _searchController.clear();
+                    setState(() {
+                      _query = '';
+                      _selectedFilter = null;
+                    });
+                  },
+                )
+              : RefreshIndicator(
+                  onRefresh: widget.onRefresh,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                      AppSpacing.md,
+                      88,
+                    ),
+                    itemCount: filteredItems.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+                      return _ModuleListCard<T>(
+                        title: widget.itemTitle(item),
+                        subtitle: widget.itemSubtitle(item),
+                        status: widget.itemStatus?.call(item),
+                        extraActions: widget.extraActions?.call(item),
+                        showEdit: widget.showEdit,
+                        showDelete: widget.showDelete,
+                        onTap: widget.onDetail == null
+                            ? null
+                            : () => widget.onDetail!(item),
+                        onEdit: () => widget.onEdit(item),
+                        onDelete: () => _confirmDelete(context, item),
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
@@ -265,26 +270,28 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
     final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showConfirmArchiveDialog(context: context);
 
-    if (confirmed) {
-      try {
-        await widget.onDelete(item);
+    if (!confirmed) {
+      return;
+    }
 
-        if (!mounted) {
-          return;
-        }
+    try {
+      await widget.onDelete(item);
 
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Đã xóa dữ liệu khỏi danh sách')),
-        );
-      } catch (_) {
-        if (!mounted) {
-          return;
-        }
-
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Chưa thể xóa dữ liệu')),
-        );
+      if (!mounted) {
+        return;
       }
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Đã xóa dữ liệu khỏi danh sách')),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Chưa thể xóa dữ liệu')),
+      );
     }
   }
 }
@@ -324,7 +331,7 @@ class _ModuleListCard<T> extends StatelessWidget {
           title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -335,9 +342,10 @@ class _ModuleListCard<T> extends StatelessWidget {
                 subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.mutedForeground,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               if (status != null && status!.trim().isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.xs),
@@ -381,25 +389,28 @@ class _ModuleListActionMenu extends StatelessWidget {
       if (showEdit)
         ModuleListAction(
           label: 'Chỉnh sửa',
-          icon: Icons.edit_outlined,
+          icon: LucideIcons.pencil,
           onSelected: onEdit,
         ),
       if (showDelete)
         ModuleListAction(
           label: 'Xóa',
-          icon: Icons.delete_outline,
+          icon: LucideIcons.trash2,
           onSelected: onDelete,
           isDestructive: true,
         ),
     ];
 
     if (actions.isEmpty) {
-      return const Icon(Icons.chevron_right, color: AppColors.textGray);
+      return const Icon(
+        LucideIcons.chevronRight,
+        color: AppColors.mutedForeground,
+      );
     }
 
     return PopupMenuButton<int>(
       tooltip: 'Thao tác khác',
-      icon: const Icon(Icons.more_vert),
+      icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
       onSelected: (index) => actions[index].onSelected(),
       itemBuilder: (context) {
         return [
@@ -421,15 +432,17 @@ class _ModuleListActionMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = action.isDestructive ? AppColors.error : AppColors.textDark;
+    final color = action.isDestructive
+        ? AppColors.destructive
+        : AppColors.foreground;
 
     return Row(
       children: [
-        Icon(action.icon, color: color),
+        Icon(action.icon, color: color, size: 18),
         const SizedBox(width: AppSpacing.sm),
         Text(
           action.label,
-          style: TextStyle(color: color, fontWeight: FontWeight.w500),
+          style: TextStyle(color: color, fontWeight: FontWeight.w700),
         ),
       ],
     );

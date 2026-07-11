@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -7,7 +8,7 @@ class DetailRow {
   const DetailRow({
     required this.label,
     required this.value,
-    this.icon = Icons.info_outline,
+    this.icon = LucideIcons.info,
   });
 
   final String label;
@@ -40,7 +41,7 @@ class SimpleDetailScreen extends StatelessWidget {
                   CircleAvatar(
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                     foregroundColor: AppColors.primary,
-                    child: const Icon(Icons.description_outlined),
+                    child: const Icon(LucideIcons.fileText, size: 20),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(

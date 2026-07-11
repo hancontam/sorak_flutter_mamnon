@@ -19,7 +19,7 @@ void main() {
       expect(find.text('Mật khẩu'), findsOneWidget);
     });
 
-    testWidgets('staff login success opens home and saves session', (
+    testWidgets('staff login success opens principal shell and saves session', (
       tester,
     ) async {
       final localStorage = await tester.pumpSorakApp();
@@ -38,13 +38,14 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('login_button')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Sorak Mầm non'), findsOneWidget);
-      expect(find.text('Xin chào, Phan Thị Hòa'), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_academic_years')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
+      expect(find.text('Năm học'), findsWidgets);
       expect(localStorage.getEmail(), 'phanthihoa@edu.vn');
       expect(localStorage.getRole(), 'PRINCIPAL');
     });
 
-    testWidgets('parent login success opens parent portal and saves session', (
+    testWidgets('parent login success opens child report and saves session', (
       tester,
     ) async {
       final localStorage = await tester.pumpSorakApp();
@@ -62,8 +63,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('login_button')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Cổng phụ huynh'), findsOneWidget);
-      expect(find.byKey(const ValueKey('nav_child')), findsOneWidget);
+      expect(find.text('Báo cáo của trẻ'), findsWidgets);
+      expect(find.byType(NavigationBar), findsNothing);
       expect(localStorage.getEmail(), '');
       expect(localStorage.getRole(), 'PARENT');
     });
@@ -94,13 +95,10 @@ void main() {
           .read<AuthProvider>();
 
       expect(find.text('Cán bộ'), findsOneWidget);
-      expect(find.text('Xin chào, Phan Thị Hòa'), findsNothing);
+      expect(find.byKey(const ValueKey('nav_academic_years')), findsNothing);
       expect(authProvider.isLoggedIn, isFalse);
       expect(authProvider.isLoading, isFalse);
-      expect(
-        authProvider.errorMessage,
-        contains('Email hoặc mật khẩu không đúng'),
-      );
+      expect(authProvider.errorMessage, contains('không đúng'));
     });
 
     testWidgets('parent login fail stays on login and stores error', (
@@ -127,21 +125,20 @@ void main() {
           .read<AuthProvider>();
 
       expect(find.text('Phụ huynh'), findsOneWidget);
-      expect(find.text('Child overview'), findsNothing);
+      expect(find.text('Báo cáo của trẻ'), findsNothing);
       expect(authProvider.isLoggedIn, isFalse);
       expect(authProvider.isLoading, isFalse);
-      expect(
-        authProvider.errorMessage,
-        contains('Mã thẻ hoặc mật khẩu không đúng'),
-      );
+      expect(authProvider.errorMessage, contains('không đúng'));
     });
 
-    testWidgets('saved session opens home directly', (tester) async {
+    testWidgets('saved session opens app shell directly', (tester) async {
       await tester.pumpLoggedInSorakApp();
 
-      expect(find.text('Sorak Mầm non'), findsOneWidget);
-      expect(find.text('Xin chào, Phan Thị Hòa'), findsOneWidget);
-      expect(find.text('Vai trò: PRINCIPAL'), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_academic_years')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('active_year_dropdown')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('logout clears session and returns to login', (tester) async {

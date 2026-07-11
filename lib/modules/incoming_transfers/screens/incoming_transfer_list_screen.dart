@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/module_list_screen.dart';
@@ -70,7 +71,7 @@ class _IncomingTransferListScreenState
               ? [
                   ModuleListAction(
                     label: 'Hủy hồ sơ',
-                    icon: Icons.cancel_outlined,
+                    icon: LucideIcons.circleX,
                     onSelected: () => provider.cancelTransfer(item.id),
                     isDestructive: true,
                   ),

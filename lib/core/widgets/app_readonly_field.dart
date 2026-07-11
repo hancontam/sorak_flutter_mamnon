@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class AppReadonlyField extends StatelessWidget {
   const AppReadonlyField({super.key, required this.label, required this.value});
@@ -14,7 +15,7 @@ class AppReadonlyField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        suffixIcon: const Icon(Icons.lock_outline),
+        suffixIcon: const Icon(LucideIcons.lock, size: 20),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../modules/auth/providers/auth_provider.dart';
@@ -39,26 +40,34 @@ class AccessDeniedScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: AppColors.error.withValues(alpha: 0.12),
-                foregroundColor: AppColors.error,
-                child: const Icon(Icons.lock_outline, size: 32),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.destructive,
+                  borderRadius: BorderRadius.circular(AppSpacing.radius),
+                ),
+                child: const Icon(
+                  LucideIcons.lock,
+                  size: 32,
+                  color: AppColors.primaryForeground,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 'Không có quyền truy cập',
                 style: Theme.of(
                   context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Vai trò hiện tại không được phép mở chức năng này.',
                 textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.textGray),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.mutedForeground,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               FilledButton.icon(
@@ -67,8 +76,8 @@ class AccessDeniedScreen extends StatelessWidget {
                   '/home',
                   (_) => false,
                 ),
-                icon: const Icon(Icons.home_outlined),
-                label: const Text('Về trang chủ'),
+                icon: const Icon(LucideIcons.house, size: 18),
+                label: const Text('Về trang chính'),
               ),
             ],
           ),

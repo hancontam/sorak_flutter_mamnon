@@ -84,3 +84,44 @@ Goal liên quan live API phải có thêm integration test bằng `DioAdapter`/m
 - App khôi phục phiên live qua `GET /auth/me`; chỉ 401/403 mới xóa cookie + metadata. Lỗi mạng không xóa cookie bền vững.
 - Logout luôn xóa cookie + metadata trong `finally`.
 - Goal 32 đã hoàn thành: single-flight refresh, retry một lần, NO_REFRESH, clear session và điều hướng Login khi refresh thất bại.
+
+## Claude UI Enhancement Lock
+
+Read `docs/ui_enhancement_claude_plan.md` before implementing UI changes. The current UI enhancement phase is presentation-only. Do not change:
+
+- `lib/core/network/**`
+- `lib/core/providers/**`
+- `lib/core/repositories/**`
+- `lib/modules/**/providers/**`
+- `lib/modules/**/repositories/**`
+- `lib/modules/**/models/**`
+- `lib/core/network/mock_api_backend.dart`
+- generated `.g.dart`
+- endpoint, DTO, request body, query, backend enum or API behavior
+
+Claude light theme is locked:
+
+- Font: Montserrat.
+- Radius: `8px` everywhere.
+- Padding: `16px`, with `8px/12px` for compact gaps.
+- Brand and semantic state both use Claude palette only.
+- Delete/Archive/Rejected/Error visual uses `#141413`, not red.
+- `AppColors.success/warning/error` are compatibility aliases to Claude tokens, not the old green/yellow/red.
+
+Navigation lock:
+
+- Principal BottomNav: `Năm học`, `Học sinh`, `Cán bộ`, `Lớp học`.
+- Teacher BottomNav: `Học sinh`, `Lớp học`.
+- Parent: no BottomNav, default body is `Báo cáo của trẻ`.
+- Do not add filler tabs for roles that have fewer actions.
+- Drawer must filter by role before rendering and must not show unauthorized items.
+
+UI component lock:
+
+- Use Lucide outline icons for user-visible icons.
+- Drawer follows HeroUI navigation drawer style.
+- BottomNav follows Modern Mobile Menu / Telegram style through Material 3 `NavigationBar`.
+- Toggle groups use `SorakToggleGroup<T>`.
+- Active academic year selector uses inline `AcademicYearAccordion`.
+- Avatar uses DiceBear pixel-art with stable non-PII account id seed.
+- Parent must not show unsupported Health/Growth/unavailable API cards in the final UI.

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/module_list_screen.dart';
@@ -8,7 +9,9 @@ import 'academic_year_detail_screen.dart';
 import 'academic_year_form_screen.dart';
 
 class AcademicYearListScreen extends StatefulWidget {
-  const AcademicYearListScreen({super.key});
+  const AcademicYearListScreen({super.key, this.showAppBar = true});
+
+  final bool showAppBar;
 
   @override
   State<AcademicYearListScreen> createState() => _AcademicYearListScreenState();
@@ -38,6 +41,7 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
       builder: (context, provider, _) {
         return ModuleListScreen<AcademicYear>(
           title: 'Năm học',
+          showAppBar: widget.showAppBar,
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,
@@ -59,8 +63,8 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
           },
           extraActions: (item) => [
             ModuleListAction(
-              label: 'Activate',
-              icon: Icons.check_circle_outline,
+              label: 'Kích hoạt',
+              icon: LucideIcons.circleCheck,
               onSelected: () => provider.activateYear(item.id),
             ),
           ],

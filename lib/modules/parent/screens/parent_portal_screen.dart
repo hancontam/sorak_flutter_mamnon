@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/status_chip.dart';
+import '../../../core/utils/ui_labels.dart';
+import '../../../core/widgets/empty_view.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/loading_view.dart';
+import '../../../core/widgets/sorak_avatar.dart';
+import '../../../core/widgets/sorak_status_badge.dart';
 import '../../auth/providers/auth_provider.dart';
 
 enum ParentPortalSection { child, health }
@@ -32,8 +38,7 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final user = authProvider.currentUser;
-    final isChildSection = widget.section == ParentPortalSection.child;
+    final profile = authProvider.profile;
 
     return RefreshIndicator(
       onRefresh: context.read<AuthProvider>().loadProfile,
@@ -45,33 +50,28 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
           96,
         ),
         children: [
-          _PortalHeader(
-            parentName: user?.fullName ?? 'Tài khoản phụ huynh',
-            section: widget.section,
+          _ReportHeader(
+            accountId: authProvider.currentUser?.id ?? 0,
+            parentName: authProvider.currentUser?.fullName ?? 'Phụ huynh',
           ),
           const SizedBox(height: AppSpacing.md),
-          if (isChildSection) ...[
-            if (authProvider.isLoading && authProvider.profile.isEmpty)
-              const Center(child: CircularProgressIndicator())
-            else if (authProvider.errorMessage != null)
-              _UnavailableDataCard(message: authProvider.errorMessage!)
-            else
-              _ChildProfileCard(profile: authProvider.profile),
+          if (authProvider.isLoading && profile.isEmpty)
+            const LoadingView(message: 'Đang tải báo cáo của trẻ...')
+          else if (authProvider.errorMessage != null)
+            ErrorView(
+              message: authProvider.errorMessage!,
+              onRetry: context.read<AuthProvider>().loadProfile,
+            )
+          else if (profile.isEmpty)
+            const EmptyView(
+              title: 'Chưa có hồ sơ trẻ',
+              message: 'Nhà trường chưa liên kết tài khoản này với hồ sơ trẻ.',
+              type: EmptyViewType.permission,
+            )
+          else ...[
+            _ChildSummaryCard(profile: profile),
             const SizedBox(height: AppSpacing.sm),
-            const _ReadOnlyNote(
-              message:
-                  'Thông tin trẻ chỉ dùng để theo dõi. Nếu có sai lệch, phụ huynh vui lòng liên hệ nhà trường.',
-            ),
-          ] else ...[
-            const _UnavailableDataCard(
-              message:
-                  'Nhà trường chưa cung cấp API sức khỏe và dinh dưỡng dành cho phụ huynh. Dữ liệu sẽ xuất hiện tại đây khi backend hỗ trợ.',
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            const _ReadOnlyNote(
-              message:
-                  'Màn hình này chỉ xem dữ liệu sức khỏe và nuôi dưỡng của trẻ. Giáo viên hoặc cán bộ nhà trường sẽ cập nhật khi có đánh giá mới.',
-            ),
+            const _ReadOnlyNote(),
           ],
         ],
       ),
@@ -79,27 +79,23 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
   }
 }
 
-class _PortalHeader extends StatelessWidget {
-  const _PortalHeader({required this.parentName, required this.section});
+class _ReportHeader extends StatelessWidget {
+  const _ReportHeader({required this.accountId, required this.parentName});
 
+  final int accountId;
   final String parentName;
-  final ParentPortalSection section;
 
   @override
   Widget build(BuildContext context) {
-    final isChildSection = section == ParentPortalSection.child;
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: AppColors.accent.withValues(alpha: 0.18),
-              foregroundColor: AppColors.primary,
-              child: Icon(
-                isChildSection ? Icons.child_care : Icons.favorite_outline,
-              ),
+            SorakAvatar(
+              seed: accountId == 0 ? 'parent' : accountId,
+              fallbackLabel: parentName,
+              size: 56,
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -107,17 +103,9 @@ class _PortalHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isChildSection ? 'Cổng phụ huynh' : 'Sức khỏe của trẻ',
+                    'Báo cáo của trẻ',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    isChildSection ? 'Thông tin trẻ' : 'Theo dõi sức khỏe',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -125,14 +113,19 @@ class _PortalHeader extends StatelessWidget {
                     parentName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: AppColors.textGray),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.mutedForeground,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
             ),
-            const StatusChip(label: 'Chỉ xem'),
+            const SorakStatusBadge(
+              label: 'Chỉ xem',
+              tone: SorakStatusTone.neutral,
+              translate: false,
+            ),
           ],
         ),
       ),
@@ -140,98 +133,93 @@ class _PortalHeader extends StatelessWidget {
   }
 }
 
-class _ChildProfileCard extends StatelessWidget {
-  const _ChildProfileCard({required this.profile});
+class _ChildSummaryCard extends StatelessWidget {
+  const _ChildSummaryCard({required this.profile});
 
   final Map<String, dynamic> profile;
 
   @override
   Widget build(BuildContext context) {
-    final enrollments = profile['enrollments'];
-    final enrollment = enrollments is List && enrollments.isNotEmpty
-        ? enrollments.first
-        : null;
-    final schoolClass = enrollment is Map ? enrollment['class'] : null;
-    final schoolYear = schoolClass is Map ? schoolClass['school_year'] : null;
+    final enrollment = _firstMap(profile['enrollments']);
+    final schoolClass = enrollment == null ? null : _asMap(enrollment['class']);
+    final schoolYear = schoolClass == null
+        ? null
+        : _asMap(schoolClass['school_year']);
 
-    return _SectionCard(
-      title: 'Hồ sơ trẻ',
-      icon: Icons.child_care_outlined,
-      child: Column(
-        children: [
-          _InfoRow(label: 'Trẻ', value: '${profile['full_name'] ?? '-'}'),
-          _InfoRow(
-            label: 'Mã trẻ',
-            value: '${profile['student_id_card_number'] ?? '-'}',
-          ),
-          _InfoRow(
-            label: 'Lớp',
-            value: schoolClass is Map
-                ? '${schoolClass['class_name'] ?? '-'}'
-                : '-',
-          ),
-          _InfoRow(
-            label: 'Năm học',
-            value: schoolYear is Map ? '${schoolYear['name'] ?? '-'}' : '-',
-          ),
-          _InfoRow(
-            label: 'Trạng thái',
-            value: '${profile['student_status'] ?? '-'}',
-          ),
-        ],
-      ),
-    );
-  }
-}
+    final childName = '${profile['full_name'] ?? '-'}';
+    final cardNumber = '${profile['student_id_card_number'] ?? '-'}';
+    final className = schoolClass == null
+        ? '-'
+        : '${schoolClass['class_name'] ?? '-'}';
+    final yearName = schoolYear == null ? '-' : '${schoolYear['name'] ?? '-'}';
+    final status = '${profile['student_status'] ?? '-'}';
 
-class _UnavailableDataCard extends StatelessWidget {
-  const _UnavailableDataCard({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      key: const ValueKey('parent_api_unavailable'),
-      container: true,
-      label: 'Backend chưa hỗ trợ dữ liệu sức khỏe phụ huynh. $message',
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            children: [
-              const Icon(
-                Icons.cloud_off_outlined,
-                color: AppColors.textGray,
-                size: 36,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Chưa có dữ liệu từ nhà trường',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
-              ),
-            ],
-          ),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(AppSpacing.radius),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Icon(
+                    LucideIcons.userRound,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    childName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                SorakStatusBadge(label: status),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _InfoRow(label: 'Mã trẻ', value: cardNumber),
+            _InfoRow(label: 'Lớp', value: className),
+            _InfoRow(label: 'Năm học', value: yearName),
+            _InfoRow(label: 'Trạng thái', value: UiLabels.status(status)),
+          ],
         ),
       ),
     );
   }
+
+  Map<String, dynamic>? _firstMap(Object? value) {
+    if (value is List && value.isNotEmpty) {
+      return _asMap(value.first);
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? _asMap(Object? value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, value) => MapEntry('$key', value));
+    }
+    return null;
+  }
 }
 
 class _ReadOnlyNote extends StatelessWidget {
-  const _ReadOnlyNote({required this.message});
-
-  final String message;
+  const _ReadOnlyNote();
 
   @override
   Widget build(BuildContext context) {
@@ -241,57 +229,17 @@ class _ReadOnlyNote extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.visibility_outlined, color: AppColors.primary),
+            const Icon(LucideIcons.info, color: AppColors.primary),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                message,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
+                'Thông tin chỉ dùng để theo dõi. Nếu có sai lệch, phụ huynh vui lòng liên hệ nhà trường để được hỗ trợ.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.mutedForeground,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
-
-  final String title;
-  final IconData icon;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: AppColors.primary),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            child,
           ],
         ),
       ),
@@ -316,19 +264,20 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textGray,
-                fontWeight: FontWeight.w500,
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
+            flex: 2,
             child: Text(
               value.isEmpty ? '-' : value,
               textAlign: TextAlign.right,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w600,
+                color: AppColors.foreground,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),

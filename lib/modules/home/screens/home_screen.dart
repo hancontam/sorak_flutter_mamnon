@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -82,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             onPressed: () => _logout(context),
-            icon: const Icon(Icons.power_settings_new),
+            icon: const Icon(LucideIcons.power),
           ),
         ],
       ),
@@ -161,33 +162,33 @@ class _HomeBody extends StatelessWidget {
             _SummaryCard(
               title: 'Trẻ',
               value: studentsProvider.items.length.toString(),
-              icon: Icons.child_care,
+              icon: LucideIcons.baby,
               isLoading: studentsProvider.isLoading,
             ),
             _SummaryCard(
               title: 'Lớp học',
               value: classesProvider.items.length.toString(),
-              icon: Icons.class_,
+              icon: LucideIcons.school,
               isLoading: classesProvider.isLoading,
             ),
             if (isPrincipal)
               _SummaryCard(
                 title: 'Giáo viên',
                 value: teachersProvider.items.length.toString(),
-                icon: Icons.badge,
+                icon: LucideIcons.badgeCheck,
                 isLoading: teachersProvider.isLoading,
               )
             else
               _SummaryCard(
                 title: 'Yêu cầu chuyển lớp',
                 value: transfersProvider.items.length.toString(),
-                icon: Icons.swap_horiz,
+                icon: LucideIcons.arrowRightLeft,
                 isLoading: transfersProvider.isLoading,
               ),
             _SummaryCard(
               title: 'Chờ duyệt',
               value: pendingTransfers.toString(),
-              icon: Icons.pending_actions,
+              icon: LucideIcons.clipboardList,
               isLoading: transfersProvider.isLoading,
               accentColor: AppColors.accent,
             ),
@@ -229,7 +230,7 @@ class _HomeBody extends StatelessWidget {
         _QuickActionCard(
           title: 'Trẻ',
           subtitle: 'Xem và cập nhật hồ sơ trẻ',
-          icon: Icons.child_care_outlined,
+          icon: LucideIcons.baby,
           onTap:
               onOpenStudents ?? () => Navigator.pushNamed(context, '/students'),
         ),
@@ -237,7 +238,7 @@ class _HomeBody extends StatelessWidget {
         _QuickActionCard(
           title: 'Lớp học',
           subtitle: 'Xem phòng học và giáo viên phụ trách',
-          icon: Icons.class_outlined,
+          icon: LucideIcons.school,
           onTap:
               onOpenClasses ?? () => Navigator.pushNamed(context, '/classes'),
         ),
@@ -246,7 +247,7 @@ class _HomeBody extends StatelessWidget {
           _QuickActionCard(
             title: 'Giáo viên',
             subtitle: 'Mở chức năng quản lý giáo viên',
-            icon: Icons.badge_outlined,
+            icon: LucideIcons.badgeCheck,
             onTap:
                 onOpenTeachers ??
                 () => Navigator.pushNamed(context, '/teachers'),
@@ -256,7 +257,7 @@ class _HomeBody extends StatelessWidget {
         _QuickActionCard(
           title: 'Chuyển lớp',
           subtitle: 'Xem yêu cầu chuyển lớp và chuyển trường',
-          icon: Icons.swap_horiz,
+          icon: LucideIcons.arrowRightLeft,
           onTap:
               onOpenTransfers ??
               () => Navigator.pushNamed(context, '/transfers'),
@@ -284,18 +285,18 @@ class _RoleDashboardBanner extends StatelessWidget {
         title: 'Tổng quan Ban Giám Hiệu',
         message:
             'Theo dõi toàn trường, yêu cầu chờ duyệt và các thao tác quản lý.',
-        icon: Icons.admin_panel_settings_outlined,
+        icon: LucideIcons.userCog,
       ),
       'TEACHER' => (
         title: 'Công việc giáo viên',
         message:
             'Lớp được phân công: $classCount. Có thể nhập nhanh sức khỏe và dinh dưỡng hằng ngày.',
-        icon: Icons.school_outlined,
+        icon: LucideIcons.school,
       ),
       _ => (
         title: 'Tổng quan',
         message: 'Theo dõi hoạt động hằng ngày và các việc quan trọng.',
-        icon: Icons.dashboard_outlined,
+        icon: LucideIcons.layoutDashboard,
       ),
     };
 
@@ -360,21 +361,21 @@ class _PrincipalDashboardSection extends StatelessWidget {
         _QuickActionCard(
           title: 'Yêu cầu chuyển lớp chờ duyệt',
           subtitle: '$pendingTransfers yêu cầu đang chờ xử lý',
-          icon: Icons.pending_actions_outlined,
+          icon: LucideIcons.clipboardList,
           onTap: onOpenTransfers,
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
           title: 'Tài khoản',
           subtitle: 'Quản lý quyền truy cập của cán bộ và phụ huynh',
-          icon: Icons.manage_accounts_outlined,
+          icon: LucideIcons.userCog,
           onTap: onOpenAccounts,
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
           title: 'Giáo viên',
           subtitle: 'Mở chức năng quản lý giáo viên',
-          icon: Icons.badge_outlined,
+          icon: LucideIcons.badgeCheck,
           onTap: onOpenTeachers,
         ),
       ],
@@ -417,21 +418,21 @@ class _TeacherDashboardSection extends StatelessWidget {
         _QuickActionCard(
           title: 'Lớp được phân công',
           subtitle: 'Kiểm tra lớp trước khi nhập liệu hằng ngày',
-          icon: Icons.class_outlined,
+          icon: LucideIcons.school,
           onTap: onOpenClasses,
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
           title: 'Nhập nhanh sức khỏe',
           subtitle: 'Nhập chiều cao, cân nặng và ghi chú sức khỏe',
-          icon: Icons.favorite_outline,
+          icon: LucideIcons.heartPulse,
           onTap: onOpenHealth,
         ),
         const SizedBox(height: AppSpacing.sm),
         _QuickActionCard(
           title: 'Nhập nhanh dinh dưỡng',
           subtitle: 'Cập nhật tình trạng dinh dưỡng theo trẻ hoặc lớp',
-          icon: Icons.restaurant_outlined,
+          icon: LucideIcons.utensils,
           onTap: onOpenNutrition,
         ),
       ],
@@ -571,7 +572,7 @@ class _QuickActionCard extends StatelessWidget {
         leading: Icon(icon, color: AppColors.primary),
         title: Text(title),
         subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: const Icon(LucideIcons.chevronRight),
         onTap: onTap,
       ),
     );

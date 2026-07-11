@@ -13,13 +13,11 @@ class AcademicYearFormScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SimpleFormScreen(
-      title: academicYear == null
-          ? 'Create Academic Year'
-          : 'Update Academic Year',
+      title: academicYear == null ? 'Tạo năm học' : 'Cập nhật năm học',
       fields: const [
-        FormFieldConfig(name: 'name', label: 'Name (YYYY-YYYY)'),
-        FormFieldConfig(name: 'start_date', label: 'Start date (YYYY-MM-DD)'),
-        FormFieldConfig(name: 'end_date', label: 'End date (YYYY-MM-DD)'),
+        FormFieldConfig(name: 'name', label: 'Tên năm học (YYYY-YYYY)'),
+        FormFieldConfig(name: 'start_date', label: 'Ngày bắt đầu'),
+        FormFieldConfig(name: 'end_date', label: 'Ngày kết thúc'),
       ],
       initialValues: {
         'name': academicYear?.name ?? '',

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/providers/crud_provider.dart';
@@ -23,10 +23,13 @@ void main() {
     testWidgets('can pump Sorak app with saved user', (tester) async {
       await tester.pumpLoggedInSorakApp();
 
-      expect(find.text('Sorak Mầm non'), findsOneWidget);
-      expect(find.text('Xin chào, Phan Thị Hòa'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('active_year_dropdown')),
+        findsOneWidget,
+      );
       expect(find.byKey(const ValueKey('open_drawer_button')), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_academic_years')), findsOneWidget);
     });
 
     test('lottie state assets are bundled', () async {

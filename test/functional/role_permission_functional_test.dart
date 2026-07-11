@@ -10,13 +10,17 @@ import 'package:sorak_flutter_mamnon/modules/classes/repositories/class_reposito
 import 'helpers/test_app.dart';
 
 void main() {
-  testWidgets('teacher sees only actions allowed by backend', (tester) async {
+  testWidgets('teacher sees only actions allowed by role navigation', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpSorakApp(savedUser: _teacher);
 
-    expect(find.text('Yêu cầu chuyển lớp'), findsOneWidget);
-    expect(find.text('Giáo viên'), findsNothing);
+    expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
+    expect(find.byKey(const ValueKey('nav_classes')), findsOneWidget);
+    expect(find.byKey(const ValueKey('nav_teachers')), findsNothing);
+    expect(find.byKey(const ValueKey('nav_academic_years')), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('nav_classes')));
     await tester.pumpAndSettle();
@@ -33,13 +37,13 @@ void main() {
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('nav_transfers')));
+    await tester.tap(find.byKey(const ValueKey('open_drawer_button')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Thao tác khác').first);
-    await tester.pumpAndSettle();
-    expect(find.text('Hủy yêu cầu'), findsOneWidget);
-    expect(find.text('Duyệt'), findsNothing);
-    expect(find.text('Từ chối'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('drawer_class_transfers')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('drawer_staff_accounts')), findsNothing);
   });
 
   test('teacher API requests outside scope are rejected', () async {
@@ -65,14 +69,15 @@ void main() {
     }
   });
 
-  testWidgets('parent does not load staff academic-year selector', (
+  testWidgets('parent does not load staff year selector or bottom nav', (
     tester,
   ) async {
     await tester.pumpSorakApp(savedUser: _parent);
 
     expect(find.byKey(const ValueKey('active_year_dropdown')), findsNothing);
-    expect(find.byKey(const ValueKey('nav_child')), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
     expect(find.text('Nguyễn Minh An'), findsWidgets);
+    expect(find.text('Báo cáo của trẻ'), findsWidgets);
   });
 }
 

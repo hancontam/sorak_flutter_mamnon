@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/module_list_screen.dart';
 import '../models/teacher.dart';
 import '../providers/teacher_provider.dart';
@@ -8,7 +9,9 @@ import 'teacher_detail_screen.dart';
 import 'teacher_form_screen.dart';
 
 class TeacherListScreen extends StatefulWidget {
-  const TeacherListScreen({super.key});
+  const TeacherListScreen({super.key, this.showAppBar = true});
+
+  final bool showAppBar;
 
   @override
   State<TeacherListScreen> createState() => _TeacherListScreenState();
@@ -35,7 +38,8 @@ class _TeacherListScreenState extends State<TeacherListScreen> {
     return Consumer<TeacherProvider>(
       builder: (context, provider, _) {
         return ModuleListScreen<Teacher>(
-          title: 'Teachers',
+          title: 'Cán bộ',
+          showAppBar: widget.showAppBar,
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,
@@ -44,7 +48,7 @@ class _TeacherListScreenState extends State<TeacherListScreen> {
           itemTitle: (item) => item.fullName,
           itemSubtitle: (item) => '${item.position} | ${item.email}',
           itemStatus: (item) => item.workStatus,
-          itemFilterValue: (item) => item.workStatus,
+          itemFilterValue: (item) => UiLabels.workStatus(item.workStatus),
           onEdit: _openForm,
           onDelete: (item) => provider.archiveItem(item.id),
           onDetail: (item) {

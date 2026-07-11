@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/sorak_toggle_group.dart';
 import '../../class_transfers/screens/class_transfer_list_screen.dart';
 import '../../incoming_transfers/screens/incoming_transfer_list_screen.dart';
 import '../../outgoing_transfers/screens/outgoing_transfer_list_screen.dart';
@@ -38,30 +40,28 @@ class _TransfersScreenState extends State<TransfersScreen> {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: AppSpacing.sm),
-              SegmentedButton<TransferSection>(
-                segments: const [
-                  ButtonSegment<TransferSection>(
+              SorakToggleGroup<TransferSection>(
+                options: const [
+                  SorakToggleOption<TransferSection>(
                     value: TransferSection.classTransfer,
-                    icon: Icon(Icons.swap_horiz),
-                    label: Text('Chuyển lớp'),
+                    icon: LucideIcons.arrowRightLeft,
+                    label: 'Chuyển lớp',
                   ),
-                  ButtonSegment<TransferSection>(
+                  SorakToggleOption<TransferSection>(
                     value: TransferSection.outgoing,
-                    icon: Icon(Icons.logout),
-                    label: Text('Chuyển đi'),
+                    icon: LucideIcons.logOut,
+                    label: 'Chuyển đi',
                   ),
-                  ButtonSegment<TransferSection>(
+                  SorakToggleOption<TransferSection>(
                     value: TransferSection.incoming,
-                    icon: Icon(Icons.login),
-                    label: Text('Chuyển đến'),
+                    icon: LucideIcons.logIn,
+                    label: 'Chuyển đến',
                   ),
                 ],
-                selected: {_selectedSection},
-                onSelectionChanged: (sections) {
-                  setState(() {
-                    _selectedSection = sections.first;
-                  });
-                },
+                selected: _selectedSection,
+                onChanged: (section) => setState(() {
+                  _selectedSection = section;
+                }),
               ),
             ],
           ),

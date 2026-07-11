@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/sorak_toggle_group.dart';
 import 'growth_who_screen.dart';
 import 'health_roster_dashboard.dart';
 
@@ -54,30 +56,28 @@ class _HealthScreenState extends State<HealthScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
           ],
-          SegmentedButton<HealthSection>(
-            segments: const [
-              ButtonSegment<HealthSection>(
+          SorakToggleGroup<HealthSection>(
+            options: const [
+              SorakToggleOption<HealthSection>(
                 value: HealthSection.health,
-                icon: Icon(Icons.favorite_outline),
-                label: Text('Sức khỏe'),
+                icon: LucideIcons.heartPulse,
+                label: 'Sức khỏe',
               ),
-              ButtonSegment<HealthSection>(
+              SorakToggleOption<HealthSection>(
                 value: HealthSection.nutrition,
-                icon: Icon(Icons.restaurant_outlined),
-                label: Text('Nuôi dưỡng'),
+                icon: LucideIcons.utensils,
+                label: 'Nuôi dưỡng',
               ),
-              ButtonSegment<HealthSection>(
+              SorakToggleOption<HealthSection>(
                 value: HealthSection.growth,
-                icon: Icon(Icons.trending_up),
-                label: Text('Tăng trưởng'),
+                icon: LucideIcons.trendingUp,
+                label: 'Tăng trưởng',
               ),
             ],
-            selected: {_selectedSection},
-            onSelectionChanged: (values) {
-              setState(() {
-                _selectedSection = values.first;
-              });
-            },
+            selected: _selectedSection,
+            onChanged: (section) => setState(() {
+              _selectedSection = section;
+            }),
           ),
           const SizedBox(height: AppSpacing.md),
           if (_selectedSection == HealthSection.health)
@@ -107,17 +107,17 @@ class _HealthSectionCard extends StatelessWidget {
       HealthSection.health => _SectionContent(
         title: 'Đánh giá sức khỏe',
         subtitle: 'Nhập nhanh chiều cao, cân nặng, BMI và ghi chú sức khỏe.',
-        icon: Icons.favorite_outline,
+        icon: LucideIcons.heartPulse,
       ),
       HealthSection.nutrition => _SectionContent(
         title: 'Nuôi dưỡng',
         subtitle: 'Theo dõi dinh dưỡng và ghi chú theo lớp được phân công.',
-        icon: Icons.restaurant_outlined,
+        icon: LucideIcons.utensils,
       ),
       HealthSection.growth => _SectionContent(
         title: 'Tăng trưởng WHO',
         subtitle: 'Xem tình trạng và biểu đồ tăng trưởng WHO của từng trẻ.',
-        icon: Icons.trending_up,
+        icon: LucideIcons.trendingUp,
       ),
     };
 

@@ -9,10 +9,12 @@ String normalizeVietnamese(String input) {
     'ỳýỵỷỹ': 'y',
     'đ': 'd',
   };
+
   for (final entry in replacements.entries) {
     for (final character in entry.key.split('')) {
       value = value.replaceAll(character, entry.value);
     }
   }
+
   return value;
 }

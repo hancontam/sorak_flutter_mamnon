@@ -21,8 +21,8 @@ Future<bool> showConfirmDialog({
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.destructive,
+              foregroundColor: AppColors.primaryForeground,
             ),
             onPressed: () => Navigator.pop(context, true),
             child: Text(confirmText),

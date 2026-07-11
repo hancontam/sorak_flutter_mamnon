@@ -9,7 +9,9 @@ import 'class_detail_screen.dart';
 import 'class_form_screen.dart';
 
 class ClassListScreen extends StatefulWidget {
-  const ClassListScreen({super.key});
+  const ClassListScreen({super.key, this.showAppBar = true});
+
+  final bool showAppBar;
 
   @override
   State<ClassListScreen> createState() => _ClassListScreenState();
@@ -40,6 +42,7 @@ class _ClassListScreenState extends State<ClassListScreen> {
       builder: (context, provider, _) {
         return ModuleListScreen<SchoolClass>(
           title: 'Lớp học',
+          showAppBar: widget.showAppBar,
           items: provider.items,
           isLoading: provider.isLoading,
           errorMessage: provider.errorMessage,

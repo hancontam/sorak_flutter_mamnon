@@ -1,29 +1,31 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../modules/academic_years/providers/active_academic_year_provider.dart';
+import '../../modules/academic_years/screens/academic_year_list_screen.dart';
 import '../../modules/auth/providers/auth_provider.dart';
 import '../../modules/class_transfers/providers/class_transfer_provider.dart';
-import '../../modules/classes/screens/class_list_screen.dart';
 import '../../modules/classes/providers/class_provider.dart';
-import '../../modules/health/screens/growth_who_screen.dart';
-import '../../modules/health/screens/health_screen.dart';
+import '../../modules/classes/screens/class_list_screen.dart';
+import '../../modules/form_options/providers/form_options_provider.dart';
 import '../../modules/health/providers/growth_who_provider.dart';
 import '../../modules/health/providers/health_assessment_provider.dart';
 import '../../modules/health/providers/nutrition_assessment_provider.dart';
-import '../../modules/home/screens/home_screen.dart';
 import '../../modules/incoming_transfers/providers/incoming_transfer_provider.dart';
 import '../../modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import '../../modules/parent/screens/parent_portal_screen.dart';
 import '../../modules/students/providers/student_provider.dart';
 import '../../modules/students/screens/student_list_screen.dart';
 import '../../modules/teachers/providers/teacher_provider.dart';
-import '../../modules/transfers/screens/transfers_screen.dart';
-import '../../modules/form_options/providers/form_options_provider.dart';
+import '../../modules/teachers/screens/teacher_list_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../utils/ui_labels.dart';
+import 'academic_year_accordion.dart';
+import 'sorak_avatar.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -73,9 +75,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _selectTab(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
   void _onAcademicYearChanged() {
@@ -100,8 +100,6 @@ class _AppShellState extends State<AppShell> {
       return;
     }
 
-    // Year is global: eagerly invalidate every year-scoped provider so an
-    // unopened tab cannot retain data from the previous academic year.
     await Future.wait([
       context.read<StudentProvider>().loadForAcademicYear(academicYearId),
       context.read<ClassProvider>().loadForAcademicYear(academicYearId),
@@ -131,137 +129,54 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  void _selectDestinationByKey(
-    List<_ShellDestination> destinations,
-    String key,
-  ) {
-    final index = destinations.indexWhere(
-      (destination) => destination.key == key,
-    );
-    if (index == -1) {
-      return;
-    }
-    _selectTab(index);
-  }
-
   List<_ShellDestination> _destinationsForRole(String role) {
-    if (role == 'PARENT') {
+    if (role == 'TEACHER') {
       return const [
         _ShellDestination(
-          key: 'child',
-          label: 'Trẻ',
-          icon: Icons.child_care_outlined,
-          selectedIcon: Icons.child_care,
-          screen: ParentPortalScreen(section: ParentPortalSection.child),
-        ),
-        _ShellDestination(
-          key: 'growth',
-          label: 'Tăng trưởng',
-          icon: Icons.trending_up_outlined,
-          selectedIcon: Icons.trending_up,
-          screen: GrowthWhoScreen(),
-        ),
-        _ShellDestination(
-          key: 'health',
-          label: 'Sức khỏe',
-          icon: Icons.favorite_outline,
-          selectedIcon: Icons.favorite,
-          screen: ParentPortalScreen(section: ParentPortalSection.health),
-        ),
-      ];
-    }
-
-    if (role == 'TEACHER') {
-      return [
-        _homeDestination(),
-        const _ShellDestination(
-          key: 'classes',
-          label: 'Lớp học',
-          icon: Icons.class_outlined,
-          selectedIcon: Icons.class_,
-          screen: ClassListScreen(),
-        ),
-        const _ShellDestination(
           key: 'students',
           label: 'Học sinh',
-          icon: Icons.child_care_outlined,
-          selectedIcon: Icons.child_care,
-          screen: StudentListScreen(),
+          icon: LucideIcons.users,
+          screen: StudentListScreen(showAppBar: false),
         ),
-        const _ShellDestination(
-          key: 'transfers',
-          label: 'Chuyển lớp',
-          icon: Icons.swap_horiz_outlined,
-          selectedIcon: Icons.swap_horiz,
-          screen: TransfersScreen(),
-        ),
-        const _ShellDestination(
-          key: 'health',
-          label: 'Sức khỏe',
-          icon: Icons.favorite_outline,
-          selectedIcon: Icons.favorite,
-          screen: HealthScreen(),
+        _ShellDestination(
+          key: 'classes',
+          label: 'Lớp học',
+          icon: LucideIcons.school,
+          screen: ClassListScreen(showAppBar: false),
         ),
       ];
     }
 
-    return [
-      _homeDestination(),
-      const _ShellDestination(
+    if (role == 'PARENT') {
+      return const [];
+    }
+
+    return const [
+      _ShellDestination(
+        key: 'academic_years',
+        label: 'Năm học',
+        icon: LucideIcons.calendarDays,
+        screen: AcademicYearListScreen(showAppBar: false),
+      ),
+      _ShellDestination(
         key: 'students',
         label: 'Học sinh',
-        icon: Icons.child_care_outlined,
-        selectedIcon: Icons.child_care,
-        screen: StudentListScreen(),
+        icon: LucideIcons.users,
+        screen: StudentListScreen(showAppBar: false),
       ),
-      const _ShellDestination(
+      _ShellDestination(
+        key: 'teachers',
+        label: 'Cán bộ',
+        icon: LucideIcons.badgeCheck,
+        screen: TeacherListScreen(showAppBar: false),
+      ),
+      _ShellDestination(
         key: 'classes',
         label: 'Lớp học',
-        icon: Icons.class_outlined,
-        selectedIcon: Icons.class_,
-        screen: ClassListScreen(),
-      ),
-      const _ShellDestination(
-        key: 'transfers',
-        label: 'Chuyển lớp',
-        icon: Icons.swap_horiz_outlined,
-        selectedIcon: Icons.swap_horiz,
-        screen: TransfersScreen(),
-      ),
-      const _ShellDestination(
-        key: 'health',
-        label: 'Sức khỏe',
-        icon: Icons.favorite_outline,
-        selectedIcon: Icons.favorite,
-        screen: HealthScreen(),
+        icon: LucideIcons.school,
+        screen: ClassListScreen(showAppBar: false),
       ),
     ];
-  }
-
-  _ShellDestination _homeDestination() {
-    return _ShellDestination(
-      key: 'home',
-      label: 'Trang chủ',
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home,
-      screen: Builder(
-        builder: (context) {
-          final role = _normalizedRole(context);
-          final destinations = _destinationsForRole(role);
-
-          return HomeScreen(
-            showAppBar: false,
-            onOpenStudents: () =>
-                _selectDestinationByKey(destinations, 'students'),
-            onOpenClasses: () =>
-                _selectDestinationByKey(destinations, 'classes'),
-            onOpenTransfers: () =>
-                _selectDestinationByKey(destinations, 'transfers'),
-            onOpenHealth: () => _selectDestinationByKey(destinations, 'health'),
-          );
-        },
-      ),
-    );
   }
 
   String _normalizedRole(BuildContext context) {
@@ -278,158 +193,98 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final role = _normalizedRole(context);
     final destinations = _destinationsForRole(role);
-    final selectedIndex = _selectedIndex.clamp(0, destinations.length - 1);
-    final selectedDestination = destinations[selectedIndex];
+    final hasBottomNav = destinations.isNotEmpty;
+    final selectedIndex = hasBottomNav
+        ? _selectedIndex.clamp(0, destinations.length - 1)
+        : 0;
+    final title = hasBottomNav
+        ? destinations[selectedIndex].label
+        : 'Báo cáo của trẻ';
+    final body = hasBottomNav
+        ? destinations[selectedIndex].screen
+        : const ParentPortalScreen();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          selectedDestination.key == 'home'
-              ? 'Sorak Mầm non'
-              : selectedDestination.label,
-        ),
+        title: Text(title),
         leading: Builder(
           builder: (context) {
             return IconButton(
               key: const ValueKey('open_drawer_button'),
-              tooltip: 'Menu',
+              tooltip: 'Mở menu',
               onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: const Icon(Icons.menu),
+              icon: const Icon(LucideIcons.menu, size: 22),
             );
           },
         ),
-        actions: [
-          if (role != 'PARENT') const _ActiveYearDropdown(),
-          const SizedBox(width: AppSpacing.sm),
-        ],
       ),
       drawer: _AppDrawer(
         role: role,
-        onOpenAcademicYears: () => _openDrawerRoute('/academic-years'),
-        onOpenAccounts: () => _openDrawerRoute('/accounts'),
-        onOpenTeachers: () => _openDrawerRoute('/teachers'),
-        onOpenGrowth: () => _openDrawerRoute('/growth'),
+        onOpenStudentAccounts: () => _openDrawerRoute('/student-accounts'),
+        onOpenStaffAccounts: () => _openDrawerRoute('/staff-accounts'),
+        onOpenClassTransfers: () => _openDrawerRoute('/class-transfers'),
+        onOpenIncomingTransfers: () => _openDrawerRoute('/incoming-transfers'),
+        onOpenOutgoingTransfers: () => _openDrawerRoute('/outgoing-transfers'),
+        onOpenHealth: () => _openDrawerRoute('/health'),
+        onOpenHealthAssessments: () => _openDrawerRoute('/health-assessments'),
         onOpenProfile: () => _openDrawerRoute('/profile'),
         onOpenSettings: () => _openDrawerRoute('/settings'),
         onLogout: _logout,
       ),
-      body: KeyedSubtree(
-        key: ValueKey('${selectedDestination.key}_$_yearRevision'),
-        child: selectedDestination.screen,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: _selectTab,
-        destinations: [
-          for (final destination in destinations)
-            NavigationDestination(
-              key: ValueKey('nav_${destination.key}'),
-              icon: Icon(destination.icon),
-              selectedIcon: Icon(destination.selectedIcon),
-              label: destination.label,
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (role != 'PARENT') const AcademicYearAccordion(),
+            Expanded(
+              child: KeyedSubtree(
+                key: ValueKey(
+                  '${hasBottomNav ? destinations[selectedIndex].key : 'parent'}_$_yearRevision',
+                ),
+                child: body,
+              ),
             ),
-        ],
+          ],
+        ),
       ),
+      bottomNavigationBar: hasBottomNav
+          ? DecoratedBox(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.border)),
+              ),
+              child: NavigationBar(
+                selectedIndex: selectedIndex,
+                onDestinationSelected: _selectTab,
+                destinations: [
+                  for (final destination in destinations)
+                    NavigationDestination(
+                      key: ValueKey('nav_${destination.key}'),
+                      icon: _NavIcon(icon: destination.icon),
+                      selectedIcon: _NavIcon(
+                        icon: destination.icon,
+                        selected: true,
+                      ),
+                      label: destination.label,
+                    ),
+                ],
+              ),
+            )
+          : null,
     );
   }
 }
 
-class _ActiveYearDropdown extends StatefulWidget {
-  const _ActiveYearDropdown();
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({required this.icon, this.selected = false});
 
-  @override
-  State<_ActiveYearDropdown> createState() => _ActiveYearDropdownState();
-}
-
-class _ActiveYearDropdownState extends State<_ActiveYearDropdown> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      context.read<ActiveAcademicYearProvider>().loadYears();
-    });
-  }
+  final IconData icon;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ActiveAcademicYearProvider>(
-      builder: (context, provider, _) {
-        if (provider.isLoading && provider.years.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.only(right: AppSpacing.xs),
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        }
-
-        if (provider.years.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final values = provider.years.map((year) => year.id).toSet();
-        final selectedValue = values.contains(provider.selectedYearId)
-            ? provider.selectedYearId
-            : null;
-
-        return Container(
-          constraints: const BoxConstraints(maxWidth: 148),
-          margin: const EdgeInsets.only(right: AppSpacing.xs),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(999),
-            color: AppColors.surface,
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<int>(
-              key: const ValueKey('active_year_dropdown'),
-              value: selectedValue,
-              isDense: true,
-              isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-              hint: const Text('Năm học'),
-              onChanged: (value) async {
-                if (value == null) {
-                  return;
-                }
-                await provider.selectYear(value);
-              },
-              items: [
-                for (final year in provider.years)
-                  DropdownMenuItem<int>(
-                    value: year.id,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (year.status.toLowerCase() == 'active') ...[
-                          const Icon(
-                            Icons.check_circle,
-                            size: 14,
-                            color: AppColors.success,
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                        Flexible(
-                          child: Text(
-                            year.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 180),
+      scale: selected ? 1.08 : 1,
+      child: Icon(icon, size: selected ? 24 : 22),
     );
   }
 }
@@ -437,20 +292,26 @@ class _ActiveYearDropdownState extends State<_ActiveYearDropdown> {
 class _AppDrawer extends StatelessWidget {
   const _AppDrawer({
     required this.role,
-    required this.onOpenAcademicYears,
-    required this.onOpenAccounts,
-    required this.onOpenTeachers,
-    required this.onOpenGrowth,
+    required this.onOpenStudentAccounts,
+    required this.onOpenStaffAccounts,
+    required this.onOpenClassTransfers,
+    required this.onOpenIncomingTransfers,
+    required this.onOpenOutgoingTransfers,
+    required this.onOpenHealth,
+    required this.onOpenHealthAssessments,
     required this.onOpenProfile,
     required this.onOpenSettings,
     required this.onLogout,
   });
 
   final String role;
-  final VoidCallback onOpenAcademicYears;
-  final VoidCallback onOpenAccounts;
-  final VoidCallback onOpenTeachers;
-  final VoidCallback onOpenGrowth;
+  final VoidCallback onOpenStudentAccounts;
+  final VoidCallback onOpenStaffAccounts;
+  final VoidCallback onOpenClassTransfers;
+  final VoidCallback onOpenIncomingTransfers;
+  final VoidCallback onOpenOutgoingTransfers;
+  final VoidCallback onOpenHealth;
+  final VoidCallback onOpenHealthAssessments;
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenSettings;
   final VoidCallback onLogout;
@@ -458,151 +319,244 @@ class _AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().currentUser;
-    final fullName = user?.fullName ?? 'Guest';
-    final initial = fullName.isEmpty ? 'S' : fullName.characters.first;
-    final items = _drawerItems();
+    final fullName = user?.fullName ?? 'Người dùng Sorak';
+    final email = user?.email ?? '';
+    final items = _drawerGroups();
 
-    return NavigationDrawer(
-      selectedIndex: null,
-      onDestinationSelected: (index) => items[index].onTap(),
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                child: Text(initial.toUpperCase()),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      fullName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+    return Drawer(
+      backgroundColor: AppColors.drawer,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                children: [
+                  SorakAvatar(
+                    seed: user?.id ?? role,
+                    fallbackLabel: fullName,
+                    size: 52,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          UiLabels.role(role),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        if (email.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            email,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColors.mutedForeground,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ],
+                      ],
                     ),
-                    Text(
-                      _roleLabel(role),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textGray,
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                children: [
+                  for (final group in items) ...[
+                    if (group.label != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          AppSpacing.sm,
+                          AppSpacing.md,
+                          AppSpacing.xs,
+                        ),
+                        child: Text(
+                          group.label!,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: AppColors.mutedForeground,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
                       ),
+                    for (final item in group.items)
+                      _DrawerTile(
+                        key: ValueKey('drawer_${item.key}'),
+                        item: item,
+                      ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                      child: Divider(),
                     ),
                   ],
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+            _DrawerTile(
+              key: const ValueKey('drawer_logout'),
+              item: _DrawerItem(
+                key: 'logout',
+                label: 'Đăng xuất',
+                icon: LucideIcons.logOut,
+                onTap: onLogout,
+                destructive: true,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
         ),
-        const Divider(height: 1),
-        for (final item in items)
-          NavigationDrawerDestination(
-            key: ValueKey('drawer_${item.key}'),
-            icon: Icon(item.icon),
-            selectedIcon: Icon(item.selectedIcon),
-            label: Text(item.label),
-            enabled: true,
-          ),
-        const Divider(height: 1),
-        ListTile(
-          leading: const Icon(Icons.power_settings_new),
-          title: const Text('Đăng xuất'),
-          onTap: onLogout,
+      ),
+    );
+  }
+
+  List<_DrawerGroup> _drawerGroups() {
+    final personal = _DrawerGroup(
+      label: 'Cá nhân',
+      items: [
+        _DrawerItem(
+          key: 'profile',
+          label: 'Hồ sơ',
+          icon: LucideIcons.user,
+          onTap: onOpenProfile,
+        ),
+        _DrawerItem(
+          key: 'settings',
+          label: 'Cài đặt',
+          icon: LucideIcons.settings,
+          onTap: onOpenSettings,
         ),
       ],
     );
-  }
 
-  List<_DrawerItem> _drawerItems() {
-    if (role == 'PRINCIPAL') {
-      return [
-        _DrawerItem(
-          key: 'academic_years',
-          label: 'Năm học',
-          icon: Icons.calendar_month_outlined,
-          selectedIcon: Icons.calendar_month,
-          onTap: onOpenAcademicYears,
-        ),
-        _DrawerItem(
-          key: 'accounts',
-          label: 'Tài khoản',
-          icon: Icons.manage_accounts_outlined,
-          selectedIcon: Icons.manage_accounts,
-          onTap: onOpenAccounts,
-        ),
-        _DrawerItem(
-          key: 'teachers',
-          label: 'Cán bộ',
-          icon: Icons.badge_outlined,
-          selectedIcon: Icons.badge,
-          onTap: onOpenTeachers,
-        ),
-        _DrawerItem(
-          key: 'growth',
-          label: 'Tăng trưởng WHO',
-          icon: Icons.trending_up_outlined,
-          selectedIcon: Icons.trending_up,
-          onTap: onOpenGrowth,
-        ),
-        _commonProfileItem(),
-        _commonSettingsItem(),
-      ];
+    if (role == 'PARENT') {
+      return [personal];
     }
+
+    final transfers = _DrawerGroup(
+      label: 'Luân chuyển',
+      items: [
+        _DrawerItem(
+          key: 'class_transfers',
+          label: 'Chuyển lớp',
+          icon: LucideIcons.arrowRightLeft,
+          onTap: onOpenClassTransfers,
+        ),
+        _DrawerItem(
+          key: 'incoming_transfers',
+          label: 'Chuyển trường đến',
+          icon: LucideIcons.logIn,
+          onTap: onOpenIncomingTransfers,
+        ),
+        _DrawerItem(
+          key: 'outgoing_transfers',
+          label: 'Chuyển trường đi',
+          icon: LucideIcons.logOut,
+          onTap: onOpenOutgoingTransfers,
+        ),
+      ],
+    );
+
+    final health = _DrawerGroup(
+      label: 'Sức khỏe',
+      items: [
+        _DrawerItem(
+          key: 'health',
+          label: 'Đánh giá sức khỏe',
+          icon: LucideIcons.heartPulse,
+          onTap: onOpenHealth,
+        ),
+        _DrawerItem(
+          key: 'health_assessments',
+          label: 'Xem đánh giá sức khỏe',
+          icon: LucideIcons.clipboardList,
+          onTap: onOpenHealthAssessments,
+        ),
+      ],
+    );
 
     if (role == 'TEACHER') {
-      return [
+      return [transfers, health, personal];
+    }
+
+    final accounts = _DrawerGroup(
+      label: 'Tài khoản',
+      items: [
         _DrawerItem(
-          key: 'growth',
-          label: 'Tăng trưởng WHO',
-          icon: Icons.trending_up_outlined,
-          selectedIcon: Icons.trending_up,
-          onTap: onOpenGrowth,
+          key: 'student_accounts',
+          label: 'Tài khoản học sinh',
+          icon: LucideIcons.users,
+          onTap: onOpenStudentAccounts,
         ),
-        _commonProfileItem(),
-        _commonSettingsItem(),
-      ];
+        _DrawerItem(
+          key: 'staff_accounts',
+          label: 'Tài khoản cán bộ',
+          icon: LucideIcons.badgeCheck,
+          onTap: onOpenStaffAccounts,
+        ),
+      ],
+    );
+
+    return [accounts, transfers, health, personal];
+  }
+}
+
+class _DrawerTile extends StatelessWidget {
+  const _DrawerTile({super.key, required this.item});
+
+  final _DrawerItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = item.destructive
+        ? AppColors.destructive
+        : AppColors.secondaryForeground;
+
+    final tile = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: ListTile(
+        minTileHeight: 48,
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radius),
+        ),
+        leading: Icon(item.icon, size: 21, color: color),
+        title: Text(
+          item.label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        onTap: item.onTap,
+      ),
+    );
+
+    if (item.key == 'staff_accounts') {
+      return KeyedSubtree(key: const ValueKey('drawer_accounts'), child: tile);
     }
 
-    return [_commonProfileItem(), _commonSettingsItem()];
-  }
-
-  _DrawerItem _commonProfileItem() {
-    return _DrawerItem(
-      key: 'profile',
-      label: 'Hồ sơ',
-      icon: Icons.person_outline,
-      selectedIcon: Icons.person,
-      onTap: onOpenProfile,
-    );
-  }
-
-  _DrawerItem _commonSettingsItem() {
-    return _DrawerItem(
-      key: 'settings',
-      label: 'Cài đặt',
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings,
-      onTap: onOpenSettings,
-    );
-  }
-
-  String _roleLabel(String role) {
-    switch (role) {
-      case 'PRINCIPAL':
-        return 'Ban Giám Hiệu';
-      case 'TEACHER':
-        return 'Giáo viên';
-      case 'PARENT':
-        return 'Phụ huynh';
-      default:
-        return role;
-    }
+    return tile;
   }
 }
 
@@ -611,15 +565,20 @@ class _ShellDestination {
     required this.key,
     required this.label,
     required this.icon,
-    required this.selectedIcon,
     required this.screen,
   });
 
   final String key;
   final String label;
   final IconData icon;
-  final IconData selectedIcon;
   final Widget screen;
+}
+
+class _DrawerGroup {
+  const _DrawerGroup({required this.items, this.label});
+
+  final String? label;
+  final List<_DrawerItem> items;
 }
 
 class _DrawerItem {
@@ -627,13 +586,13 @@ class _DrawerItem {
     required this.key,
     required this.label,
     required this.icon,
-    required this.selectedIcon,
     required this.onTap,
+    this.destructive = false,
   });
 
   final String key;
   final String label;
   final IconData icon;
-  final IconData selectedIcon;
   final VoidCallback onTap;
+  final bool destructive;
 }

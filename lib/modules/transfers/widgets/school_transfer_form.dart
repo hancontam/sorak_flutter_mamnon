@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_options.dart';
@@ -403,7 +404,7 @@ class _BottomSaveBar extends StatelessWidget {
                           color: Colors.white,
                         ),
                       )
-                    : const Icon(Icons.save_outlined),
+                    : const Icon(LucideIcons.save, size: 18),
                 label: const Text('Lưu'),
               ),
             ),

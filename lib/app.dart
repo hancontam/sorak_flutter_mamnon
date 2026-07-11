@@ -241,6 +241,14 @@ class SorakApp extends StatelessWidget {
             allowedRoles: _principalOnly,
             child: AccountListScreen(),
           ),
+          '/student-accounts': (_) => const RoleGuard(
+            allowedRoles: _principalOnly,
+            child: AccountListScreen(initialView: AccountView.student),
+          ),
+          '/staff-accounts': (_) => const RoleGuard(
+            allowedRoles: _principalOnly,
+            child: AccountListScreen(initialView: AccountView.staff),
+          ),
           '/transfers': (_) => const RoleGuard(
             allowedRoles: _staffRoles,
             child: TransfersScreen(),

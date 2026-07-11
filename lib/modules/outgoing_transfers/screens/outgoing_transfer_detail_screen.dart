@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/outgoing_transfer.dart';
 
@@ -18,13 +19,19 @@ class OutgoingTransferDetailScreen extends StatelessWidget {
       rows: [
         DetailRow(label: 'ID', value: '${outgoingTransfer.id}'),
         DetailRow(
-          label: 'Destination school',
+          label: 'Trường chuyển đến',
           value: outgoingTransfer.destinationSchool,
         ),
-        DetailRow(label: 'Transfer date', value: outgoingTransfer.transferDate),
-        DetailRow(label: 'Reason', value: outgoingTransfer.reason),
-        DetailRow(label: 'Note', value: outgoingTransfer.note),
-        DetailRow(label: 'Status', value: outgoingTransfer.status),
+        DetailRow(
+          label: 'Ngày chuyển trường',
+          value: outgoingTransfer.transferDate,
+        ),
+        DetailRow(label: 'Lý do', value: outgoingTransfer.reason),
+        DetailRow(label: 'Ghi chú', value: outgoingTransfer.note),
+        DetailRow(
+          label: 'Trạng thái',
+          value: UiLabels.status(outgoingTransfer.status),
+        ),
       ],
     );
   }

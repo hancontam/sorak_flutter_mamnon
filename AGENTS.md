@@ -674,3 +674,66 @@ CLAUDE.md
 docs/api_contract_audit.md
 docs/core_api_integration_handoff.md
 ```
+
+## Claude UI Enhancement Context (Locked)
+
+Read `docs/ui_enhancement_claude_plan.md` before changing UI. Current UI work is presentation-only: do not edit API, provider, repository, model, generated files, DTO, endpoint, query/body contract, or `lib/core/network/mock_api_backend.dart`.
+
+Allowed UI scope:
+
+- `pubspec.yaml`
+- `lib/app.dart`
+- `lib/core/theme/**`
+- `lib/core/widgets/**`
+- `lib/core/utils/ui_labels.dart`
+- `lib/modules/**/screens/**`
+- UI-only widgets under `lib/modules/**/widgets/**`
+- Widget/functional tests and `docs/**`
+
+Claude light theme is mandatory:
+
+- Font: Montserrat through `google_fonts`.
+- Radius: `8px` across cards, dialogs, inputs, buttons and chips.
+- Padding: base `16px`, compact `8px` or `12px`.
+- Palette:
+  - background/card `#FAF9F5`
+  - foreground `#3D3929`
+  - destructive/cardForeground `#141413`
+  - primary/ring `#C96442`
+  - primaryForeground `#FFFFFF`
+  - secondary/accent `#E9E6DC`
+  - secondaryForeground `#535146`
+  - muted `#EDE9DE`
+  - mutedForeground `#83827D`
+  - border `#DAD9D4`
+  - input `#B4B2A7`
+  - popover `#FFFFFF`
+  - drawer `#F5F4EE`
+  - chart1 `#B05730`
+  - chart2 `#9C87F5`
+  - chartNeutral `#DED8C4`
+
+Semantic colors must also use Claude tokens:
+
+- Success/Active/Approved/Completed: text `#3D3929`, background `#E9E6DC`, border `#B4B2A7`.
+- Pending/Warning: text `#B05730`, background `#DED8C4`, border `#C96442`.
+- Error/Rejected/Archived/Delete: text `#FFFFFF`, background/border `#141413`.
+- Neutral/Inactive: text `#535146`, background `#EDE9DE`, border `#DAD9D4`.
+
+Navigation lock:
+
+- Principal BottomNav has exactly 4 tabs: `Năm học`, `Học sinh`, `Cán bộ`, `Lớp học`.
+- Teacher BottomNav has exactly 2 tabs: `Học sinh`, `Lớp học`.
+- Parent has no BottomNav and lands on `ParentPortalScreen` as `Báo cáo của trẻ`.
+- Do not fill missing role tabs with unrelated modules.
+- Drawer filters items before render. Principal sees student/staff accounts, transfers, health entry/history, profile, settings, logout. Teacher sees transfers, health entry/history, profile, settings, logout. Parent sees profile, settings, logout.
+
+Component lock:
+
+- Use Lucide outline icons for user-visible icons. Remaining `Icons.*` must be deliberate fallback and documented.
+- Drawer follows HeroUI navigation drawer reference.
+- Bottom navigation follows Modern Mobile Menu / Telegram style using Material 3 `NavigationBar`.
+- Toggle groups use shared `SorakToggleGroup<T>`.
+- Global academic year selector uses shared `AcademicYearAccordion`.
+- DiceBear pixel-art avatar seed must use stable non-PII account id, not name/email.
+- Parent must not show unsupported Health/Growth API cards in live scope.

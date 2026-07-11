@@ -15,10 +15,10 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_profile')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Profile'), findsOneWidget);
+      expect(find.text('Hồ sơ'), findsOneWidget);
       expect(find.text('Phan Thị Hòa'), findsWidgets);
-      expect(find.text('Staff profile'), findsOneWidget);
-      expect(find.text('Account'), findsOneWidget);
+      expect(find.text('Hồ sơ cán bộ'), findsOneWidget);
+      expect(find.text('Tài khoản'), findsOneWidget);
     });
 
     testWidgets('settings changes password through backend-supported flow', (
@@ -33,10 +33,12 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_settings')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Settings'), findsOneWidget);
-      expect(find.text('Change password'), findsWidgets);
+      expect(find.text('Cài đặt'), findsOneWidget);
+      expect(find.text('Đổi mật khẩu'), findsWidgets);
       expect(
-        find.text('Backend endpoint: POST /auth/change-password'),
+        find.text(
+          'Tính năng dùng endpoint POST /auth/change-password khi backend hỗ trợ.',
+        ),
         findsOneWidget,
       );
 
@@ -57,7 +59,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
 
-      expect(find.text('Password changed successfully'), findsOneWidget);
+      expect(find.text('Đã đổi mật khẩu thành công'), findsOneWidget);
     });
   });
 }

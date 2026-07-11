@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -50,12 +51,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _newPasswordController.clear();
       _confirmPasswordController.clear();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Password changed successfully')),
+        const SnackBar(content: Text('Đã đổi mật khẩu thành công')),
       );
     } else {
       final message =
-          context.read<AuthProvider>().errorMessage ??
-          'Could not change password';
+          context.read<AuthProvider>().errorMessage ?? 'Chưa thể đổi mật khẩu';
       messenger.showSnackBar(SnackBar(content: Text(message)));
     }
   }
@@ -65,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: const Text('Cài đặt')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
@@ -77,10 +77,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.tune_outlined, color: AppColors.primary),
+                      const Icon(
+                        LucideIcons.slidersHorizontal,
+                        color: AppColors.primary,
+                      ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        'App preferences',
+                        'Tùy chọn ứng dụng',
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
@@ -89,8 +92,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Health update notifications'),
-                    subtitle: const Text('Show reminders and health updates.'),
+                    title: const Text('Thông báo sức khỏe'),
+                    subtitle: const Text(
+                      'Hiển thị nhắc nhở và cập nhật sức khỏe.',
+                    ),
                     value: _notifyHealthUpdates,
                     onChanged: (value) {
                       setState(() => _notifyHealthUpdates = value);
@@ -98,9 +103,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Hide sensitive data'),
+                    title: const Text('Ẩn dữ liệu nhạy cảm'),
                     subtitle: const Text(
-                      'Mask private information on shared devices.',
+                      'Che thông tin riêng tư khi dùng thiết bị chung.',
                     ),
                     value: _hideSensitiveData,
                     onChanged: (value) {
@@ -122,14 +127,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.lock_outline,
-                          color: AppColors.primary,
-                        ),
+                        const Icon(LucideIcons.lock, color: AppColors.primary),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
-                            'Change password',
+                            'Đổi mật khẩu',
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
@@ -142,11 +144,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       controller: _oldPasswordController,
                       obscureText: true,
                       decoration: const InputDecoration(
-                        labelText: 'Old password',
+                        labelText: 'Mật khẩu hiện tại',
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Old password is required';
+                          return 'Vui lòng nhập mật khẩu hiện tại';
                         }
                         return null;
                       },
@@ -157,11 +159,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       controller: _newPasswordController,
                       obscureText: true,
                       decoration: const InputDecoration(
-                        labelText: 'New password',
+                        labelText: 'Mật khẩu mới',
                       ),
                       validator: (value) {
                         if (value == null || value.trim().length < 6) {
-                          return 'New password must be at least 6 characters';
+                          return 'Mật khẩu mới phải có ít nhất 6 ký tự';
                         }
                         return null;
                       },
@@ -172,11 +174,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       controller: _confirmPasswordController,
                       obscureText: true,
                       decoration: const InputDecoration(
-                        labelText: 'Confirm password',
+                        labelText: 'Xác nhận mật khẩu mới',
                       ),
                       validator: (value) {
                         if (value != _newPasswordController.text) {
-                          return 'Passwords do not match';
+                          return 'Mật khẩu xác nhận chưa khớp';
                         }
                         return null;
                       },
@@ -198,13 +200,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(Icons.save_outlined),
-                        label: const Text('Change password'),
+                            : const Icon(LucideIcons.save, size: 18),
+                        label: const Text('Đổi mật khẩu'),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'Backend endpoint: POST /auth/change-password',
+                      'Tính năng dùng endpoint POST /auth/change-password khi backend hỗ trợ.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textGray,
                       ),

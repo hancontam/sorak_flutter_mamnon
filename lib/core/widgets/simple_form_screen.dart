@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../constants/app_options.dart';
 import '../theme/app_colors.dart';
@@ -177,7 +178,7 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(Icons.save_outlined),
+                      : const Icon(LucideIcons.save, size: 18),
                   label: const Text('Lưu'),
                 ),
               ),

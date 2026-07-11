@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/health_assessment.dart';
@@ -16,52 +17,52 @@ class HealthAssessmentDetailScreen extends StatelessWidget {
         DetailRow(
           label: 'Mã trẻ',
           value: assessment.studentCode,
-          icon: Icons.badge_outlined,
+          icon: LucideIcons.badgeCheck,
         ),
         DetailRow(
           label: 'Lớp',
           value: assessment.className,
-          icon: Icons.class_outlined,
+          icon: LucideIcons.school,
         ),
         DetailRow(
           label: 'Ngày đánh giá',
           value: assessment.assessmentDate.substring(0, 10),
-          icon: Icons.event_outlined,
+          icon: LucideIcons.calendarDays,
         ),
         DetailRow(
           label: 'Chiều cao',
           value: '${assessment.heightCm} cm',
-          icon: Icons.height,
+          icon: LucideIcons.ruler,
         ),
         DetailRow(
           label: 'Cân nặng',
           value: '${assessment.weightKg} kg',
-          icon: Icons.monitor_weight_outlined,
+          icon: LucideIcons.weight,
         ),
         DetailRow(
           label: 'BMI',
           value: assessment.bmi == 0 ? '-' : assessment.bmi.toStringAsFixed(2),
-          icon: Icons.favorite_outline,
+          icon: LucideIcons.heartPulse,
         ),
         DetailRow(
           label: 'Tình trạng BMI',
           value: assessment.bmiStatus,
-          icon: Icons.insights_outlined,
+          icon: LucideIcons.chartNoAxesCombined,
         ),
         DetailRow(
           label: 'Tình trạng chiều cao',
           value: assessment.heightStatus,
-          icon: Icons.trending_up,
+          icon: LucideIcons.trendingUp,
         ),
         DetailRow(
           label: 'Tình trạng cân nặng',
           value: assessment.weightStatus,
-          icon: Icons.scale_outlined,
+          icon: LucideIcons.scale,
         ),
         DetailRow(
           label: 'Ghi chú',
           value: assessment.note,
-          icon: Icons.notes_outlined,
+          icon: LucideIcons.notebookText,
         ),
       ],
     );

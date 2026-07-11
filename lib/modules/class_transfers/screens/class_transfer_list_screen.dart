@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/module_list_screen.dart';
@@ -68,19 +69,19 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
             if (isPrincipal && item.status == 'Pending') ...[
               ModuleListAction(
                 label: 'Duyệt',
-                icon: Icons.thumb_up_alt_outlined,
+                icon: LucideIcons.circleCheck,
                 onSelected: () => provider.updateStatus(item.id, 'approve'),
               ),
               ModuleListAction(
                 label: 'Từ chối',
-                icon: Icons.thumb_down_alt_outlined,
+                icon: LucideIcons.circleX,
                 onSelected: () => provider.updateStatus(item.id, 'reject'),
               ),
             ],
             if (item.status == 'Pending')
               ModuleListAction(
                 label: 'Hủy yêu cầu',
-                icon: Icons.cancel_outlined,
+                icon: LucideIcons.circleX,
                 onSelected: () => provider.updateStatus(item.id, 'cancel'),
                 isDestructive: true,
               ),

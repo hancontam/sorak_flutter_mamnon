@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/student.dart';
 
@@ -15,9 +16,12 @@ class StudentDetailScreen extends StatelessWidget {
       rows: [
         DetailRow(label: 'ID', value: '${student.id}'),
         DetailRow(label: 'Ngày sinh', value: student.dateOfBirth),
-        DetailRow(label: 'Gender', value: student.gender),
-        DetailRow(label: 'Class', value: student.className),
-        DetailRow(label: 'Status', value: student.studentStatus),
+        DetailRow(label: 'Giới tính', value: UiLabels.gender(student.gender)),
+        DetailRow(label: 'Lớp', value: student.className),
+        DetailRow(
+          label: 'Trạng thái',
+          value: UiLabels.status(student.studentStatus),
+        ),
         DetailRow(label: 'Số điện thoại', value: student.contactPhone),
       ],
     );

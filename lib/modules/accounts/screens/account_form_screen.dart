@@ -13,21 +13,21 @@ class AccountFormScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SimpleFormScreen(
-      title: account == null ? 'Create Account' : 'Update Account',
+      title: account == null ? 'Tạo tài khoản' : 'Cập nhật tài khoản',
       fields: const [
-        FormFieldConfig(name: 'full_name', label: 'Full name'),
+        FormFieldConfig(name: 'full_name', label: 'Họ tên'),
         FormFieldConfig(
           name: 'email',
           label: 'Email',
           keyboardType: TextInputType.emailAddress,
         ),
-        FormFieldConfig(name: 'role', label: 'Role (PRINCIPAL/TEACHER)'),
+        FormFieldConfig(name: 'role', label: 'Vai trò'),
         FormFieldConfig(
           name: 'phone',
-          label: 'Phone',
+          label: 'Số điện thoại',
           keyboardType: TextInputType.phone,
         ),
-        FormFieldConfig(name: 'gender', label: 'Gender'),
+        FormFieldConfig(name: 'gender', label: 'Giới tính'),
       ],
       initialValues: {
         'full_name': account?.fullName ?? '',

@@ -6,5 +6,6 @@ class AppSpacing {
   static const double md = 16;
   static const double lg = 24;
 
-  static const double cardRadius = 16;
+  static const double radius = 8;
+  static const double cardRadius = radius;
 }

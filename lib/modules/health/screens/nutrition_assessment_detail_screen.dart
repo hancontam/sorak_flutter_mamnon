@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/nutrition_assessment.dart';
@@ -16,54 +17,54 @@ class NutritionAssessmentDetailScreen extends StatelessWidget {
         DetailRow(
           label: 'Mã trẻ',
           value: assessment.studentCode,
-          icon: Icons.badge_outlined,
+          icon: LucideIcons.badgeCheck,
         ),
         DetailRow(
           label: 'Lớp',
           value: assessment.className,
-          icon: Icons.class_outlined,
+          icon: LucideIcons.school,
         ),
         DetailRow(
           label: 'Giai đoạn',
           value: assessment.period,
-          icon: Icons.event_repeat_outlined,
+          icon: LucideIcons.calendarSync,
         ),
         DetailRow(
           label: 'Tình trạng dinh dưỡng',
           value: assessment.statusSummary,
-          icon: Icons.restaurant_outlined,
+          icon: LucideIcons.utensils,
         ),
         DetailRow(
           label: 'BMI gần nhất',
           value: assessment.latestBmi == 0
               ? '-'
               : assessment.latestBmi.toStringAsFixed(2),
-          icon: Icons.favorite_outline,
+          icon: LucideIcons.heartPulse,
         ),
         DetailRow(
           label: 'Tình trạng BMI gần nhất',
           value: assessment.latestBmiStatus,
-          icon: Icons.insights_outlined,
+          icon: LucideIcons.chartNoAxesCombined,
         ),
         DetailRow(
           label: 'Thấp còi',
           value: assessment.isStunting ? 'Có' : 'Không',
-          icon: Icons.height,
+          icon: LucideIcons.ruler,
         ),
         DetailRow(
           label: 'Thấp còi nặng',
           value: assessment.isSevereStunting ? 'Có' : 'Không',
-          icon: Icons.warning_amber_outlined,
+          icon: LucideIcons.triangleAlert,
         ),
         DetailRow(
           label: 'Béo phì',
           value: assessment.isObese ? 'Có' : 'Không',
-          icon: Icons.monitor_weight_outlined,
+          icon: LucideIcons.weight,
         ),
         DetailRow(
           label: 'Ghi chú',
           value: assessment.note,
-          icon: Icons.notes_outlined,
+          icon: LucideIcons.notebookText,
         ),
       ],
     );

@@ -55,55 +55,38 @@ void main() {
       Navigator.of(shellContext).pushNamed('/accounts');
       await tester.pumpAndSettle();
 
-      expect(find.text('Quản lý tài khoản'), findsWidgets);
+      expect(find.text('Tài khoản cán bộ'), findsWidgets);
       expect(find.text('Không có quyền truy cập'), findsNothing);
     });
   });
 
   group('Role dashboard polish functional test', () {
-    testWidgets('principal dashboard shows overview and management shortcuts', (
-      tester,
-    ) async {
+    testWidgets('principal shell shows management tabs', (tester) async {
       await _pumpTall(tester, testAuthUser);
 
-      expect(find.text('Tổng quan Ban Giám Hiệu'), findsOneWidget);
-      expect(find.text('Thao tác Ban Giám Hiệu'), findsOneWidget);
-      expect(find.text('Yêu cầu chuyển lớp chờ duyệt'), findsOneWidget);
-      expect(find.text('Tài khoản'), findsWidgets);
+      expect(find.byKey(const ValueKey('nav_academic_years')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_teachers')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_classes')), findsOneWidget);
     });
 
-    testWidgets('teacher dashboard shows assigned classes and quick entry', (
-      tester,
-    ) async {
+    testWidgets('teacher shell shows assigned working tabs', (tester) async {
       await _pumpTall(tester, _teacherUser);
 
-      expect(find.text('Công việc giáo viên'), findsOneWidget);
-      expect(find.text('Thao tác nhanh cho giáo viên'), findsOneWidget);
-      expect(find.text('Lớp được phân công'), findsOneWidget);
-      expect(find.text('Nhập nhanh sức khỏe'), findsOneWidget);
-      expect(find.text('Nhập nhanh dinh dưỡng'), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_classes')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav_teachers')), findsNothing);
     });
 
-    testWidgets('parent dashboard shows child profile then health tab', (
-      tester,
-    ) async {
+    testWidgets('parent shell shows report only', (tester) async {
       await _pumpTall(tester, _parentUser);
 
-      expect(find.text('Cổng phụ huynh'), findsOneWidget);
-      expect(find.text('Thông tin trẻ'), findsOneWidget);
-      expect(find.text('Hồ sơ trẻ'), findsOneWidget);
-      expect(find.text('Tình trạng sức khỏe'), findsNothing);
-
-      await tester.tap(find.byKey(const ValueKey('nav_health')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Sức khỏe của trẻ'), findsOneWidget);
+      expect(find.text('Báo cáo của trẻ'), findsWidgets);
+      expect(find.byType(NavigationBar), findsNothing);
       expect(
         find.byKey(const ValueKey('parent_api_unavailable')),
-        findsOneWidget,
+        findsNothing,
       );
-      expect(find.text('Chưa có dữ liệu từ nhà trường'), findsOneWidget);
-      expect(find.text('Hồ sơ trẻ'), findsNothing);
     });
   });
 }

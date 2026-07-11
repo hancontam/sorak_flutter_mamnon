@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class AppSearchBar extends StatelessWidget {
   const AppSearchBar({
@@ -23,13 +24,13 @@ class AppSearchBar extends StatelessWidget {
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: const Icon(LucideIcons.search, size: 20),
         suffixIcon: controller.text.isEmpty
             ? null
             : IconButton(
                 tooltip: 'Xóa nội dung tìm kiếm',
                 onPressed: onClear,
-                icon: const Icon(Icons.close),
+                icon: const Icon(LucideIcons.x, size: 20),
               ),
       ),
     );

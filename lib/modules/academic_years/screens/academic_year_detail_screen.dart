@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/simple_detail_screen.dart';
 import '../models/academic_year.dart';
 
@@ -14,10 +15,13 @@ class AcademicYearDetailScreen extends StatelessWidget {
       title: academicYear.name,
       rows: [
         DetailRow(label: 'ID', value: '${academicYear.id}'),
-        DetailRow(label: 'Name', value: academicYear.name),
-        DetailRow(label: 'Start date', value: academicYear.startDate),
-        DetailRow(label: 'End date', value: academicYear.endDate),
-        DetailRow(label: 'Status', value: academicYear.status),
+        DetailRow(label: 'Tên năm học', value: academicYear.name),
+        DetailRow(label: 'Ngày bắt đầu', value: academicYear.startDate),
+        DetailRow(label: 'Ngày kết thúc', value: academicYear.endDate),
+        DetailRow(
+          label: 'Trạng thái',
+          value: UiLabels.status(academicYear.status),
+        ),
       ],
     );
   }

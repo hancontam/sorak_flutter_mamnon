@@ -23,11 +23,11 @@ class LoadingView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 136,
-                height: 136,
+                width: 128,
+                height: 128,
                 child: Lottie.asset(
                   'assets/lottie/loading.json',
-                  repeat: false,
+                  repeat: true,
                   errorBuilder: (context, error, stackTrace) {
                     return const Center(child: CircularProgressIndicator());
                   },
@@ -36,9 +36,11 @@ class LoadingView extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               Text(
                 message,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.textGray),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.mutedForeground,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

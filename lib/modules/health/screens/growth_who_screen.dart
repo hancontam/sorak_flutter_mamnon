@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -81,7 +82,7 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
             title: 'Chưa có dữ liệu tăng trưởng',
             message:
                 'Nhà trường chưa cung cấp API tăng trưởng dành cho phụ huynh. Ứng dụng không hiển thị dữ liệu mẫu khi đang kết nối hệ thống thật.',
-            icon: Icons.cloud_off_outlined,
+            icon: LucideIcons.cloudOff,
             type: EmptyViewType.unsupported,
           ),
         ),
@@ -104,7 +105,7 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
           return const EmptyView(
             title: 'Chưa có dữ liệu tăng trưởng',
             message: 'Các lần đo sức khỏe sẽ hiển thị tại đây sau khi nhập.',
-            icon: Icons.trending_up,
+            icon: LucideIcons.trendingUp,
           );
         }
 
@@ -241,7 +242,7 @@ class _GrowthHeader extends StatelessWidget {
             CircleAvatar(
               backgroundColor: AppColors.primary.withValues(alpha: 0.1),
               foregroundColor: AppColors.primary,
-              child: const Icon(Icons.trending_up),
+              child: const Icon(LucideIcons.trendingUp),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -269,7 +270,7 @@ class _GrowthHeader extends StatelessWidget {
             if (isParent)
               const Chip(
                 label: Text('Chỉ xem'),
-                avatar: Icon(Icons.visibility_outlined, size: 18),
+                avatar: Icon(LucideIcons.eye, size: 18),
               ),
           ],
         ),
@@ -341,25 +342,25 @@ class _SummaryGrid extends StatelessWidget {
         _MetricCard(
           label: selected.studentName,
           value: selected.className,
-          icon: Icons.child_care_outlined,
+          icon: LucideIcons.baby,
         ),
         _MetricCard(
           label: 'BMI',
           value: selected.bmi == 0 ? '-' : selected.bmi.toStringAsFixed(2),
           helper: selected.bmiStatus,
-          icon: Icons.favorite_outline,
+          icon: LucideIcons.heartPulse,
         ),
         _MetricCard(
           label: 'Chiều cao',
           value: '${selected.heightCm} cm',
           helper: selected.heightStatus,
-          icon: Icons.height,
+          icon: LucideIcons.ruler,
         ),
         _MetricCard(
           label: 'Số lần đo',
           value: '$historyCount',
           helper: 'Lịch sử WHO',
-          icon: Icons.timeline_outlined,
+          icon: LucideIcons.timeline,
         ),
       ],
     );
@@ -436,7 +437,7 @@ class _GrowthChartCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.show_chart, color: AppColors.primary),
+                const Icon(LucideIcons.chartLine, color: AppColors.primary),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
@@ -565,7 +566,7 @@ class _StudentPicker extends StatelessWidget {
       return const EmptyView(
         title: 'Không có trẻ phù hợp',
         message: 'Thử từ khóa hoặc bộ lọc lớp khác.',
-        icon: Icons.search_off,
+        icon: LucideIcons.searchX,
       );
     }
 
@@ -583,10 +584,10 @@ class _StudentPicker extends StatelessWidget {
           Card(
             child: ListTile(
               selected: student.studentId == selectedStudentId,
-              leading: const Icon(Icons.child_care_outlined),
+              leading: const Icon(LucideIcons.baby),
               title: Text(student.studentName),
               subtitle: Text('${student.className} | ${student.studentCode}'),
-              trailing: const Icon(Icons.chevron_right),
+              trailing: const Icon(LucideIcons.chevronRight),
               onTap: () => onSelected(student),
             ),
           ),
@@ -617,7 +618,7 @@ class _HistoryList extends StatelessWidget {
         for (final item in history.reversed) ...[
           Card(
             child: ListTile(
-              leading: const Icon(Icons.event_note_outlined),
+              leading: const Icon(LucideIcons.calendarDays),
               title: Text(item.assessmentDate.substring(0, 10)),
               subtitle: Text(
                 '${item.heightCm} cm | ${item.weightKg} kg | BMI ${item.bmi.toStringAsFixed(2)}',

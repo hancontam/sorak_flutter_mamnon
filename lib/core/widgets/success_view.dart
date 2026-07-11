@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -7,8 +8,8 @@ import '../theme/app_spacing.dart';
 class SuccessView extends StatelessWidget {
   const SuccessView({
     super.key,
-    this.title = 'Success',
-    this.message = 'The action was completed successfully.',
+    this.title = 'Thành công',
+    this.message = 'Thao tác đã được hoàn tất.',
   });
 
   final String title;
@@ -23,16 +24,16 @@ class SuccessView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 136,
-              height: 136,
+              width: 128,
+              height: 128,
               child: Lottie.asset(
                 'assets/lottie/success.json',
                 repeat: false,
                 errorBuilder: (context, error, stackTrace) {
                   return const Icon(
-                    Icons.check_circle_outline,
+                    LucideIcons.circleCheck,
                     size: 56,
-                    color: AppColors.success,
+                    color: AppColors.foreground,
                   );
                 },
               ),
@@ -43,15 +44,16 @@ class SuccessView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textGray),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),

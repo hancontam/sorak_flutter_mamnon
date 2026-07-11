@@ -15,9 +15,9 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_accounts')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Quản lý tài khoản'), findsOneWidget);
-      expect(find.text('Tài khoản cán bộ'), findsOneWidget);
-      expect(find.text('Tài khoản phụ huynh'), findsOneWidget);
+      expect(find.text('Tài khoản cán bộ'), findsWidgets);
+      expect(find.text('Cán bộ'), findsWidgets);
+      expect(find.text('Học sinh'), findsWidgets);
       expect(find.text('Chưa cấp'), findsOneWidget);
       expect(find.text('Đã cấp'), findsOneWidget);
 
@@ -25,7 +25,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Lê Minh Anh'), findsOneWidget);
-      expect(find.text('Chưa cấp'), findsWidgets);
+      expect(find.text('Chưa cấp tài khoản'), findsWidgets);
 
       await tester.tap(find.byTooltip('Thao tác').first);
       await tester.pumpAndSettle();
@@ -33,7 +33,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Cấp tài khoản'), findsOneWidget);
-      expect(find.text('Vai trò'), findsOneWidget);
+      expect(find.text('Vai trò'), findsWidgets);
       expect(find.text('Mật khẩu khởi tạo'), findsOneWidget);
 
       await tester.tap(find.text('Lưu'));
@@ -42,7 +42,7 @@ void main() {
       expect(find.text('Đã cập nhật tài khoản'), findsOneWidget);
     });
 
-    testWidgets('parent tab supports password and active actions', (
+    testWidgets('student account tab supports password and active actions', (
       tester,
     ) async {
       await tester.pumpLoggedInSorakApp();
@@ -52,18 +52,18 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('drawer_accounts')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Tài khoản phụ huynh'));
+      await tester.tap(find.text('Học sinh').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('Mã thẻ: NMA2025.001'), findsOneWidget);
-      expect(find.text('SĐT PH: 0910000401'), findsOneWidget);
+      expect(find.text('Mã trẻ: NMA2025.001'), findsOneWidget);
+      expect(find.text('Số điện thoại phụ huynh'), findsWidgets);
 
       await tester.tap(find.byTooltip('Thao tác').first);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Đổi mật khẩu PH'));
+      await tester.tap(find.text('Đổi mật khẩu phụ huynh'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Đổi mật khẩu PH'), findsOneWidget);
+      expect(find.text('Đổi mật khẩu phụ huynh'), findsOneWidget);
       expect(find.text('Mật khẩu mới'), findsOneWidget);
 
       await tester.tap(find.text('Lưu'));
@@ -73,10 +73,10 @@ void main() {
 
       await tester.tap(find.byTooltip('Thao tác').first);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Khóa tài khoản PH'));
+      await tester.tap(find.text('Khóa tài khoản'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Inactive'), findsWidgets);
+      expect(find.text('Ngừng hoạt động'), findsWidgets);
     });
   });
 }

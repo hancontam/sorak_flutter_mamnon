@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class AppDateField extends StatelessWidget {
   const AppDateField({
@@ -27,7 +28,7 @@ class AppDateField extends StatelessWidget {
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        suffixIcon: const Icon(Icons.calendar_month_outlined),
+        suffixIcon: const Icon(LucideIcons.calendarDays, size: 20),
       ),
       onTap: enabled ? () => _pickDate(context) : null,
     );

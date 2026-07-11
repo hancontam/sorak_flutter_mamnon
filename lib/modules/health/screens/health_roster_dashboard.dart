@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_options.dart';
@@ -384,7 +385,7 @@ class _StudentRosterCard extends StatelessWidget {
         ),
         title: Text(student.fullName),
         subtitle: Text('${student.className} · $subtitle'),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: const Icon(LucideIcons.chevronRight, size: 20),
       ),
     );
   }
@@ -666,7 +667,7 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(Icons.save_outlined),
+                            : const Icon(LucideIcons.save, size: 18),
                         label: Text(
                           _isHealth ? 'Lưu sức khỏe' : 'Lưu nuôi dưỡng',
                         ),
@@ -810,7 +811,7 @@ class _RosterSummary extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.groups_outlined, color: AppColors.primary),
+          const Icon(LucideIcons.users, color: AppColors.primary, size: 22),
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text('$completed/$total $label')),
         ],

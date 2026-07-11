@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
+import '../../../core/widgets/sorak_avatar.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -43,12 +46,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         final role = (profile['role'] ?? user?.role ?? '').toString();
-        final fullName = (profile['full_name'] ?? user?.fullName ?? 'User')
-            .toString();
+        final fullName =
+            (profile['full_name'] ?? user?.fullName ?? 'Người dùng').toString();
         final email = (profile['email'] ?? user?.email ?? '').toString();
+        final accountId = profile['account_id'] ?? user?.id ?? fullName;
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Profile')),
+          appBar: AppBar(title: const Text('Hồ sơ')),
           body: RefreshIndicator(
             onRefresh: provider.loadProfile,
             child: ListView(
@@ -59,17 +63,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          child: Text(
-                            fullName.isEmpty
-                                ? 'S'
-                                : fullName.characters.first.toUpperCase(),
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(color: Colors.white),
-                          ),
+                        SorakAvatar(
+                          seed: accountId,
+                          fallbackLabel: fullName,
+                          size: 56,
                         ),
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
@@ -103,14 +100,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _InfoSection(
-                  title: 'Account',
-                  icon: Icons.manage_accounts_outlined,
+                  title: 'Tài khoản',
+                  icon: LucideIcons.userCog,
                   rows: [
                     _InfoRowData(
-                      'Account ID',
+                      'Mã tài khoản',
                       '${profile['account_id'] ?? user?.id ?? '-'}',
                     ),
-                    _InfoRowData('Role', _roleLabel(role)),
+                    _InfoRowData('Vai trò', _roleLabel(role)),
                     if (email.isNotEmpty) _InfoRowData('Email', email),
                   ],
                 ),
@@ -130,13 +127,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _roleLabel(String role) {
     switch (role.toUpperCase()) {
       case 'PRINCIPAL':
-        return 'Principal';
+        return UiLabels.role(role);
       case 'TEACHER':
-        return 'Teacher';
+        return UiLabels.role(role);
       case 'PARENT':
-        return 'Parent';
+        return UiLabels.role(role);
       default:
-        return role.isEmpty ? 'User' : role;
+        return role.isEmpty ? 'Người dùng' : UiLabels.role(role);
     }
   }
 }
@@ -149,14 +146,20 @@ class _StaffInfoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _InfoSection(
-      title: 'Staff profile',
-      icon: Icons.badge_outlined,
+      title: 'Hồ sơ cán bộ',
+      icon: LucideIcons.badgeCheck,
       rows: [
-        _InfoRowData('Teacher ID', '${profile['teacher_id'] ?? '-'}'),
-        _InfoRowData('Position', '${profile['position'] ?? '-'}'),
-        _InfoRowData('Phone', '${profile['phone'] ?? '-'}'),
-        _InfoRowData('Gender', '${profile['gender'] ?? '-'}'),
-        _InfoRowData('Work status', '${profile['work_status'] ?? '-'}'),
+        _InfoRowData('Mã giáo viên', '${profile['teacher_id'] ?? '-'}'),
+        _InfoRowData('Chức vụ', '${profile['position'] ?? '-'}'),
+        _InfoRowData('Số điện thoại', '${profile['phone'] ?? '-'}'),
+        _InfoRowData(
+          'Giới tính',
+          UiLabels.gender('${profile['gender'] ?? '-'}'),
+        ),
+        _InfoRowData(
+          'Trạng thái công tác',
+          UiLabels.workStatus('${profile['work_status'] ?? '-'}'),
+        ),
       ],
     );
   }
@@ -179,23 +182,26 @@ class _ParentInfoSection extends StatelessWidget {
     final schoolYear = schoolClass is Map ? schoolClass['school_year'] : null;
 
     return _InfoSection(
-      title: 'Child account',
-      icon: Icons.child_care_outlined,
+      title: 'Tài khoản học sinh',
+      icon: LucideIcons.baby,
       rows: [
-        _InfoRowData('Student ID', '${profile['student_id'] ?? '-'}'),
+        _InfoRowData('Mã học sinh', '${profile['student_id'] ?? '-'}'),
         _InfoRowData(
-          'Student card',
+          'Mã thẻ học sinh',
           '${profile['student_id_card_number'] ?? '-'}',
         ),
         _InfoRowData(
-          'Class',
+          'Lớp',
           schoolClass is Map ? '${schoolClass['class_name'] ?? '-'}' : '-',
         ),
         _InfoRowData(
-          'School year',
+          'Năm học',
           schoolYear is Map ? '${schoolYear['name'] ?? '-'}' : '-',
         ),
-        _InfoRowData('Status', '${profile['student_status'] ?? '-'}'),
+        _InfoRowData(
+          'Trạng thái',
+          UiLabels.status('${profile['student_status'] ?? '-'}'),
+        ),
       ],
     );
   }
