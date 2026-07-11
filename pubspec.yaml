@@ -36,3 +36,4 @@ flutter:
     - assets/lottie/loading.json
     - assets/lottie/empty.json
     - assets/lottie/success.json
+    - assets/images/banner_login.jpg
