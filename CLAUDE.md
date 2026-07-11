@@ -4,6 +4,8 @@
 
 Read `docs/test_plan_after_core_api.md`, `docs/functional_defect_inventory.md`,
 and `docs/test_regression_report.md` before changing API or role behavior.
+For the remaining gate, read `docs/backend_parent_read_api_contract.md` and
+`docs/goal_50_ux_hardening_audit.md`.
 
 - Mock mode uses one `MockApiBackend` as Dio's `HttpClientAdapter`.
 - Mock and live share `ApiResponse`, `fromJson`, query mapping, DTOs,

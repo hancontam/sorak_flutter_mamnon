@@ -138,6 +138,8 @@ Nen test hien tai sau Goals 40+:
   hien tai la chinh ma the duoc sinh; khong ghi ma the/password that vao repo.
 - Doc `docs/test_plan_after_core_api.md` va
   `docs/functional_defect_inventory.md` truoc khi sua fixture/API.
+- Parent read API chua ton tai. Dung contract de xuat trong
+  `docs/backend_parent_read_api_contract.md`; khong tu doan endpoint.
 
 - Test theo muc chuc nang, khong viet unit test qua chi tiet cho tung ham nho.
 - Uu tien automated test bang `flutter test` voi mock API de test UI flow, provider state, navigation, CRUD co ban, va archive behavior.
