@@ -10,7 +10,7 @@ Baseline date: 2026-07-10
 | `flutter test` | 83 passed, 2 skipped live-contract cases |
 | Live-branch adapter contract | 2 passed |
 | Android mock role UI | Pass on Pixel 7 Pro emulator, Android 16/API 36 |
-| Android live UI | Partial: Principal/Teacher pass on API 35; Parent credential unavailable |
+| Android live UI | Pass role journeys on API 35; Parent Health/Growth remains a backend contract gap |
 
 ## Implemented Evidence
 
@@ -25,8 +25,10 @@ Baseline date: 2026-07-10
 - Teacher-to-Accounts and class-transfer approve/revert integrity.
 - Android screenshots for login, Principal dashboard/Health, Teacher dashboard,
   and Parent profile/unavailable Health in `docs/evidence/`.
-- Live Android screenshots for login, Principal, Teacher and Teacher Health on
-  a clean API 35 AVD. No live mutation was performed.
+- Live Android screenshots for all three roles on a clean API 35 AVD. Live
+  mutations were restricted to prefixed records and followed by soft archive.
+- Live Parent profile and truthful unavailable Health/Growth states using a
+  provisioned `MOBILE_TEST_` student that was soft-archived after evidence.
 
 Passing widget tests are not sufficient evidence for live behavior. A feature passes only when its role visibility, displayed data, request contract, mutation refresh, and error/empty/loading states are asserted.
 
@@ -57,7 +59,6 @@ Passing widget tests are not sufficient evidence for live behavior. A feature pa
 - Critical and High defects are closed; remaining defects have an owner and status.
 - Analyze, functional tests, live-contract tests, Android smoke, and debug APK results are recorded.
 
-Current completion status: **Partial**. Automated, Android mock, live Principal
-and live Teacher gates pass, but SORAK-TEST-011 and SORAK-TEST-013 remain
-open/partial.
+Current completion status: **Partial**. Automated and all three Android role
+journeys pass, but SORAK-TEST-011 remains an external backend contract gap.
 Goal 50 must not start until those High items are closed or explicitly accepted.

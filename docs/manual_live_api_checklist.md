@@ -82,7 +82,8 @@ Live flavor was installed on a clean Android 15/API 35 x86_64 AVD.
 | Teacher Classes/Students/Transfers/Health | Pass | Health roster contains the same 3 students |
 | Principal Teacher create | Pass | Created `MOBILE_TEST_TEACHER_235640`, ID 26 |
 | Delete UI -> soft archive | Pass | Record hidden; detail returns `deleted_at` |
-| Parent login/profile | Blocked | No provisioned/default credential accepted |
+| Parent login/profile | Pass | Provisioned student ID 226; `/auth/me` matched; archived after smoke |
+| Parent Health/Growth | Pass truthful fallback | Unsupported API state shown; no mock data |
 
 No password, cookie or token value was written to the report. Screenshots are
 stored under `docs/evidence/android_live_*.png`.

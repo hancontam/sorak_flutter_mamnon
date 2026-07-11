@@ -134,6 +134,8 @@ Nen test hien tai sau Goals 40+:
   API 403.
 - Parent chi lay profile tre tu `/auth/me`; khong fallback mock Health/Growth
   trong live mode.
+- Student create tu dong cap Parent account. Password mac dinh theo backend
+  hien tai la chinh ma the duoc sinh; khong ghi ma the/password that vao repo.
 - Doc `docs/test_plan_after_core_api.md` va
   `docs/functional_defect_inventory.md` truoc khi sua fixture/API.
 

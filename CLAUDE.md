@@ -18,9 +18,9 @@ and `docs/test_regression_report.md` before changing API or role behavior.
   responses are rejected by `CrudProvider` revisions.
 - Default and live-contract test commands must both pass. See the regression
   report for the latest exact count and Android/manual blockers.
-- Live Android read smoke passes for Principal and Teacher on API 35. Parent
-  still needs a provisioned live credential; do not treat mock Parent evidence
-  as a live pass.
+- Live Android role smoke passes for Principal, Teacher and a temporary Parent
+  student on API 35. The Parent test student/account was soft-archived after
+  evidence; create another `MOBILE_TEST_` student for repeat live smoke.
 
 Core read and transfer wiring is complete. Before touching these repositories, read `docs/core_api_integration_handoff.md` and run `flutter test --dart-define=USE_MOCK_API=false test/functional/live_api_contract_functional_test.dart`. In particular, Academic Years accepts no pagination query; class transfers have no DELETE route; school transfers have no restore route.
 

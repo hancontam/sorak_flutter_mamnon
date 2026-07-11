@@ -46,7 +46,7 @@ phanthihoa@edu.vn
 | 46 Parent truthful data | Pass with backend blocker | `/auth/me` profile only; Health/Growth show unavailable, never mock |
 | 47 Health/Nutrition/Growth | Pass automated | Bulk save then reload, missing rows, history and WHO curves |
 | 48 Cross-module integrity | Pass automated | Teacher-account grant and class transfer approve/revert |
-| 49 Live/final regression | Partial | Live Principal/Teacher and prefixed mutation pass on API 35; Parent credential pending |
+| 49 Live/final regression | Pass with contract gap | Principal, Teacher, Parent profile and prefixed create/archive pass on API 35; Parent Health/Growth backend API absent |
 | 50 UI/UX enhancement | Blocked by quality gate | Do not start while High live/backend gaps remain |
 
 ## Regression Gate Ket Qua
@@ -60,7 +60,7 @@ phanthihoa@edu.vn
 | Hard-code/endpoint scan | Pass | No live year-1 fallback in health; no secret prints |
 | Live HTTP smoke | Pass | login/me/refresh/year/health/nutrition/growth/logout all HTTP 200; secrets not logged |
 | Android mock UI smoke | Pass | Pixel 7 Pro emulator, Android 16/API 36; Principal, Teacher, Parent and staff Health |
-| Android live UI smoke | Partial | Principal, Teacher and `MOBILE_TEST_` Teacher create/archive pass on API 35; Parent login unavailable |
+| Android live UI smoke | Pass role journeys | Principal, Teacher, Parent profile and `MOBILE_TEST_` cleanup pass on API 35 |
 | Debug APK | Pass | `build/app/outputs/flutter-apk/app-debug.apk` |
 
 ## Automated Functional Test Files
@@ -151,6 +151,8 @@ Live evidence generated with `USE_MOCK_API=false` on clean API 35 x86_64 AVD:
 - `docs/evidence/android_live_principal.png`
 - `docs/evidence/android_live_teacher.png`
 - `docs/evidence/android_live_teacher_health.png`
+- `docs/evidence/android_live_parent.png`
+- `docs/evidence/android_live_parent_health.png`
 
 Live observations:
 
@@ -164,8 +166,13 @@ Live observations:
 - Principal created `MOBILE_TEST_TEACHER_235640` through the Flutter form. The
   list refreshed with Teacher ID 26; Delete then hid it and live detail
   confirmed `deleted_at` is set, proving soft archive.
-- Parent login remains blocked: default credentials for all 49 active-year
-  students were rejected. No password, cookie or token was logged.
+- A temporary `MOBILE_TEST_` student (ID 226) provisioned its own Parent
+  account. Android profile matched `/auth/me`; Health/Growth showed explicit
+  unavailable states and no mock data. Student/account cleanup used soft
+  archive and a subsequent Parent login returned 401.
+- No password, card number, cookie or token value was logged.
+- Final live search confirmed zero active `MOBILE_TEST_PARENT_` students and
+  zero active `MOBILE_TEST_TEACHER_` teachers.
 - API 36 AVD package services became unhealthy during reinstall, so live smoke
   was repeated on a fresh API 35 AVD. This was an emulator issue before app
   startup, not a Flutter exception.
@@ -185,8 +192,7 @@ Trang thai live API smoke read-only: Pass.
 
 Trang thai Android mock UI: Pass cho Principal, Teacher va Parent.
 
-Trang thai Android live API: Partial. Principal, Teacher va mutation
-`MOBILE_TEST_` pass; Parent login chua co bang chung.
+Trang thai Android live API: Pass role journeys. Principal, Teacher, Parent
+profile va mutation/cleanup `MOBILE_TEST_` co bang chung.
 
-Definition of Done tong the: Chua dat. Con blocker Parent Health/Growth API va
-Parent Android live role smoke.
+Definition of Done tong the: Chua dat. Con blocker Parent Health/Growth API.
