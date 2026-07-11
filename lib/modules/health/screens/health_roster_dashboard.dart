@@ -420,6 +420,14 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
   bool _isSevereStunting = false;
   bool _isObese = false;
   bool _isSaving = false;
+  bool _allowPop = false;
+  late final String _initialHeight;
+  late final String _initialWeight;
+  late final String _initialNote;
+  late final String _initialWeightChannel;
+  late final bool _initialIsStunting;
+  late final bool _initialIsSevereStunting;
+  late final bool _initialIsObese;
 
   bool get _isHealth => widget.mode == HealthRosterMode.health;
 
@@ -438,10 +446,23 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
     _isStunting = _latestNutrition?.isStunting ?? false;
     _isSevereStunting = _latestNutrition?.isSevereStunting ?? false;
     _isObese = _latestNutrition?.isObese ?? false;
+    _initialHeight = _heightController.text;
+    _initialWeight = _weightController.text;
+    _initialNote = _noteController.text;
+    _initialWeightChannel = _weightChannel;
+    _initialIsStunting = _isStunting;
+    _initialIsSevereStunting = _isSevereStunting;
+    _initialIsObese = _isObese;
+    _heightController.addListener(_onTextChanged);
+    _weightController.addListener(_onTextChanged);
+    _noteController.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
+    _heightController.removeListener(_onTextChanged);
+    _weightController.removeListener(_onTextChanged);
+    _noteController.removeListener(_onTextChanged);
     _heightController.dispose();
     _weightController.dispose();
     _noteController.dispose();
@@ -460,153 +481,237 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
         : widget.nutritionHistory.last;
   }
 
+  bool get _isDirty {
+    return _heightController.text != _initialHeight ||
+        _weightController.text != _initialWeight ||
+        _noteController.text != _initialNote ||
+        _weightChannel != _initialWeightChannel ||
+        _isStunting != _initialIsStunting ||
+        _isSevereStunting != _initialIsSevereStunting ||
+        _isObese != _initialIsObese;
+  }
+
+  void _onTextChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    // Keyboard + system safe-area bottom so Save stays reachable.
-    final bottomPad =
-        media.viewInsets.bottom + media.padding.bottom + AppSpacing.md;
+    final availableHeight = media.size.height - media.viewInsets.bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppSpacing.md,
-        right: AppSpacing.md,
-        top: AppSpacing.md,
-        bottom: bottomPad,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              widget.student.fullName,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            Text(
-              widget.student.className,
-              style: const TextStyle(color: AppColors.textGray),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              _isHealth ? 'Preview sức khỏe' : 'Preview nuôi dưỡng',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            _PreviewSummary(
-              health: _latestHealth,
-              nutrition: _latestNutrition,
-              mode: widget.mode,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Lịch sử gần đây',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            if (_isHealth)
-              for (final item in widget.history.take(3))
-                Text(
-                  '${item.assessmentDate.substring(0, 10)} · ${item.heightCm} cm · ${item.weightKg} kg',
-                )
-            else
-              for (final item in widget.nutritionHistory.take(3))
-                Text('${item.period} · ${item.statusSummary}'),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              _isHealth ? 'Nhập nhanh sức khỏe' : 'Nhập nhanh nuôi dưỡng',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            if (_isHealth) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      controller: _heightController,
-                      label: 'Chiều cao (cm)',
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+    return PopScope<bool>(
+      canPop: _allowPop || !_isDirty,
+      onPopInvokedWithResult: (didPop, result) => _handlePop(didPop),
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: availableHeight * 0.9,
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.student.fullName,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          widget.student.className,
+                          style: const TextStyle(color: AppColors.textGray),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          _isHealth ? 'Preview sức khỏe' : 'Preview nuôi dưỡng',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        _PreviewSummary(
+                          health: _latestHealth,
+                          nutrition: _latestNutrition,
+                          mode: widget.mode,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'Lịch sử gần đây',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        if (_isHealth)
+                          for (final item in widget.history.take(3))
+                            Text(
+                              '${item.assessmentDate.substring(0, 10)} · ${item.heightCm} cm · ${item.weightKg} kg',
+                            )
+                        else
+                          for (final item in widget.nutritionHistory.take(3))
+                            Text('${item.period} · ${item.statusSummary}'),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          _isHealth
+                              ? 'Nhập nhanh sức khỏe'
+                              : 'Nhập nhanh nuôi dưỡng',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        if (_isHealth) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppTextField(
+                                  controller: _heightController,
+                                  label: 'Chiều cao (cm)',
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: AppTextField(
+                                  controller: _weightController,
+                                  label: 'Cân nặng (kg)',
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ] else ...[
+                          AppDropdownField<String>(
+                            key: ValueKey('nutrition_channel_$_weightChannel'),
+                            label: 'Kênh tăng trưởng cân nặng',
+                            options: NutritionOptions.weightChannels,
+                            value: _weightChannel,
+                            onChanged: (value) {
+                              setState(() {
+                                _weightChannel =
+                                    value ?? NutritionOptions.weightNormal;
+                              });
+                            },
+                          ),
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('SDD thấp còi'),
+                            value: _isStunting,
+                            onChanged: (value) {
+                              setState(() => _isStunting = value ?? false);
+                            },
+                          ),
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('SDD còi cọc'),
+                            value: _isSevereStunting,
+                            onChanged: (value) {
+                              setState(
+                                () => _isSevereStunting = value ?? false,
+                              );
+                            },
+                          ),
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Béo phì'),
+                            value: _isObese,
+                            onChanged: (value) {
+                              setState(() => _isObese = value ?? false);
+                            },
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.sm),
+                        AppTextField(
+                          controller: _noteController,
+                          label: 'Ghi chú',
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
+                    ),
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: AppColors.background,
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        key: const Key('health_roster_save_button'),
+                        onPressed: _isSaving || !_isDirty ? null : _save,
+                        icon: _isSaving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.save_outlined),
+                        label: Text(
+                          _isHealth ? 'Lưu sức khỏe' : 'Lưu nuôi dưỡng',
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: AppTextField(
-                      controller: _weightController,
-                      label: 'Cân nặng (kg)',
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ] else ...[
-              AppDropdownField<String>(
-                key: ValueKey('nutrition_channel_$_weightChannel'),
-                label: 'Kênh tăng trưởng cân nặng',
-                options: NutritionOptions.weightChannels,
-                value: _weightChannel,
-                onChanged: (value) {
-                  setState(() {
-                    _weightChannel = value ?? NutritionOptions.weightNormal;
-                  });
-                },
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('SDD thấp còi'),
-                value: _isStunting,
-                onChanged: (value) {
-                  setState(() => _isStunting = value ?? false);
-                },
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('SDD còi cọc'),
-                value: _isSevereStunting,
-                onChanged: (value) {
-                  setState(() => _isSevereStunting = value ?? false);
-                },
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Béo phì'),
-                value: _isObese,
-                onChanged: (value) {
-                  setState(() => _isObese = value ?? false);
-                },
-              ),
-            ],
-            const SizedBox(height: AppSpacing.sm),
-            AppTextField(
-              controller: _noteController,
-              label: 'Ghi chú',
-              maxLines: 2,
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                key: const Key('health_roster_save_button'),
-                onPressed: _isSaving ? null : _save,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: Text(_isHealth ? 'Lưu sức khỏe' : 'Lưu nuôi dưỡng'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _handlePop(bool didPop) async {
+    if (didPop || !_isDirty || _isSaving || !mounted) {
+      return;
+    }
+
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Bỏ thay đổi?'),
+        content: const Text(
+          'Thông tin vừa nhập chưa được lưu. Bạn có muốn rời màn hình không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Tiếp tục nhập'),
+          ),
+          FilledButton(
+            key: const ValueKey('discard_health_changes_button'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Bỏ thay đổi'),
+          ),
+        ],
+      ),
+    );
+
+    if (discard == true && mounted) {
+      setState(() => _allowPop = true);
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _save() async {
@@ -670,6 +775,7 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
     }
     setState(() => _isSaving = false);
     if (ok) {
+      _allowPop = true;
       Navigator.pop(context, true);
     } else {
       final message = _isHealth

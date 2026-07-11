@@ -194,6 +194,7 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
                     message:
                         'Thử từ khóa khác, đổi bộ lọc hoặc xóa nội dung tìm kiếm.',
                     icon: Icons.search_off,
+                    type: EmptyViewType.search,
                     actionLabel: 'Xóa bộ lọc',
                     onAction: () {
                       _searchController.clear();

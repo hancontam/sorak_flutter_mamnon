@@ -49,6 +49,7 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
@@ -61,6 +62,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
+          minimumSize: const Size(48, 48),
           side: const BorderSide(color: AppColors.primary),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
@@ -70,6 +72,9 @@ class AppTheme {
             borderRadius: BorderRadius.circular(AppSpacing.sm),
           ),
         ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.background,

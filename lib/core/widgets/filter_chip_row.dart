@@ -28,7 +28,7 @@ class FilterChipRow extends StatelessWidget {
         children: [
           FilterChip(
             key: const ValueKey('filter_chip_all'),
-            label: const Text('All'),
+            label: const Text('Tất cả'),
             selected: selectedOption == null,
             onSelected: (_) => onSelected(null),
           ),

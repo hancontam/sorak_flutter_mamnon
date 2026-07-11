@@ -6,7 +6,7 @@ class AppSearchBar extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     required this.onClear,
-    this.hintText = 'Search',
+    this.hintText = 'Tìm kiếm',
   });
 
   final TextEditingController controller;
@@ -27,7 +27,7 @@ class AppSearchBar extends StatelessWidget {
         suffixIcon: controller.text.isEmpty
             ? null
             : IconButton(
-                tooltip: 'Clear search',
+                tooltip: 'Xóa nội dung tìm kiếm',
                 onPressed: onClear,
                 icon: const Icon(Icons.close),
               ),

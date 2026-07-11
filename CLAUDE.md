@@ -15,7 +15,8 @@ For the remaining gate, read `docs/backend_parent_read_api_contract.md` and
 - Canonical ID ranges are year 101+, teacher 201+, class 301+, student 401+,
   transfer 501+, and account 1001+.
 - Parent profile comes only from `/auth/me`. Parent Health/Growth APIs do not
-  exist, so UI shows unavailable state and never fixture data.
+  exist. Product owner accepted this as current backend scope, so UI shows an
+  explicit unavailable state and never fixture data. Do not invent endpoints.
 - Global year changes invalidate every year-scoped provider; stale async
   responses are rejected by `CrudProvider` revisions.
 - Default and live-contract test commands must both pass. See the regression

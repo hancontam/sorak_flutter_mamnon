@@ -2,7 +2,7 @@
 
 ## Thong Tin Chung
 
-Ngay chay: 2026-07-10 to 2026-07-11 (Goals 36-49)
+Ngay chay: 2026-07-10 to 2026-07-11 (Goals 36-50)
 
 Pham vi:
 
@@ -33,7 +33,7 @@ phanthihoa@edu.vn
 | 38 Live smoke + hardening | Pass (HTTP) / Android UI skip | Login/me/refresh/logout/year + Health/Nutrition/Growth reads HTTP 200; no secrets logged |
 | 39 Final regression + commit | Pass | analyze clean, full test 66 pass / 2 skip (live contract needs USE_MOCK_API=false), debug APK attempted |
 
-## Goals 40-49 status
+## Goals 40-50 status
 
 | Goal | Status | Notes |
 | --- | --- | --- |
@@ -43,19 +43,19 @@ phanthihoa@edu.vn
 | 43 Global year | Pass | Three datasets, all-tab invalidation, empty year, stale response race |
 | 44 Principal journeys | Pass automated | Accounts, CRUD, transfer, health/nutrition/growth flows |
 | 45 Teacher scope | Pass automated | Assigned class/student data, action visibility, deep-link and API 403 |
-| 46 Parent truthful data | Pass with backend blocker | `/auth/me` profile only; Health/Growth show unavailable, never mock |
+| 46 Parent truthful data | Pass with accepted backend scope | `/auth/me` profile only; Health/Growth show unavailable, never mock |
 | 47 Health/Nutrition/Growth | Pass automated | Bulk save then reload, missing rows, history and WHO curves |
 | 48 Cross-module integrity | Pass automated | Teacher-account grant and class transfer approve/revert |
-| 49 Live/final regression | Pass with contract gap | Principal, Teacher, Parent profile and prefixed create/archive pass on API 35; Parent Health/Growth backend API absent |
-| 50 UI/UX enhancement | Blocked by quality gate | Do not start while High live/backend gaps remain |
+| 49 Live/final regression | Pass with accepted contract gap | Principal, Teacher, Parent profile and prefixed create/archive pass on API 35; Parent Health/Growth backend API absent |
+| 50 UI/UX enhancement | Pass with Medium follow-up | Parent scope accepted; Vietnamese states, semantics, 48 px controls, text scale and Health dirty/sticky-save regression pass; SORAK-UX-001 tracks server pagination |
 
 ## Regression Gate Ket Qua
 
 | Command | Ket qua | Ghi chu |
 | --- | --- | --- |
-| `dart run build_runner build` | Pass | Teacher and Account generated parsers updated |
+| `dart run build_runner build` | Pass | Generated code current; 0 outputs changed |
 | `flutter analyze` | Pass | No issues found |
-| `flutter test` | Pass | 83 passed, 2 skipped (live contract skipped when mock default) |
+| `flutter test` | Pass | 85 passed, 2 skipped (live contract skipped when mock default) |
 | Live contract health/nutrition/growth | Pass | `flutter test --dart-define=USE_MOCK_API=false test/functional/live_api_contract_functional_test.dart` |
 | Hard-code/endpoint scan | Pass | No live year-1 fallback in health; no secret prints |
 | Live HTTP smoke | Pass | login/me/refresh/year/health/nutrition/growth/logout all HTTP 200; secrets not logged |
@@ -78,6 +78,7 @@ phanthihoa@edu.vn
 | `test/functional/academic_year_race_functional_test.dart` | Old request cannot overwrite selected year | Pass |
 | `test/functional/role_permission_functional_test.dart` | Teacher/Parent visibility and API permission | Pass |
 | `test/functional/health_data_journey_functional_test.dart` | Health/Nutrition/Growth persistence and class transfer integrity | Pass |
+| `test/functional/goal_50_ux_hardening_functional_test.dart` | Vietnamese semantic states, 2x text, 48 px target, Health dirty guard and sticky Save | Pass |
 
 ## Automated Test Coverage Theo Module
 
@@ -186,7 +187,7 @@ Quy tac:
 
 ## Ket Luan
 
-Trang thai automated regression: Pass (83 pass, 2 conditional skip).
+Trang thai automated regression: Pass (85 pass, 2 conditional skip).
 
 Trang thai live API smoke read-only: Pass.
 
@@ -195,4 +196,9 @@ Trang thai Android mock UI: Pass cho Principal, Teacher va Parent.
 Trang thai Android live API: Pass role journeys. Principal, Teacher, Parent
 profile va mutation/cleanup `MOBILE_TEST_` co bang chung.
 
-Definition of Done tong the: Chua dat. Con blocker Parent Health/Growth API.
+Definition of Done: Parent Health/Growth duoc ghi nhan la unavailable state theo
+pham vi backend hien tai. Day khong con la release blocker; app khong duoc hien
+thi mock data trong live mode.
+
+Goal 50 hoan thanh voi mot follow-up Medium co owner: SORAK-UX-001 cho
+server-side search/pagination khi mot module vuot 500 ban ghi active.

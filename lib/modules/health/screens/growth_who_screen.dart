@@ -82,6 +82,7 @@ class _GrowthWhoScreenState extends State<GrowthWhoScreen> {
             message:
                 'Nhà trường chưa cung cấp API tăng trưởng dành cho phụ huynh. Ứng dụng không hiển thị dữ liệu mẫu khi đang kết nối hệ thống thật.',
             icon: Icons.cloud_off_outlined,
+            type: EmptyViewType.unsupported,
           ),
         ),
       );

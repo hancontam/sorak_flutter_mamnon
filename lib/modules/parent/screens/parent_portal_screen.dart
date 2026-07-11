@@ -191,33 +191,37 @@ class _UnavailableDataCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Semantics(
       key: const ValueKey('parent_api_unavailable'),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.cloud_off_outlined,
-              color: AppColors.textGray,
-              size: 36,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Chưa có dữ liệu từ nhà trường',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
-            ),
-          ],
+      container: true,
+      label: 'Backend chưa hỗ trợ dữ liệu sức khỏe phụ huynh. $message',
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                color: AppColors.textGray,
+                size: 36,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Chưa có dữ liệu từ nhà trường',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textGray),
+              ),
+            ],
+          ),
         ),
       ),
     );

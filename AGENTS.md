@@ -140,6 +140,10 @@ Nen test hien tai sau Goals 40+:
   `docs/functional_defect_inventory.md` truoc khi sua fixture/API.
 - Parent read API chua ton tai. Dung contract de xuat trong
   `docs/backend_parent_read_api_contract.md`; khong tu doan endpoint.
+- Product owner da xac nhan backend hien tai khong ho tro Parent Health/Growth.
+  Day la unavailable state hop le trong pham vi hien tai, khong phai ly do dung
+  release. Flutter giu UI chi doc, hien thong bao ro rang va tuyet doi khong
+  fallback mock khi `USE_MOCK_API=false`.
 
 - Test theo muc chuc nang, khong viet unit test qua chi tiet cho tung ham nho.
 - Uu tien automated test bang `flutter test` voi mock API de test UI flow, provider state, navigation, CRUD co ban, va archive behavior.
