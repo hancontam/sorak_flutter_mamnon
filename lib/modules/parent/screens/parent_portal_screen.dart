@@ -4,13 +4,13 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/empty_view.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../core/widgets/sorak_avatar.dart';
 import '../../../core/widgets/sorak_status_badge.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../widgets/parent_profile_info_cards.dart';
 
 enum ParentPortalSection { child, health }
 
@@ -37,12 +37,27 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    final profile = authProvider.profile;
+    final profile = context.select<AuthProvider, Map<String, dynamic>>(
+      (provider) => provider.profile,
+    );
+    final isLoading = context.select<AuthProvider, bool>(
+      (provider) => provider.isLoading,
+    );
+    final errorMessage = context.select<AuthProvider, String?>(
+      (provider) => provider.errorMessage,
+    );
+    final accountId = context.select<AuthProvider, int>(
+      (provider) => provider.currentUser?.id ?? 0,
+    );
+    final parentName = context.select<AuthProvider, String>(
+      (provider) => provider.currentUser?.fullName ?? 'Phụ huynh',
+    );
 
     return RefreshIndicator(
       onRefresh: context.read<AuthProvider>().loadProfile,
       child: ListView(
+        // Always scrollable so back transition keeps a stable scroll view.
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.md,
           AppSpacing.md,
@@ -51,15 +66,15 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
         ),
         children: [
           _ReportHeader(
-            accountId: authProvider.currentUser?.id ?? 0,
-            parentName: authProvider.currentUser?.fullName ?? 'Phụ huynh',
+            accountId: accountId,
+            parentName: parentName,
           ),
           const SizedBox(height: AppSpacing.md),
-          if (authProvider.isLoading && profile.isEmpty)
+          if (isLoading && profile.isEmpty)
             const LoadingView(message: 'Đang tải báo cáo của trẻ...')
-          else if (authProvider.errorMessage != null)
+          else if (errorMessage != null && profile.isEmpty)
             ErrorView(
-              message: authProvider.errorMessage!,
+              message: errorMessage,
               onRetry: context.read<AuthProvider>().loadProfile,
             )
           else if (profile.isEmpty)
@@ -69,7 +84,12 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
               type: EmptyViewType.permission,
             )
           else ...[
-            _ChildSummaryCard(profile: profile),
+            // Child report only — parent/guardian block lives in Profile drawer.
+            ParentProfileInfoCards(
+              profile: profile,
+              showStudentHeader: true,
+              showParents: false,
+            ),
             const SizedBox(height: AppSpacing.sm),
             const _ReadOnlyNote(),
           ],
@@ -99,26 +119,13 @@ class _ReportHeader extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Báo cáo của trẻ',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    parentName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.mutedForeground,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              child: Text(
+                parentName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             const SorakStatusBadge(
@@ -130,91 +137,6 @@ class _ReportHeader extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _ChildSummaryCard extends StatelessWidget {
-  const _ChildSummaryCard({required this.profile});
-
-  final Map<String, dynamic> profile;
-
-  @override
-  Widget build(BuildContext context) {
-    final enrollment = _firstMap(profile['enrollments']);
-    final schoolClass = enrollment == null ? null : _asMap(enrollment['class']);
-    final schoolYear = schoolClass == null
-        ? null
-        : _asMap(schoolClass['school_year']);
-
-    final childName = '${profile['full_name'] ?? '-'}';
-    final cardNumber = '${profile['student_id_card_number'] ?? '-'}';
-    final className = schoolClass == null
-        ? '-'
-        : '${schoolClass['class_name'] ?? '-'}';
-    final yearName = schoolYear == null ? '-' : '${schoolYear['name'] ?? '-'}';
-    final status = '${profile['student_status'] ?? '-'}';
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(AppSpacing.radius),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: const Icon(
-                    LucideIcons.userRound,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    childName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                SorakStatusBadge(label: status),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _InfoRow(label: 'Mã trẻ', value: cardNumber),
-            _InfoRow(label: 'Lớp', value: className),
-            _InfoRow(label: 'Năm học', value: yearName),
-            _InfoRow(label: 'Trạng thái', value: UiLabels.status(status)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Map<String, dynamic>? _firstMap(Object? value) {
-    if (value is List && value.isNotEmpty) {
-      return _asMap(value.first);
-    }
-    return null;
-  }
-
-  Map<String, dynamic>? _asMap(Object? value) {
-    if (value is Map<String, dynamic>) {
-      return value;
-    }
-    if (value is Map) {
-      return value.map((key, value) => MapEntry('$key', value));
-    }
-    return null;
   }
 }
 
@@ -242,46 +164,6 @@ class _ReadOnlyNote extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs / 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.mutedForeground,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            flex: 2,
-            child: Text(
-              value.isEmpty ? '-' : value,
-              textAlign: TextAlign.right,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.foreground,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

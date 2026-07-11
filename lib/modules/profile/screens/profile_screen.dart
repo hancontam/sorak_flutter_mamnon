@@ -10,6 +10,7 @@ import '../../../core/widgets/loading_view.dart';
 import '../../../core/widgets/sorak_avatar.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../parent/widgets/parent_profile_info_cards.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,6 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Refresh quietly when profile already filled by Parent portal.
       context.read<AuthProvider>().loadProfile();
     });
   }
@@ -35,20 +37,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final profile = provider.profile;
 
         if (provider.isLoading && profile.isEmpty) {
-          return const LoadingView();
+          return const Scaffold(body: LoadingView());
         }
 
         if (provider.errorMessage != null && profile.isEmpty) {
-          return ErrorView(
-            message: provider.errorMessage!,
-            onRetry: provider.loadProfile,
+          return Scaffold(
+            appBar: AppBar(title: const Text('Hồ sơ')),
+            body: ErrorView(
+              message: provider.errorMessage!,
+              onRetry: provider.loadProfile,
+            ),
           );
         }
 
         final role = (profile['role'] ?? user?.role ?? '').toString();
-        final fullName =
-            (profile['full_name'] ?? user?.fullName ?? 'Người dùng').toString();
+        final isParent = role.toUpperCase() == 'PARENT';
         final email = (profile['email'] ?? user?.email ?? '').toString();
+        // Parent /auth/me is student-centric; prefer first guardian name on Profile.
+        final fullName = isParent
+            ? _parentDisplayName(profile, user?.fullName)
+            : (profile['full_name'] ?? user?.fullName ?? 'Người dùng')
+                .toString();
         final accountId = profile['account_id'] ?? user?.id ?? fullName;
 
         return Scaffold(
@@ -81,7 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(height: AppSpacing.xs),
-                              if (email.isNotEmpty)
+                              if (!isParent && email.isNotEmpty)
                                 Text(
                                   email,
                                   maxLines: 1,
@@ -89,7 +98,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: AppColors.textGray),
                                 ),
-                              const SizedBox(height: AppSpacing.xs),
+                              if (!isParent && email.isNotEmpty)
+                                const SizedBox(height: AppSpacing.xs),
                               StatusChip(label: _roleLabel(role)),
                             ],
                           ),
@@ -99,23 +109,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                _InfoSection(
-                  title: 'Tài khoản',
-                  icon: LucideIcons.userCog,
-                  rows: [
-                    _InfoRowData(
-                      'Mã tài khoản',
-                      '${profile['account_id'] ?? user?.id ?? '-'}',
-                    ),
-                    _InfoRowData('Vai trò', _roleLabel(role)),
-                    if (email.isNotEmpty) _InfoRowData('Email', email),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                if (role.toUpperCase() == 'PARENT')
-                  _ParentInfoSection(profile: profile)
-                else
+                if (isParent)
+                  // Parent Profile: guardians only. Student lives in child report.
+                  ParentProfileInfoCards(
+                    profile: profile,
+                    showStudentHeader: false,
+                    showStudentInfo: false,
+                    showParents: true,
+                  )
+                else ...[
+                  _InfoSection(
+                    title: 'Tài khoản',
+                    icon: LucideIcons.userCog,
+                    rows: [
+                      _InfoRowData(
+                        'Mã tài khoản',
+                        '${profile['account_id'] ?? user?.id ?? '-'}',
+                      ),
+                      _InfoRowData('Vai trò', _roleLabel(role)),
+                      if (email.isNotEmpty) _InfoRowData('Email', email),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   _StaffInfoSection(profile: profile),
+                ],
               ],
             ),
           ),
@@ -135,6 +152,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       default:
         return role.isEmpty ? 'Người dùng' : UiLabels.role(role);
     }
+  }
+
+  String _parentDisplayName(Map<String, dynamic> profile, String? fallback) {
+    final parents = profile['parents'];
+    if (parents is List && parents.isNotEmpty) {
+      final first = parents.first;
+      if (first is Map) {
+        final name = '${first['full_name'] ?? ''}'.trim();
+        if (name.isNotEmpty) {
+          return name;
+        }
+      }
+    }
+    final fromFallback = (fallback ?? '').trim();
+    if (fromFallback.isNotEmpty) {
+      return fromFallback;
+    }
+    return 'Phụ huynh';
   }
 }
 
@@ -159,48 +194,6 @@ class _StaffInfoSection extends StatelessWidget {
         _InfoRowData(
           'Trạng thái công tác',
           UiLabels.workStatus('${profile['work_status'] ?? '-'}'),
-        ),
-      ],
-    );
-  }
-}
-
-class _ParentInfoSection extends StatelessWidget {
-  const _ParentInfoSection({required this.profile});
-
-  final Map<String, dynamic> profile;
-
-  @override
-  Widget build(BuildContext context) {
-    final enrollments = profile['enrollments'];
-    final firstEnrollment = enrollments is List && enrollments.isNotEmpty
-        ? enrollments.first
-        : null;
-    final schoolClass = firstEnrollment is Map
-        ? firstEnrollment['class']
-        : null;
-    final schoolYear = schoolClass is Map ? schoolClass['school_year'] : null;
-
-    return _InfoSection(
-      title: 'Tài khoản học sinh',
-      icon: LucideIcons.baby,
-      rows: [
-        _InfoRowData('Mã học sinh', '${profile['student_id'] ?? '-'}'),
-        _InfoRowData(
-          'Mã thẻ học sinh',
-          '${profile['student_id_card_number'] ?? '-'}',
-        ),
-        _InfoRowData(
-          'Lớp',
-          schoolClass is Map ? '${schoolClass['class_name'] ?? '-'}' : '-',
-        ),
-        _InfoRowData(
-          'Năm học',
-          schoolYear is Map ? '${schoolYear['name'] ?? '-'}' : '-',
-        ),
-        _InfoRowData(
-          'Trạng thái',
-          UiLabels.status('${profile['student_status'] ?? '-'}'),
         ),
       ],
     );

@@ -180,8 +180,10 @@ class _AppShellState extends State<AppShell> {
   }
 
   String _normalizedRole(BuildContext context) {
-    return context.watch<AuthProvider>().currentUser?.role.toUpperCase() ??
-        'TEACHER';
+    // Select role only — avoid full shell rebuild when profile reloads.
+    return context.select<AuthProvider, String>(
+      (provider) => provider.currentUser?.role.toUpperCase() ?? 'TEACHER',
+    );
   }
 
   String _currentRole() {

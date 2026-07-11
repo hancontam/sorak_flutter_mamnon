@@ -18,7 +18,21 @@ import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/out
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
+/// Only execute when the process is started with
+/// `--dart-define=USE_MOCK_API=false`. Default app config is live, but the
+/// shared test bootstrap forces mock — so we clear the override here.
+const bool _runLiveContract =
+    bool.hasEnvironment('USE_MOCK_API') &&
+    !bool.fromEnvironment('USE_MOCK_API');
+
 void main() {
+  setUpAll(() {
+    if (_runLiveContract) {
+      AppConfig.clearUseMockApiOverride();
+    }
+  });
+  tearDownAll(AppConfig.forceMockApiForTests);
+
   group('Live API contract functional test', () {
     test(
       'core and transfer repositories use backend paths, query names, and ids',
@@ -171,9 +185,9 @@ void main() {
           'password': 'password456',
         });
       },
-      skip: AppConfig.useMockApi
-          ? 'Run with --dart-define=USE_MOCK_API=false.'
-          : false,
+      skip: _runLiveContract
+          ? false
+          : 'Run with --dart-define=USE_MOCK_API=false.',
     );
 
     test(
@@ -268,9 +282,9 @@ void main() {
         expect(adapter.query('/health-assessments')['latest'], 'true');
         expect(adapter.query('/health-assessments')['school_year_id'], '2');
       },
-      skip: AppConfig.useMockApi
-          ? 'Run with --dart-define=USE_MOCK_API=false.'
-          : false,
+      skip: _runLiveContract
+          ? false
+          : 'Run with --dart-define=USE_MOCK_API=false.',
     );
   });
 }

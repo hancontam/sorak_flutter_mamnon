@@ -38,16 +38,23 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> loadProfile() async {
-    _isLoading = true;
+    // Keep existing profile on screen while refreshing so popping Profile
+    // back to Parent portal does not flash a global loading rebuild.
+    final showLoading = _profile.isEmpty;
     _errorMessage = null;
-    notifyListeners();
+    if (showLoading) {
+      _isLoading = true;
+      notifyListeners();
+    }
 
     try {
       _profile = await _authRepository.getProfile();
     } catch (error) {
       _errorMessage = apiErrorMessage(error);
     } finally {
-      _isLoading = false;
+      if (showLoading) {
+        _isLoading = false;
+      }
       notifyListeners();
     }
   }
