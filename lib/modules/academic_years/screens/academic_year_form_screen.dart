@@ -16,13 +16,21 @@ class AcademicYearFormScreen extends StatelessWidget {
       title: academicYear == null ? 'Tạo năm học' : 'Cập nhật năm học',
       fields: const [
         FormFieldConfig(name: 'name', label: 'Tên năm học (YYYY-YYYY)'),
-        FormFieldConfig(name: 'start_date', label: 'Ngày bắt đầu'),
-        FormFieldConfig(name: 'end_date', label: 'Ngày kết thúc'),
+        FormFieldConfig(
+          name: 'start_date',
+          label: 'Ngày bắt đầu',
+          type: SimpleFormFieldType.date,
+        ),
+        FormFieldConfig(
+          name: 'end_date',
+          label: 'Ngày kết thúc',
+          type: SimpleFormFieldType.date,
+        ),
       ],
       initialValues: {
         'name': academicYear?.name ?? '',
-        'start_date': academicYear?.startDate ?? '',
-        'end_date': academicYear?.endDate ?? '',
+        'start_date': _dateOnly(academicYear?.startDate),
+        'end_date': _dateOnly(academicYear?.endDate),
       },
       onSave: (data) {
         final provider = context.read<AcademicYearProvider>();
@@ -33,4 +41,23 @@ class AcademicYearFormScreen extends StatelessWidget {
       },
     );
   }
+}
+
+/// Normalize API ISO datetime to yyyy-MM-dd for the date picker field.
+String _dateOnly(String? raw) {
+  final trimmed = (raw ?? '').trim();
+  if (trimmed.isEmpty) {
+    return '';
+  }
+  final datePart = trimmed.split(RegExp(r'[T\s]')).first;
+  if (datePart.length >= 10) {
+    return datePart.substring(0, 10);
+  }
+  final parsed = DateTime.tryParse(trimmed);
+  if (parsed == null) {
+    return datePart;
+  }
+  final month = parsed.month.toString().padLeft(2, '0');
+  final day = parsed.day.toString().padLeft(2, '0');
+  return '${parsed.year}-$month-$day';
 }

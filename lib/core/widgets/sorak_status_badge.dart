@@ -21,7 +21,10 @@ class SorakStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayLabel = translate ? UiLabels.status(label) : label;
-    final scheme = _schemeFor(tone ?? _toneFor(label));
+    // "Đang hoạt động" / active → primary accent (year list & status chips).
+    final scheme = _isActiveStatus(label) || _isActiveStatus(displayLabel)
+        ? _primaryActiveScheme
+        : _schemeFor(tone ?? _toneFor(label));
 
     return Semantics(
       label: 'Trạng thái: $displayLabel',
@@ -52,11 +55,18 @@ class SorakStatusBadge extends StatelessWidget {
     );
   }
 
+  static bool _isActiveStatus(String value) {
+    final normalized = value.trim().toLowerCase();
+    return normalized == 'active' ||
+        normalized.contains('đang hoạt động') ||
+        normalized == 'đang hoạt động';
+  }
+
   SorakStatusTone _toneFor(String value) {
     final normalized = value.trim().toLowerCase();
 
-    if (normalized.contains('active') ||
-        normalized.contains('approve') ||
+    // Active handled via primary scheme in build(); keep success for other OK states.
+    if (normalized.contains('approve') ||
         normalized.contains('complete') ||
         normalized.contains('recorded') ||
         normalized.contains('đang học') ||
@@ -74,15 +84,27 @@ class SorakStatusBadge extends StatelessWidget {
     if (normalized.contains('reject') ||
         normalized.contains('cancel') ||
         normalized.contains('archive') ||
-        normalized.contains('inactive') ||
         normalized.contains('xóa') ||
         normalized.contains('hủy') ||
         normalized.contains('từ chối')) {
       return SorakStatusTone.error;
     }
 
+    // inactive / Ngừng hoạt động → neutral muted (not black error).
+    if (normalized.contains('inactive') ||
+        normalized.contains('ngừng hoạt động') ||
+        normalized.contains('ngung hoat dong')) {
+      return SorakStatusTone.neutral;
+    }
+
     return SorakStatusTone.neutral;
   }
+
+  static final _primaryActiveScheme = _BadgeScheme(
+    text: AppColors.primary,
+    background: AppColors.primary.withValues(alpha: 0.12),
+    border: AppColors.primary,
+  );
 
   _BadgeScheme _schemeFor(SorakStatusTone tone) {
     return switch (tone) {

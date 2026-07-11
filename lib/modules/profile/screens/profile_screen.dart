@@ -122,10 +122,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Tài khoản',
                     icon: LucideIcons.userCog,
                     rows: [
-                      _InfoRowData(
-                        'Mã tài khoản',
-                        '${profile['account_id'] ?? user?.id ?? '-'}',
-                      ),
                       _InfoRowData('Vai trò', _roleLabel(role)),
                       if (email.isNotEmpty) _InfoRowData('Email', email),
                     ],
@@ -184,7 +180,6 @@ class _StaffInfoSection extends StatelessWidget {
       title: 'Hồ sơ cán bộ',
       icon: LucideIcons.badgeCheck,
       rows: [
-        _InfoRowData('Mã giáo viên', '${profile['teacher_id'] ?? '-'}'),
         _InfoRowData('Chức vụ', '${profile['position'] ?? '-'}'),
         _InfoRowData('Số điện thoại', '${profile['phone'] ?? '-'}'),
         _InfoRowData(

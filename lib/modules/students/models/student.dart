@@ -13,6 +13,7 @@ class Student {
     this.className = '',
     this.studentStatus = 'Đang học',
     this.contactPhone = '',
+    this.studentIdCardNumber = '',
     this.isActive = true,
     this.isDeleted = false,
   });
@@ -30,6 +31,8 @@ class Student {
   final String studentStatus;
   @JsonKey(defaultValue: '')
   final String contactPhone;
+  @JsonKey(name: 'student_id_card_number', defaultValue: '')
+  final String studentIdCardNumber;
   @JsonKey(readValue: _readIsActive)
   final bool isActive;
   @JsonKey(readValue: _readIsDeleted)
@@ -48,6 +51,7 @@ class Student {
     String? fullName,
     String? dateOfBirth,
     String? gender,
+    String? studentIdCardNumber,
     int? classId,
     String? className,
     String? studentStatus,
@@ -64,6 +68,7 @@ class Student {
       className: className ?? this.className,
       studentStatus: studentStatus ?? this.studentStatus,
       contactPhone: contactPhone ?? this.contactPhone,
+      studentIdCardNumber: studentIdCardNumber ?? this.studentIdCardNumber,
       isActive: isActive ?? this.isActive,
       isDeleted: isDeleted ?? this.isDeleted,
     );

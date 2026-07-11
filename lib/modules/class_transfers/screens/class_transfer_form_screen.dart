@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_options.dart';
@@ -449,9 +448,9 @@ class _BottomSaveBar extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: FilledButton.icon(
+              child: FilledButton(
                 onPressed: isSaving ? null : onSave,
-                icon: isSaving
+                child: isSaving
                     ? const SizedBox(
                         width: 18,
                         height: 18,
@@ -460,8 +459,7 @@ class _BottomSaveBar extends StatelessWidget {
                           color: Colors.white,
                         ),
                       )
-                    : const Icon(LucideIcons.save, size: 18),
-                label: const Text('Lưu'),
+                    : const Text('Lưu'),
               ),
             ),
           ],

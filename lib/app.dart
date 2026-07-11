@@ -253,12 +253,9 @@ class SorakApp extends StatelessWidget {
             allowedRoles: _staffRoles,
             child: TransfersScreen(),
           ),
-          '/health': (_) => RoleGuard(
+          '/health': (_) => const RoleGuard(
             allowedRoles: _staffRoles,
-            child: Scaffold(
-              appBar: AppBar(title: Text('Sức khỏe')),
-              body: const HealthScreen(showTitle: false),
-            ),
+            child: HealthScreen(),
           ),
           '/health-assessments': (_) => const RoleGuard(
             allowedRoles: _staffRoles,

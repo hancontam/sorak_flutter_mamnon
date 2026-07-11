@@ -162,6 +162,7 @@ class MockApiBackend implements HttpClientAdapter {
       _classTransfer(503, 403, 303, 303, 'Cancelled'),
     ];
     classTransfers.first['requested_by'] = 1002;
+    classTransfers.first['requester'] = _requesterByAccountId(1002);
     incomingTransfers = [
       _schoolTransfer(
         id: 511,
@@ -691,6 +692,7 @@ class MockApiBackend implements HttpClientAdapter {
             'reason': body['reason'],
             'effective_date': body['effective_date'],
             'requested_by': _accountId,
+            'requester': _requesterByAccountId(_accountId),
           });
       classTransfers.add(item);
       return _object(item);
@@ -1449,7 +1451,21 @@ class MockApiBackend implements HttpClientAdapter {
     'student': _studentSummary(_find(students, 'student_id', studentId)),
     'from_class': {'class_id': fromId, 'class_name': _className(fromId)},
     'to_class': {'class_id': toId, 'class_name': _className(toId)},
+    'requester': _requesterByAccountId(1001),
   };
+
+  Map<String, dynamic> _requesterByAccountId(int accountId) {
+    String fullName = '';
+    try {
+      fullName = '${_find(teachers, 'account_id', accountId)['full_name']}';
+    } catch (_) {
+      fullName = '';
+    }
+    return {
+      'account_id': accountId,
+      'teacher': {'full_name': fullName},
+    };
+  }
 
   Map<String, dynamic> _schoolTransfer({
     required int id,

@@ -23,6 +23,10 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
   /// Roster prefill for one class + assessment date.
   /// Live: GET /health-assessments/by-class-date
+  ///
+  /// Backend only returns existing records (not full class roster) and omits
+  /// `school_year_id` / `assessment_date` / nested class. Inject query context
+  /// so parsing and roster matching stay stable.
   Future<List<HealthAssessment>> getByClassDate({
     required int classId,
     required String assessmentDate,
@@ -31,9 +35,17 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
       '${ApiEndpoints.healthAssessments}/by-class-date',
       queryParameters: {'class_id': classId, 'assessment_date': assessmentDate},
     );
-    return ApiResponse.list(response.data)
-        .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
-        .toList();
+    return ApiResponse.list(response.data).map((raw) {
+      final json = Map<String, dynamic>.from(raw as Map);
+      json['class_id'] ??= classId;
+      json['assessment_date'] ??= assessmentDate;
+      // Prefer date string without time for UI matching.
+      final date = json['assessment_date'];
+      if (date is String && date.length >= 10) {
+        json['assessment_date'] = date.substring(0, 10);
+      }
+      return HealthAssessment.fromJson(json);
+    }).toList();
   }
 
   /// Roster bulk upsert. Live: POST /health-assessments/bulk
@@ -139,11 +151,38 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
   }
 
   Map<String, dynamic> _liveBulkRow(Map<String, dynamic> row) {
+    final studentId = int.tryParse('${row['student_id']}');
+    final height = _parseMeasure(row['height_cm']);
+    final weight = _parseMeasure(row['weight_kg']);
+    if (studentId == null) {
+      throw StateError('Thiếu mã học sinh trong dòng đánh giá');
+    }
+    // Backend bulk rejects partial rows (height-only or weight-only).
+    if (height == null || height <= 0) {
+      throw StateError('Chiều cao không hợp lệ');
+    }
+    if (weight == null || weight <= 0) {
+      throw StateError(
+        'Cân nặng không hợp lệ — cần nhập cả chiều cao và cân nặng',
+      );
+    }
     return {
-      'student_id': int.tryParse('${row['student_id']}'),
-      'height_cm': double.tryParse('${row['height_cm']}'),
-      'weight_kg': double.tryParse('${row['weight_kg']}'),
-      if (row['note'] != null) 'note': row['note'],
+      'student_id': studentId,
+      'height_cm': height,
+      'weight_kg': weight,
+      if (row['note'] != null && '${row['note']}'.trim().isNotEmpty)
+        'note': '${row['note']}'.trim(),
     };
+  }
+
+  double? _parseMeasure(Object? raw) {
+    if (raw is num) {
+      return raw.toDouble();
+    }
+    final text = '${raw ?? ''}'.trim().replaceAll(',', '.');
+    if (text.isEmpty || text == 'null') {
+      return null;
+    }
+    return double.tryParse(text);
   }
 }

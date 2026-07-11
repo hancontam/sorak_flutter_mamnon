@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../constants/app_options.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../utils/text_normalizer.dart';
+import 'app_dropdown_field.dart';
 import 'app_search_bar.dart';
 import 'confirm_archive_dialog.dart';
 import 'empty_view.dart';
@@ -44,6 +46,8 @@ class ModuleListScreen<T> extends StatefulWidget {
     this.itemStatus,
     this.itemFilterValue,
     this.searchHint,
+    this.filterLabel = 'Lọc',
+    this.useFilterDropdown = false,
     this.showAdd = true,
     this.showEdit = true,
     this.showDelete = true,
@@ -65,6 +69,10 @@ class ModuleListScreen<T> extends StatefulWidget {
   final String Function(T item)? itemStatus;
   final String Function(T item)? itemFilterValue;
   final String? searchHint;
+  /// Dropdown field label when [useFilterDropdown] is true.
+  final String filterLabel;
+  /// When true, status/filter uses a dropdown instead of chip row.
+  final bool useFilterDropdown;
   final bool showAdd;
   final bool showEdit;
   final bool showDelete;
@@ -204,13 +212,41 @@ class _ModuleListScreenState<T> extends State<ModuleListScreen<T>> {
         ),
         if (filterOptions.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.xs),
-          FilterChipRow(
-            options: filterOptions,
-            selectedOption: _selectedFilter,
-            onSelected: (value) {
-              setState(() => _selectedFilter = value);
-            },
-          ),
+          if (widget.useFilterDropdown)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: AppDropdownField<String>(
+                key: ValueKey(
+                  'module_filter_dropdown_${_selectedFilter ?? ''}',
+                ),
+                label: widget.filterLabel,
+                showLabel: false,
+                options: [
+                  AppOption(
+                    value: '',
+                    label: 'Tất cả ${widget.filterLabel.toLowerCase()}',
+                  ),
+                  for (final option in filterOptions)
+                    AppOption(value: option, label: option),
+                ],
+                value: _selectedFilter ?? '',
+                hintText: 'Tất cả ${widget.filterLabel.toLowerCase()}',
+                onChanged: (value) {
+                  setState(() {
+                    _selectedFilter =
+                        (value == null || value.isEmpty) ? null : value;
+                  });
+                },
+              ),
+            )
+          else
+            FilterChipRow(
+              options: filterOptions,
+              selectedOption: _selectedFilter,
+              onSelected: (value) {
+                setState(() => _selectedFilter = value);
+              },
+            ),
           const SizedBox(height: AppSpacing.xs),
         ],
         if (widget.isLoading) const LinearProgressIndicator(minHeight: 2),
@@ -436,15 +472,10 @@ class _ModuleListActionMenuItem extends StatelessWidget {
         ? AppColors.destructive
         : AppColors.foreground;
 
-    return Row(
-      children: [
-        Icon(action.icon, color: color, size: 18),
-        const SizedBox(width: AppSpacing.sm),
-        Text(
-          action.label,
-          style: TextStyle(color: color, fontWeight: FontWeight.w700),
-        ),
-      ],
+    // Text-only popup items (no leading icon next to label).
+    return Text(
+      action.label,
+      style: TextStyle(color: color, fontWeight: FontWeight.w700),
     );
   }
 }

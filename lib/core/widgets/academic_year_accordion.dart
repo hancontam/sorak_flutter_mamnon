@@ -6,7 +6,6 @@ import '../../modules/academic_years/models/academic_year.dart';
 import '../../modules/academic_years/providers/active_academic_year_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
-import 'sorak_status_badge.dart';
 
 class AcademicYearAccordion extends StatefulWidget {
   const AcademicYearAccordion({super.key});
@@ -194,21 +193,52 @@ class _AcademicYearRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.foreground,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                ),
+                      color: AppColors.foreground,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    ),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            SorakStatusBadge(label: year.status),
-            const SizedBox(width: AppSpacing.sm),
-            Icon(
-              selected ? LucideIcons.check : LucideIcons.circle,
-              size: 18,
-              color: selected ? AppColors.primary : AppColors.mutedForeground,
-            ),
+            // Radio-style: empty circle / circle with primary inner dot.
+            // No status badge on year filter rows.
+            _YearSelectIndicator(selected: selected),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _YearSelectIndicator extends StatelessWidget {
+  const _YearSelectIndicator({required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 20,
+      height: 20,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.mutedForeground,
+            width: 1.5,
+          ),
+        ),
+        child: selected
+            ? Center(
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              )
+            : null,
       ),
     );
   }

@@ -21,6 +21,9 @@ ClassTransfer _$ClassTransferFromJson(
       '',
   status: json['status'] as String? ?? 'Pending',
   note: ClassTransfer._readNote(json, 'note') as String? ?? '',
+  requesterName:
+      ClassTransfer._readRequesterName(json, 'requester_name') as String? ??
+      '',
 );
 
 Map<String, dynamic> _$ClassTransferToJson(ClassTransfer instance) =>
@@ -35,4 +38,5 @@ Map<String, dynamic> _$ClassTransferToJson(ClassTransfer instance) =>
       'effective_date': instance.effectiveDate,
       'status': instance.status,
       'note': instance.note,
+      'requester_name': instance.requesterName,
     };

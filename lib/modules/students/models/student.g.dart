@@ -15,6 +15,7 @@ Student _$StudentFromJson(Map<String, dynamic> json) => Student(
   className: Student._readClassName(json, 'class_name') as String? ?? '',
   studentStatus: json['student_status'] as String? ?? 'Đang học',
   contactPhone: json['contact_phone'] as String? ?? '',
+  studentIdCardNumber: json['student_id_card_number'] as String? ?? '',
   isActive: Student._readIsActive(json, 'is_active') as bool? ?? true,
   isDeleted: Student._readIsDeleted(json, 'is_deleted') as bool? ?? false,
 );
@@ -28,6 +29,7 @@ Map<String, dynamic> _$StudentToJson(Student instance) => <String, dynamic>{
   'class_name': instance.className,
   'student_status': instance.studentStatus,
   'contact_phone': instance.contactPhone,
+  'student_id_card_number': instance.studentIdCardNumber,
   'is_active': instance.isActive,
   'is_deleted': instance.isDeleted,
 };

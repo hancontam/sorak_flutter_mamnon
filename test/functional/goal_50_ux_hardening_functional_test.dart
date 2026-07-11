@@ -84,7 +84,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Mầm 1A - A101').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Nguyễn Minh An'));
+      await tester.tap(find.text('Nguyễn Minh An').first);
       await tester.pumpAndSettle();
 
       final saveFinder = find.byKey(const Key('health_roster_save_button'));
@@ -93,11 +93,17 @@ void main() {
       expect(tester.getBottomRight(saveFinder).dy, lessThanOrEqualTo(640));
 
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Chiều cao (cm)'),
+        find.widgetWithText(TextFormField, 'Nhập chiều cao'),
         '104',
       );
       await tester.pump();
+      // Height-only still enables save so the sheet can show a clear error
+      // about missing weight (backend requires both measures).
       expect(tester.widget<FilledButton>(saveFinder).onPressed, isNotNull);
+      expect(
+        find.textContaining('chiều cao và cân nặng'),
+        findsWidgets,
+      );
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -105,7 +111,9 @@ void main() {
 
       await tester.tap(find.text('Tiếp tục nhập'));
       await tester.pumpAndSettle();
-      expect(find.text('Nhập nhanh sức khỏe'), findsOneWidget);
+      // Sheet stays open — student name is the sheet title.
+      expect(find.text('Lưu sức khỏe'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsWidgets);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -114,7 +122,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Nhập nhanh sức khỏe'), findsNothing);
+      expect(find.text('Lưu sức khỏe'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

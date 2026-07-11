@@ -9,12 +9,14 @@ part of 'health_assessment.dart';
 HealthAssessment _$HealthAssessmentFromJson(
   Map<String, dynamic> json,
 ) => HealthAssessment(
-  id: (json['assessment_id'] as num).toInt(),
-  studentId: (json['student_id'] as num).toInt(),
-  schoolYearId: (json['school_year_id'] as num).toInt(),
-  assessmentDate: json['assessment_date'] as String,
-  heightCm: (json['height_cm'] as num).toDouble(),
-  weightKg: (json['weight_kg'] as num).toDouble(),
+  // Live GET /by-class-date may omit school_year_id / assessment_date and
+  // can return null numeric fields — never hard-cast null to num.
+  id: (json['assessment_id'] as num?)?.toInt() ?? 0,
+  studentId: (json['student_id'] as num?)?.toInt() ?? 0,
+  schoolYearId: (json['school_year_id'] as num?)?.toInt() ?? 0,
+  assessmentDate: json['assessment_date']?.toString() ?? '',
+  heightCm: (json['height_cm'] as num?)?.toDouble() ?? 0,
+  weightKg: (json['weight_kg'] as num?)?.toDouble() ?? 0,
   classId:
       (HealthAssessment._readClassId(json, 'class_id') as num?)?.toInt() ?? 0,
   studentName:

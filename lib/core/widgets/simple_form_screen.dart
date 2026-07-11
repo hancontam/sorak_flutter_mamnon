@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../constants/app_options.dart';
 import '../theme/app_colors.dart';
@@ -167,9 +166,9 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: FilledButton.icon(
+                child: FilledButton(
                   onPressed: _isSaving ? null : _save,
-                  icon: _isSaving
+                  child: _isSaving
                       ? const SizedBox(
                           width: 18,
                           height: 18,
@@ -178,8 +177,7 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(LucideIcons.save, size: 18),
-                  label: const Text('Lưu'),
+                      : const Text('Lưu'),
                 ),
               ),
             ],
