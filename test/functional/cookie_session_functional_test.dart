@@ -23,7 +23,7 @@ void main() {
       );
       expect(adapter.studentsCookieHeader, isNot(contains('sorak_refresh=')));
       final refreshCookies = await apiClient.cookieJar.loadForRequest(
-        Uri.parse('http://localhost:3000/api/auth/refresh'),
+        _refreshUri(apiClient),
       );
       expect(
         refreshCookies.map((cookie) => cookie.name),
@@ -40,7 +40,7 @@ void main() {
       await apiClient.clearSessionCookies();
 
       final cookies = await apiClient.cookieJar.loadForRequest(
-        Uri.parse('http://localhost:3000/api/auth/refresh'),
+        _refreshUri(apiClient),
       );
       expect(cookies, isEmpty);
     });
@@ -102,9 +102,7 @@ void main() {
         expect(adapter.refreshCalls, 1);
         expect(sessionExpiryCalls, 1);
         expect(
-          await apiClient.cookieJar.loadForRequest(
-            Uri.parse('http://localhost:3000/api/auth/refresh'),
-          ),
+          await apiClient.cookieJar.loadForRequest(_refreshUri(apiClient)),
           isEmpty,
         );
       },
@@ -123,6 +121,10 @@ void main() {
       expect(adapter.refreshCalls, 0);
     });
   });
+}
+
+Uri _refreshUri(ApiClient apiClient) {
+  return Uri.parse('${apiClient.dio.options.baseUrl}/auth/refresh');
 }
 
 class _CookieSessionAdapter implements HttpClientAdapter {
