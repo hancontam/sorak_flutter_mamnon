@@ -40,13 +40,22 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build debug APK
-        run: flutter build apk --debug
+      - name: Verify live API contract
+        run: >-
+          flutter test
+          --dart-define=USE_MOCK_API=false
+          test/functional/live_api_contract_functional_test.dart
 
-      - name: Upload debug APK
+      - name: Build live debug APK
+        run: >-
+          flutter build apk --debug
+          --dart-define=USE_MOCK_API=false
+          --dart-define=API_BASE_URL=http://103.69.191.210:8082/api
+
+      - name: Upload live debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: sorak-mam-non-debug-apk
+          name: sorak-mam-non-live-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 14
