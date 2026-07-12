@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 
 class AppReadonlyField extends StatelessWidget {
   const AppReadonlyField({super.key, required this.label, required this.value});
@@ -11,11 +13,20 @@ class AppReadonlyField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       initialValue: value,
-      readOnly: true,
+      enabled: false,
+      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+        color: AppColors.mutedForeground,
+        fontWeight: FontWeight.w600,
+      ),
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        suffixIcon: const Icon(LucideIcons.lock, size: 20),
+        fillColor: AppColors.muted,
+        disabledBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppSpacing.radius)),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        labelStyle: const TextStyle(color: AppColors.mutedForeground),
       ),
     );
   }

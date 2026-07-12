@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_options.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 
 class AppDropdownField<T> extends StatelessWidget {
   const AppDropdownField({
@@ -22,6 +24,7 @@ class AppDropdownField<T> extends StatelessWidget {
   final String? hintText;
   final FormFieldValidator<T>? validator;
   final bool enabled;
+
   /// When false, only the dropdown value/hint is shown (no floating label).
   final bool showLabel;
 
@@ -33,8 +36,24 @@ class AppDropdownField<T> extends StatelessWidget {
     return DropdownButtonFormField<T>(
       initialValue: effectiveValue,
       isExpanded: true,
+      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+        color: enabled ? AppColors.foreground : AppColors.mutedForeground,
+        fontWeight: enabled ? FontWeight.w500 : FontWeight.w600,
+      ),
+      iconDisabledColor: AppColors.mutedForeground,
       decoration: InputDecoration(
         labelText: showLabel && label.isNotEmpty ? label : null,
+        filled: !enabled,
+        fillColor: enabled ? AppColors.background : AppColors.muted,
+        disabledBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppSpacing.radius)),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        labelStyle: TextStyle(
+          color: enabled
+              ? AppColors.secondaryForeground
+              : AppColors.mutedForeground,
+        ),
       ),
       hint: hintText == null ? null : Text(hintText!),
       validator: validator,

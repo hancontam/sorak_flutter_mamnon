@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
+import 'package:sorak_flutter_mamnon/core/theme/app_colors.dart';
 import 'package:sorak_flutter_mamnon/core/widgets/app_readonly_field.dart';
 import 'package:sorak_flutter_mamnon/modules/academic_years/repositories/academic_year_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/providers/class_provider.dart';
@@ -119,6 +120,25 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AppReadonlyField), findsNWidgets(3));
+      final readonlyTextFields = tester.widgetList<TextFormField>(
+        find.descendant(
+          of: find.byType(AppReadonlyField),
+          matching: find.byType(TextFormField),
+        ),
+      );
+      for (final field in readonlyTextFields) {
+        expect(field.enabled, isFalse);
+      }
+      final readonlyDecorators = tester.widgetList<InputDecorator>(
+        find.descendant(
+          of: find.byType(AppReadonlyField),
+          matching: find.byType(InputDecorator),
+        ),
+      );
+      for (final decorator in readonlyDecorators) {
+        expect(decorator.decoration.fillColor, AppColors.muted);
+        expect(decorator.decoration.suffixIcon, isNull);
+      }
       expect(find.text('Tên lớp'), findsOneWidget);
       expect(find.text('Năm học'), findsOneWidget);
       expect(find.text('Khối'), findsOneWidget);
