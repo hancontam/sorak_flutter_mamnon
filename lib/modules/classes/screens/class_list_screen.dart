@@ -571,7 +571,7 @@ class _ClassDetailSheet extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.md,
                 AppSpacing.sm,
-                AppSpacing.xs,
+                AppSpacing.md,
                 AppSpacing.sm,
               ),
               child: Row(
@@ -605,11 +605,6 @@ class _ClassDetailSheet extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Đóng',
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(LucideIcons.x, size: 20),
                   ),
                 ],
               ),

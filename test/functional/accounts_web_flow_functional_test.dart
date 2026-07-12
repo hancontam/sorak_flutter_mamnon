@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sorak_flutter_mamnon/modules/accounts/screens/account_list_screen.dart';
 
 import 'helpers/test_app.dart';
 
 void main() {
+  group('Default staff password', () {
+    test('removes Vietnamese accents and whitespace', () {
+      expect(defaultStaffPassword('  Đặng   Thị Ánh  '), 'dangthianh@123');
+      expect(defaultStaffPassword('Phan Huy'), 'phanhuy@123');
+      expect(defaultStaffPassword(''), 'sorak@123');
+    });
+  });
+
   group('Accounts web flow functional test', () {
     testWidgets(
       'staff accounts supports work/account filters and account grant',
@@ -50,8 +59,12 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Cấp tài khoản'), findsOneWidget);
-        expect(find.text('Vai trò'), findsWidgets);
-        expect(find.text('Mật khẩu khởi tạo'), findsOneWidget);
+        expect(find.text('Vai trò *'), findsOneWidget);
+        expect(find.text('Mật khẩu khởi tạo *'), findsOneWidget);
+        final passwordField = tester.widget<TextField>(
+          find.byType(TextField).last,
+        );
+        expect(passwordField.controller?.text, 'leminhanh@123');
 
         await tester.binding.setSurfaceSize(const Size(360, 640));
         tester.view.viewInsets = const FakeViewPadding(bottom: 260);
@@ -92,7 +105,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Đổi mật khẩu PH'), findsOneWidget);
-      expect(find.text('Mật khẩu mới'), findsOneWidget);
+      expect(find.text('Mật khẩu mới *'), findsOneWidget);
 
       await tester.tap(find.text('Lưu'));
       await tester.pumpAndSettle();

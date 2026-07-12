@@ -20,6 +20,28 @@ enum AccountView { student, staff }
 /// Account-status filter aligned with web StaffTab/StudentTab selects.
 enum _AccountStatusFilter { all, active, inactive }
 
+String defaultStaffPassword(String fullName) {
+  const source =
+      'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ';
+  const target =
+      'aaaaaaaaaaaaaaaaa'
+      'eeeeeeeeeee'
+      'iiiii'
+      'ooooooooooooooooo'
+      'uuuuuuuuuuu'
+      'yyyyy'
+      'd';
+  final normalizedName = StringBuffer();
+  for (final rune in fullName.toLowerCase().runes) {
+    final character = String.fromCharCode(rune);
+    final index = source.indexOf(character);
+    final normalized = index >= 0 ? target[index] : character;
+    if (normalized.trim().isNotEmpty) normalizedName.write(normalized);
+  }
+  final namePart = normalizedName.toString();
+  return '${namePart.isEmpty ? 'sorak' : namePart}@123';
+}
+
 class AccountListScreen extends StatefulWidget {
   const AccountListScreen({super.key, this.initialView = AccountView.staff});
 
@@ -229,7 +251,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
         ? account.role
         : RoleOptions.teacher;
     final passwordController = TextEditingController(
-      text: account.hasAccount ? '' : _defaultStaffPassword(account.fullName),
+      text: account.hasAccount ? '' : defaultStaffPassword(account.fullName),
     );
     var passwordVisible = false;
 
@@ -263,7 +285,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: selectedRole,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Vai trò'),
+                      decoration: const InputDecoration(labelText: 'Vai trò *'),
                       items: const [
                         DropdownMenuItem(
                           value: RoleOptions.principal,
@@ -291,7 +313,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
                       TextField(
                         controller: passwordController,
                         decoration: InputDecoration(
-                          labelText: 'Mật khẩu khởi tạo',
+                          labelText: 'Mật khẩu khởi tạo *',
                           helperText: 'Tối thiểu 6 ký tự',
                           suffixIcon: IconButton(
                             tooltip: passwordVisible
@@ -396,7 +418,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
                 TextField(
                   controller: passwordController,
                   decoration: InputDecoration(
-                    labelText: 'Mật khẩu mới',
+                    labelText: 'Mật khẩu mới *',
                     helperText: 'Tối thiểu 6 ký tự',
                     suffixIcon: IconButton(
                       tooltip: passwordVisible
@@ -480,14 +502,6 @@ class _AccountListScreenState extends State<AccountListScreen> {
         content: Text(success ? 'Đã cập nhật tài khoản' : 'Chưa thể cập nhật'),
       ),
     );
-  }
-
-  String _defaultStaffPassword(String fullName) {
-    final ascii = fullName
-        .toLowerCase()
-        .replaceAll(RegExp(r'\s+'), '')
-        .replaceAll('đ', 'd');
-    return '$ascii@123';
   }
 }
 

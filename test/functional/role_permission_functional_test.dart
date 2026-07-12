@@ -60,6 +60,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('drawer_staff_accounts')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('drawer_class_transfers')));
+    await tester.pumpAndSettle();
+    expect(find.text('Duyệt'), findsNothing);
+    expect(find.text('Từ chối'), findsNothing);
+    expect(find.text('Hủy'), findsOneWidget);
   });
 
   testWidgets('principal keeps full student class and grade filters', (
@@ -99,6 +105,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Không tìm thấy cán bộ'), findsOneWidget);
     expect(find.text('Xóa bộ lọc'), findsNothing);
+
+    final shellContext = tester.element(find.byType(NavigationBar));
+    Navigator.of(shellContext).pushNamed('/class-transfers');
+    await tester.pumpAndSettle();
+    expect(find.text('Duyệt'), findsOneWidget);
+    expect(find.text('Từ chối'), findsOneWidget);
+    expect(find.text('Hủy'), findsOneWidget);
   });
 
   testWidgets('teacher direct routes load only assigned classes', (
