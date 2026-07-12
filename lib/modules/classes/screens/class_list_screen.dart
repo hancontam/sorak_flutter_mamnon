@@ -116,6 +116,11 @@ class _ClassListScreenState extends State<ClassListScreen> {
     final isPrincipal =
         context.watch<AuthProvider>().currentUser?.role.toUpperCase() ==
         'PRINCIPAL';
+    final ageGroupOptions = _ageGroupOptions(
+      provider.items,
+      isPrincipal: isPrincipal,
+    );
+    _resetInvalidAgeGroupFilter(ageGroupOptions, provider.isLoading);
     final classes = _filteredClasses(provider.items);
     final groups = _groupedClasses(classes);
 
@@ -166,10 +171,7 @@ class _ClassListScreenState extends State<ClassListScreen> {
               key: ValueKey('class_grade_filter_${_selectedAgeGroup ?? ''}'),
               label: 'Lọc theo khối',
               showLabel: false,
-              options: const [
-                AppOption(value: '', label: 'Tất cả khối'),
-                ...GradeOptions.all,
-              ],
+              options: ageGroupOptions,
               value: _selectedAgeGroup ?? '',
               hintText: 'Tất cả khối',
               onChanged: (value) => setState(() {
@@ -193,6 +195,47 @@ class _ClassListScreenState extends State<ClassListScreen> {
         ],
       ),
     );
+  }
+
+  List<AppOption<String>> _ageGroupOptions(
+    List<SchoolClass> classes, {
+    required bool isPrincipal,
+  }) {
+    if (isPrincipal) {
+      return const [
+        AppOption(value: '', label: 'Tất cả khối'),
+        ...GradeOptions.all,
+      ];
+    }
+
+    final assignedAgeGroups = classes
+        .map((schoolClass) => _normalizedAgeGroup(schoolClass.ageGroup))
+        .where((value) => value.isNotEmpty)
+        .toSet();
+    return [
+      const AppOption(value: '', label: 'Tất cả khối'),
+      ...GradeOptions.all.where(
+        (option) => assignedAgeGroups.contains(option.value),
+      ),
+    ];
+  }
+
+  void _resetInvalidAgeGroupFilter(
+    List<AppOption<String>> options,
+    bool isLoading,
+  ) {
+    final selected = _selectedAgeGroup;
+    if (isLoading ||
+        selected == null ||
+        options.any((option) => option.value == selected)) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedAgeGroup != null) {
+        setState(() => _selectedAgeGroup = null);
+      }
+    });
   }
 
   Widget _buildContent(

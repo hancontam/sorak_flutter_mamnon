@@ -49,9 +49,31 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
     _dateController.text = DateTime.now().toIso8601String().substring(0, 10);
     _dateController.addListener(_onDateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FormOptionsProvider>().loadInitialOptions();
-      _reloadRoster();
+      _initializeDashboard();
     });
+  }
+
+  Future<void> _initializeDashboard() async {
+    await Future.wait([
+      context.read<FormOptionsProvider>().loadInitialOptions(),
+      _loadRoleScopedClasses(),
+    ]);
+    if (mounted) {
+      await _reloadRoster();
+    }
+  }
+
+  Future<void> _loadRoleScopedClasses() async {
+    if (!_isTeacher(context)) {
+      return;
+    }
+    final classProvider = context.read<ClassProvider>();
+    final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
+    if (yearId == null) {
+      await classProvider.loadItems();
+    } else {
+      await classProvider.loadForAcademicYear(yearId);
+    }
   }
 
   @override
@@ -82,7 +104,10 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
     final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
 
     if (forceOptions) {
-      await formOptions.loadInitialOptions();
+      await Future.wait([
+        formOptions.loadInitialOptions(),
+        _loadRoleScopedClasses(),
+      ]);
       if (!mounted) {
         return;
       }
@@ -132,10 +157,12 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
     final isTeacher =
         context.watch<AuthProvider>().currentUser?.role.toUpperCase() ==
         'TEACHER';
+    final classProvider = context.watch<ClassProvider>();
     final scopedClasses = isTeacher
-        ? context.watch<ClassProvider>().items
+        ? classProvider.items
         : optionsProvider.classes;
-    _applyDefaultClass(optionsProvider);
+    final isClassScopeLoading = isTeacher && classProvider.isLoading;
+    _applyDefaultClass(scopedClasses);
 
     final students = _studentsForClass(optionsProvider);
     final visibleStudents = _filterStudentsBySearch(students);
@@ -143,6 +170,7 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
         optionsProvider.isLoading ||
         healthProvider.isLoading ||
         nutritionProvider.isLoading ||
+        isClassScopeLoading ||
         _isReloadingRoster;
     final errorMessage = _isHealth
         ? healthProvider.errorMessage
@@ -166,7 +194,10 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
             options: _classOptions(scopedClasses),
             value: _selectedClassId,
             hintText: 'Chọn lớp',
-            enabled: !optionsProvider.isLoading && scopedClasses.isNotEmpty,
+            enabled:
+                !optionsProvider.isLoading &&
+                !isClassScopeLoading &&
+                scopedClasses.isNotEmpty,
             onChanged: (value) {
               setState(() => _selectedClassId = value);
               context.read<FormOptionsProvider>().selectClass(
@@ -175,7 +206,7 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
               _reloadRoster();
             },
           ),
-          if (scopedClasses.isEmpty) ...[
+          if (!isClassScopeLoading && scopedClasses.isEmpty) ...[
             const SizedBox(height: AppSpacing.xs),
             const _NoCompatibleClassNotice(),
           ],
@@ -293,21 +324,17 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
     );
   }
 
-  void _applyDefaultClass(FormOptionsProvider optionsProvider) {
-    if (_selectedClassId != null || optionsProvider.classes.isEmpty) {
+  void _applyDefaultClass(List<SchoolClass> classes) {
+    if (_selectedClassId != null || classes.isEmpty) {
       return;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted ||
-          _selectedClassId != null ||
-          optionsProvider.classes.isEmpty) {
+      if (!mounted || _selectedClassId != null || classes.isEmpty) {
         return;
       }
-      setState(() => _selectedClassId = '${optionsProvider.classes.first.id}');
-      context.read<FormOptionsProvider>().selectClass(
-        optionsProvider.classes.first.id,
-      );
+      setState(() => _selectedClassId = '${classes.first.id}');
+      context.read<FormOptionsProvider>().selectClass(classes.first.id);
       _reloadRoster();
     });
   }

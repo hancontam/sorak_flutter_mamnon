@@ -17,6 +17,7 @@ import '../../../core/widgets/sorak_avatar.dart';
 import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../classes/models/school_class.dart';
+import '../../classes/providers/class_provider.dart';
 import '../../form_options/providers/form_options_provider.dart';
 import '../models/student.dart';
 import '../providers/student_provider.dart';
@@ -57,10 +58,16 @@ class _StudentListScreenState extends State<StudentListScreen> {
   Future<void> _loadStudentsForCurrentYear() async {
     final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
     if (yearId == null) {
-      await context.read<StudentProvider>().loadItems();
+      await Future.wait([
+        context.read<StudentProvider>().loadItems(),
+        context.read<ClassProvider>().loadItems(),
+      ]);
       return;
     }
-    await context.read<StudentProvider>().loadForAcademicYear(yearId);
+    await Future.wait([
+      context.read<StudentProvider>().loadForAcademicYear(yearId),
+      context.read<ClassProvider>().loadForAcademicYear(yearId),
+    ]);
   }
 
   void _openStudentForm([Student? student]) {
@@ -142,8 +149,15 @@ class _StudentListScreenState extends State<StudentListScreen> {
         'PRINCIPAL';
     final options = context.watch<FormOptionsProvider>();
     final provider = context.watch<StudentProvider>();
+    final classProvider = context.watch<ClassProvider>();
+    final filterClasses = isPrincipal ? options.classes : classProvider.items;
+    final isClassFilterLoading = isPrincipal
+        ? options.isLoading
+        : classProvider.isLoading;
+    _resetInvalidClassFilter(filterClasses, isLoading: isClassFilterLoading);
     final students = _filteredStudents(provider.items);
-    final isLoading = provider.isLoading || options.isLoading;
+    final isLoading =
+        provider.isLoading || options.isLoading || isClassFilterLoading;
 
     return Scaffold(
       appBar: widget.showAppBar
@@ -158,12 +172,14 @@ class _StudentListScreenState extends State<StudentListScreen> {
               ],
             )
           : null,
-      floatingActionButton: FloatingActionButton(
-        key: const ValueKey('module_add_button'),
-        tooltip: 'Thêm học sinh',
-        onPressed: () => _openStudentForm(),
-        child: const Icon(LucideIcons.plus),
-      ),
+      floatingActionButton: isPrincipal
+          ? FloatingActionButton(
+              key: const ValueKey('module_add_button'),
+              tooltip: 'Thêm học sinh',
+              onPressed: () => _openStudentForm(),
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
       body: Column(
         children: [
           Padding(
@@ -190,10 +206,10 @@ class _StudentListScreenState extends State<StudentListScreen> {
               key: ValueKey('student_class_filter_${_selectedClassId ?? ''}'),
               label: 'Lọc theo lớp',
               showLabel: false,
-              options: _classOptions(options.classes),
+              options: _classOptions(filterClasses),
               value: _selectedClassId ?? '',
-              hintText: options.isLoading ? 'Đang tải lớp...' : 'Tất cả lớp',
-              enabled: !options.isLoading,
+              hintText: isClassFilterLoading ? 'Đang tải lớp...' : 'Tất cả lớp',
+              enabled: !isClassFilterLoading,
               onChanged: (value) => setState(() {
                 _selectedClassId = value == null || value.isEmpty
                     ? null
@@ -208,7 +224,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
               context,
               provider,
               students,
-              options.classes,
+              filterClasses,
               isPrincipal,
             ),
           ),
@@ -237,8 +253,8 @@ class _StudentListScreenState extends State<StudentListScreen> {
       return EmptyView(
         title: 'Chưa có học sinh',
         message: 'Chưa có dữ liệu trong năm học đang chọn.',
-        actionLabel: 'Thêm học sinh',
-        onAction: () => _openStudentForm(),
+        actionLabel: isPrincipal ? 'Thêm học sinh' : null,
+        onAction: isPrincipal ? () => _openStudentForm() : null,
       );
     }
     if (students.isEmpty) {
@@ -285,6 +301,24 @@ class _StudentListScreenState extends State<StudentListScreen> {
         ),
       ),
     );
+  }
+
+  void _resetInvalidClassFilter(
+    List<SchoolClass> classes, {
+    required bool isLoading,
+  }) {
+    final selectedId = int.tryParse(_selectedClassId ?? '');
+    if (isLoading ||
+        selectedId == null ||
+        classes.any((schoolClass) => schoolClass.id == selectedId)) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedClassId != null) {
+        setState(() => _selectedClassId = null);
+      }
+    });
   }
 
   String _gradeForStudent(Student student, List<SchoolClass> classes) {

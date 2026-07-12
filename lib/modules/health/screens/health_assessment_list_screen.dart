@@ -13,6 +13,7 @@ import '../../../core/widgets/empty_view.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../core/widgets/sorak_avatar.dart';
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../classes/models/school_class.dart';
 import '../../classes/providers/class_provider.dart';
@@ -43,9 +44,34 @@ class _HealthAssessmentListScreenState
     super.initState();
     _dateController.addListener(_onDateFilterChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FormOptionsProvider>().loadInitialOptions();
-      context.read<HealthAssessmentProvider>().loadItems();
+      _initializeScreen();
     });
+  }
+
+  Future<void> _initializeScreen() async {
+    await Future.wait([
+      context.read<FormOptionsProvider>().loadInitialOptions(),
+      _loadRoleScopedClasses(),
+    ]);
+    if (mounted) {
+      await context.read<HealthAssessmentProvider>().loadItems();
+    }
+  }
+
+  Future<void> _loadRoleScopedClasses() async {
+    final isTeacher =
+        context.read<AuthProvider>().currentUser?.role.toUpperCase() ==
+        'TEACHER';
+    if (!isTeacher) {
+      return;
+    }
+    final classProvider = context.read<ClassProvider>();
+    final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
+    if (yearId == null) {
+      await classProvider.loadItems();
+    } else {
+      await classProvider.loadForAcademicYear(yearId);
+    }
   }
 
   @override
@@ -63,7 +89,10 @@ class _HealthAssessmentListScreenState
   }
 
   Future<void> _reload() async {
-    await context.read<FormOptionsProvider>().loadInitialOptions();
+    await Future.wait([
+      context.read<FormOptionsProvider>().loadInitialOptions(),
+      _loadRoleScopedClasses(),
+    ]);
     if (!mounted) {
       return;
     }
@@ -128,20 +157,43 @@ class _HealthAssessmentListScreenState
     ];
   }
 
+  String? _validSelectedClassId(List<SchoolClass> classes) {
+    final selectedId = int.tryParse(_selectedClassId ?? '');
+    if (selectedId == null) {
+      return null;
+    }
+    if (classes.any((schoolClass) => schoolClass.id == selectedId)) {
+      return _selectedClassId;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedClassId != null) {
+        setState(() => _selectedClassId = null);
+      }
+    });
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final optionsProvider = context.watch<FormOptionsProvider>();
     final healthProvider = context.watch<HealthAssessmentProvider>();
     final role = context.watch<AuthProvider>().currentUser?.role.toUpperCase();
     final isTeacher = role == 'TEACHER';
+    final classProvider = context.watch<ClassProvider>();
     final scopedClasses = isTeacher
-        ? context.watch<ClassProvider>().items
+        ? classProvider.items
         : optionsProvider.classes;
+    final isClassScopeLoading = isTeacher && classProvider.isLoading;
+    final selectedClassId = _validSelectedClassId(scopedClasses);
     final allowedClassIds = isTeacher
         ? scopedClasses.map((schoolClass) => schoolClass.id).toSet()
         : null;
     final items = _filtered(healthProvider.items, allowedClassIds);
-    final isLoading = healthProvider.isLoading || optionsProvider.isLoading;
+    final isLoading =
+        healthProvider.isLoading ||
+        optionsProvider.isLoading ||
+        isClassScopeLoading;
     final errorMessage = healthProvider.errorMessage;
 
     return Scaffold(
@@ -170,9 +222,12 @@ class _HealthAssessmentListScreenState
               key: ValueKey('health_history_class_${_selectedClassId ?? ''}'),
               label: 'Lớp',
               options: _classOptions(scopedClasses),
-              value: _selectedClassId ?? '',
+              value: selectedClassId ?? '',
               hintText: 'Chọn lớp',
-              enabled: !optionsProvider.isLoading && scopedClasses.isNotEmpty,
+              enabled:
+                  !optionsProvider.isLoading &&
+                  !isClassScopeLoading &&
+                  scopedClasses.isNotEmpty,
               onChanged: (value) {
                 setState(() {
                   _selectedClassId = (value == null || value.isEmpty)
@@ -181,7 +236,7 @@ class _HealthAssessmentListScreenState
                 });
               },
             ),
-            if (scopedClasses.isEmpty) ...[
+            if (!isClassScopeLoading && scopedClasses.isEmpty) ...[
               const SizedBox(height: AppSpacing.xs),
               const _NoCompatibleClassNotice(),
             ],

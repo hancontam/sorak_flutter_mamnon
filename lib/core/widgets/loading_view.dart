@@ -28,6 +28,13 @@ class LoadingView extends StatelessWidget {
                 child: Lottie.asset(
                   'assets/lottie/loading.json',
                   repeat: true,
+                  delegates: LottieDelegates(
+                    values: [
+                      ValueDelegate.color(const [
+                        '**',
+                      ], value: AppColors.primary),
+                    ],
+                  ),
                   errorBuilder: (context, error, stackTrace) {
                     return const Center(child: CircularProgressIndicator());
                   },

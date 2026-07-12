@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_date_field.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../classes/models/school_class.dart';
 import '../../classes/providers/class_provider.dart';
@@ -49,8 +50,24 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     _status = item?.status ?? TransferStatusOptions.pending;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FormOptionsProvider>().loadInitialOptions();
+      _loadOptionsAndClassScope();
     });
+  }
+
+  Future<void> _loadOptionsAndClassScope() async {
+    final futures = <Future<void>>[
+      context.read<FormOptionsProvider>().loadInitialOptions(),
+    ];
+    if (_isTeacher(context)) {
+      final classProvider = context.read<ClassProvider>();
+      final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
+      futures.add(
+        yearId == null
+            ? classProvider.loadItems()
+            : classProvider.loadForAcademicYear(yearId),
+      );
+    }
+    await Future.wait(futures);
   }
 
   @override
@@ -118,6 +135,8 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     return Consumer<FormOptionsProvider>(
       builder: (context, optionsProvider, _) {
         final isTeacher = _isTeacher(context);
+        final isClassScopeLoading =
+            isTeacher && context.watch<ClassProvider>().isLoading;
         final scopedClasses = _scopedClasses(optionsProvider);
         _applyInitialValuesAfterOptionsLoaded(optionsProvider, scopedClasses);
 
@@ -153,12 +172,17 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
                 96,
               ),
               children: [
+                if (isClassScopeLoading) ...[
+                  const LinearProgressIndicator(minHeight: 2),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
                 AppDropdownField<String>(
                   key: ValueKey('class_transfer_from_$selectedFromClassId'),
                   label: 'Lớp hiện tại *',
                   options: sourceClassOptions,
                   value: selectedFromClassId,
                   hintText: 'Chọn lớp hiện tại',
+                  enabled: !isClassScopeLoading,
                   validator: _requiredDropdown('lớp hiện tại'),
                   onChanged: (value) {
                     setState(() {
@@ -171,7 +195,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
                     );
                   },
                 ),
-                if (scopedClasses.isEmpty) ...[
+                if (!isClassScopeLoading && scopedClasses.isEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),
                   const _NoCompatibleClassNotice(),
                 ],
@@ -186,7 +210,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
                   hintText: _fromClassId == null
                       ? 'Chọn lớp hiện tại trước'
                       : 'Chọn học sinh',
-                  enabled: _fromClassId != null,
+                  enabled: !isClassScopeLoading && _fromClassId != null,
                   validator: _requiredDropdown('học sinh'),
                   onChanged: (value) {
                     setState(() => _studentId = value);
@@ -203,13 +227,15 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
                   hintText: _fromClassId == null
                       ? 'Chọn lớp hiện tại trước'
                       : 'Chọn lớp cùng khối',
-                  enabled: _fromClassId != null,
+                  enabled: !isClassScopeLoading && _fromClassId != null,
                   validator: _requiredDropdown('lớp chuyển đến'),
                   onChanged: (value) {
                     setState(() => _toClassId = value);
                   },
                 ),
-                if (_fromClassId != null && targetClassOptions.isEmpty) ...[
+                if (!isClassScopeLoading &&
+                    _fromClassId != null &&
+                    targetClassOptions.isEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),
                   const _NoCompatibleClassNotice(
                     message: 'Hiện tại không có lớp cùng khối phù hợp.',

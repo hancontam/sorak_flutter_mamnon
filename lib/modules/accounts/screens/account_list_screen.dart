@@ -131,18 +131,9 @@ class _AccountListScreenState extends State<AccountListScreen> {
                   label: 'Trạng thái tài khoản',
                   value: _accountStatusFilter.name,
                   options: const [
-                    AppOption(
-                      value: 'all',
-                      label: 'Tất cả tài khoản',
-                    ),
-                    AppOption(
-                      value: 'active',
-                      label: 'Đang mở',
-                    ),
-                    AppOption(
-                      value: 'inactive',
-                      label: 'Đã khóa',
-                    ),
+                    AppOption(value: 'all', label: 'Tất cả tài khoản'),
+                    AppOption(value: 'active', label: 'Đang mở'),
+                    AppOption(value: 'inactive', label: 'Đã khóa'),
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -246,64 +237,72 @@ class _AccountListScreenState extends State<AccountListScreen> {
     final success = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
         return AlertDialog(
+          scrollable: true,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: viewInsets.bottom > 0 ? AppSpacing.sm : AppSpacing.lg,
+          ),
           title: Text(account.hasAccount ? 'Đổi vai trò' : 'Cấp tài khoản'),
-          content: ValueListenableBuilder<String>(
-            valueListenable: roleController,
-            builder: (context, role, _) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      account.fullName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: ValueListenableBuilder<String>(
+              valueListenable: roleController,
+              builder: (context, role, _) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        account.fullName,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  DropdownButtonFormField<String>(
-                    initialValue: role,
-                    isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Vai trò'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: RoleOptions.principal,
-                        child: Text(
-                          'BGH - Ban Giám hiệu',
-                          overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: AppSpacing.sm),
+                    DropdownButtonFormField<String>(
+                      initialValue: role,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: 'Vai trò'),
+                      items: const [
+                        DropdownMenuItem(
+                          value: RoleOptions.principal,
+                          child: Text(
+                            'BGH - Ban Giám hiệu',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      DropdownMenuItem(
-                        value: RoleOptions.teacher,
-                        child: Text(
-                          'GV - Giáo viên',
-                          overflow: TextOverflow.ellipsis,
+                        DropdownMenuItem(
+                          value: RoleOptions.teacher,
+                          child: Text(
+                            'GV - Giáo viên',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          roleController.value = value;
+                        }
+                      },
+                    ),
+                    if (!account.hasAccount) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      TextField(
+                        controller: passwordController,
+                        decoration: const InputDecoration(
+                          labelText: 'Mật khẩu khởi tạo',
+                          helperText: 'Tối thiểu 6 ký tự',
+                        ),
+                        obscureText: true,
                       ),
                     ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        roleController.value = value;
-                      }
-                    },
-                  ),
-                  if (!account.hasAccount) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    TextField(
-                      controller: passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Mật khẩu khởi tạo',
-                        helperText: 'Tối thiểu 6 ký tự',
-                      ),
-                      obscureText: true,
-                    ),
                   ],
-                ],
-              );
-            },
+                );
+              },
+            ),
           ),
           actions: [
             TextButton(
@@ -345,8 +344,12 @@ class _AccountListScreenState extends State<AccountListScreen> {
       },
     );
 
-    roleController.dispose();
-    passwordController.dispose();
+    // showDialog completes when pop starts, while the closing animation still
+    // renders the text field. Dispose after that Material transition finishes.
+    Future<void>.delayed(kThemeAnimationDuration, () {
+      roleController.dispose();
+      passwordController.dispose();
+    });
     _showActionResult(success);
   }
 
@@ -473,10 +476,7 @@ class _FilterDropdown extends StatelessWidget {
       key: ValueKey('$label-$effectiveValue'),
       initialValue: effectiveValue,
       isExpanded: true,
-      decoration: InputDecoration(
-        labelText: label,
-        isDense: true,
-      ),
+      decoration: InputDecoration(labelText: label, isDense: true),
       selectedItemBuilder: (context) {
         return [
           for (final option in options)
@@ -556,7 +556,10 @@ class _AccountCard extends StatelessWidget {
                         account.fullName,
                         softWrap: true,
                         style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800, height: 1.25),
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              height: 1.25,
+                            ),
                       ),
                       const SizedBox(height: AppSpacing.xs / 2),
                       Text(

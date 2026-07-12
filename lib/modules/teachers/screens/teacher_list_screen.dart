@@ -189,14 +189,6 @@ class _TeacherListScreenState extends State<TeacherListScreen> {
         title: 'Không tìm thấy cán bộ',
         message: 'Thử tên, email, số điện thoại hoặc đổi trạng thái.',
         type: EmptyViewType.search,
-        actionLabel: 'Xóa bộ lọc',
-        onAction: () {
-          _searchController.clear();
-          setState(() {
-            _search = '';
-            _selectedStatus = null;
-          });
-        },
       );
     }
 
