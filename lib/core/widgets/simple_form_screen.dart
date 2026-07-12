@@ -39,12 +39,14 @@ class SimpleFormScreen extends StatefulWidget {
     required this.fields,
     required this.onSave,
     this.initialValues = const {},
+    this.extraContent,
   });
 
   final String title;
   final List<FormFieldConfig> fields;
   final Map<String, String> initialValues;
   final Future<bool> Function(Map<String, dynamic> data) onSave;
+  final Widget? extraContent;
 
   @override
   State<SimpleFormScreen> createState() => _SimpleFormScreenState();
@@ -136,10 +138,14 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
             AppSpacing.md,
             96,
           ),
-          itemCount: widget.fields.length,
+          itemCount:
+              widget.fields.length + (widget.extraContent == null ? 0 : 1),
           separatorBuilder: (context, index) =>
               const SizedBox(height: AppSpacing.sm),
           itemBuilder: (context, index) {
+            if (index == widget.fields.length) {
+              return widget.extraContent!;
+            }
             final field = widget.fields[index];
             return _FieldBuilder(
               field: field,

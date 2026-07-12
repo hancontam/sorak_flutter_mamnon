@@ -135,7 +135,6 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
     final success = _isEditing
         ? await provider.updateClassSetup(
             classId: widget.schoolClass!.id,
-            schoolYearId: _selectedYearId ?? '',
             room: _roomController.text.trim(),
             teacherAccountIdsToAdd: _teacherAccountIdsToAdd.toList(),
             teacherIdsToRemove: _teacherIdsToRemove.toList(),
@@ -211,17 +210,24 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
                     validator: _required('tên lớp'),
                   ),
                 const SizedBox(height: AppSpacing.sm),
-                AppDropdownField<String>(
-                  key: ValueKey('class_year_${_selectedYearId ?? ''}'),
-                  label: 'Năm học *',
-                  options: _yearOptions(optionsProvider),
-                  value: _selectedYearId,
-                  hintText: optionsProvider.isLoading
-                      ? 'Đang tải...'
-                      : 'Chọn năm học',
-                  validator: _required('năm học'),
-                  onChanged: (value) => setState(() => _selectedYearId = value),
-                ),
+                if (_isEditing)
+                  AppReadonlyField(
+                    label: 'Năm học',
+                    value: _selectedYearLabel(optionsProvider),
+                  )
+                else
+                  AppDropdownField<String>(
+                    key: ValueKey('class_year_${_selectedYearId ?? ''}'),
+                    label: 'Năm học *',
+                    options: _yearOptions(optionsProvider),
+                    value: _selectedYearId,
+                    hintText: optionsProvider.isLoading
+                        ? 'Đang tải...'
+                        : 'Chọn năm học',
+                    validator: _required('năm học'),
+                    onChanged: (value) =>
+                        setState(() => _selectedYearId = value),
+                  ),
                 const SizedBox(height: AppSpacing.sm),
                 if (_isEditing)
                   AppReadonlyField(
@@ -342,6 +348,14 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
     return provider.academicYearOptions
         .map((year) => AppOption(value: '${year.value}', label: year.label))
         .toList();
+  }
+
+  String _selectedYearLabel(FormOptionsProvider provider) {
+    final selectedId = _selectedYearId;
+    for (final year in _yearOptions(provider)) {
+      if (year.value == selectedId) return year.label;
+    }
+    return selectedId ?? 'Chưa có';
   }
 
   String _normalizeGrade(String? value) {

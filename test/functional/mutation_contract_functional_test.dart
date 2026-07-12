@@ -61,10 +61,7 @@ void main() {
           (item) =>
               item.method == 'PATCH' && item.path == '/classes/${created.id}',
         );
-        expect(update.body, {
-          'class_name': 'MOBILE_TEST_Mầm 1C mới',
-          'school_year_id': 103,
-        });
+        expect(update.body, {'class_name': 'MOBILE_TEST_Mầm 1C mới'});
 
         final assignedTeacherId = created.assignedTeachers.single.id;
         await repository.removeTeacher(

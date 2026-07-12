@@ -13,4 +13,10 @@ class AcademicYearProvider extends CrudProvider<AcademicYear> {
     await _academicYearRepository.activate(id);
     await loadItems();
   }
+
+  Future<Map<String, dynamic>> promoteStudents(int id) async {
+    final result = await _academicYearRepository.promoteStudents(id);
+    await loadItems();
+    return result;
+  }
 }

@@ -118,10 +118,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(AppReadonlyField), findsNWidgets(2));
+      expect(find.byType(AppReadonlyField), findsNWidgets(3));
       expect(find.text('Tên lớp'), findsOneWidget);
+      expect(find.text('Năm học'), findsOneWidget);
       expect(find.text('Khối'), findsOneWidget);
-      expect(find.byKey(const ValueKey('class_year_101')), findsOneWidget);
+      expect(find.byKey(const ValueKey('class_year_101')), findsNothing);
       final teacherDropdown = find.byKey(const ValueKey('class_teacher_'));
       await tester.scrollUntilVisible(
         teacherDropdown,

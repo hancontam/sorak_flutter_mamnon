@@ -90,8 +90,6 @@ class ClassRepository implements CrudRepository<SchoolClass> {
 
   Map<String, dynamic> _updatePayload(Map<String, dynamic> data) => {
     if (data['class_name'] != null) 'class_name': data['class_name'],
-    if (data['school_year_id'] != null)
-      'school_year_id': int.tryParse('${data['school_year_id']}'),
     if (data['age_group'] != null) 'age_group': data['age_group'],
     if (data['room'] != null) 'room': data['room'],
   };
