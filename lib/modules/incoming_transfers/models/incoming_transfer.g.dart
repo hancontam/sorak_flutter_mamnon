@@ -19,6 +19,15 @@ IncomingTransfer _$IncomingTransferFromJson(Map<String, dynamic> json) =>
       status: json['status'] as String? ?? 'Recorded',
       isDeleted:
           IncomingTransfer._readIsDeleted(json, 'is_deleted') as bool? ?? false,
+      className:
+          IncomingTransfer._readClassName(json, 'class_name') as String? ?? '',
+      schoolYearName:
+          IncomingTransfer._readSchoolYearName(json, 'school_year_name')
+              as String? ??
+          '',
+      cardNumber:
+          IncomingTransfer._readCardNumber(json, 'card_number') as String? ??
+          '',
     );
 
 Map<String, dynamic> _$IncomingTransferToJson(IncomingTransfer instance) =>
@@ -32,4 +41,7 @@ Map<String, dynamic> _$IncomingTransferToJson(IncomingTransfer instance) =>
       'note': instance.note,
       'status': instance.status,
       'is_deleted': instance.isDeleted,
+      'class_name': instance.className,
+      'school_year_name': instance.schoolYearName,
+      'card_number': instance.cardNumber,
     };

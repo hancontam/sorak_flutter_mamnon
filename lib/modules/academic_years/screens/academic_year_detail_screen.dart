@@ -14,7 +14,6 @@ class AcademicYearDetailScreen extends StatelessWidget {
     return SimpleDetailScreen(
       title: academicYear.name,
       rows: [
-        DetailRow(label: 'ID', value: '${academicYear.id}'),
         DetailRow(label: 'Tên năm học', value: academicYear.name),
         DetailRow(label: 'Ngày bắt đầu', value: academicYear.startDate),
         DetailRow(label: 'Ngày kết thúc', value: academicYear.endDate),

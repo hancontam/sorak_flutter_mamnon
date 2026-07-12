@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/widgets/module_list_screen.dart';
+import '../../../core/constants/app_options.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/text_normalizer.dart';
+import '../../../core/widgets/app_dropdown_field.dart';
+import '../../../core/widgets/app_search_bar.dart';
+import '../../../core/widgets/confirm_archive_dialog.dart';
+import '../../../core/widgets/empty_view.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/loading_view.dart';
+import '../../../core/widgets/sorak_avatar.dart';
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/school_class.dart';
 import '../providers/class_provider.dart';
-import 'class_detail_screen.dart';
 import 'class_form_screen.dart';
 
 class ClassListScreen extends StatefulWidget {
@@ -18,55 +29,579 @@ class ClassListScreen extends StatefulWidget {
 }
 
 class _ClassListScreenState extends State<ClassListScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _search = '';
+  String? _selectedAgeGroup;
+  int? _lastAcademicYearId;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ClassProvider>().loadItems();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadForSelectedYear());
   }
 
-  void _openForm([SchoolClass? item]) {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadForSelectedYear() async {
+    final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
+    if (yearId == null) {
+      await context.read<ClassProvider>().loadItems();
+      return;
+    }
+    await context.read<ClassProvider>().loadForAcademicYear(yearId);
+  }
+
+  void _openForm([SchoolClass? schoolClass]) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ClassFormScreen(schoolClass: item)),
+      MaterialPageRoute(
+        builder: (_) => ClassFormScreen(schoolClass: schoolClass),
+      ),
     );
+  }
+
+  List<SchoolClass> _filteredClasses(List<SchoolClass> classes) {
+    final query = normalizeVietnamese(_search);
+
+    return classes.where((schoolClass) {
+      if (_selectedAgeGroup != null &&
+          _normalizedAgeGroup(schoolClass.ageGroup) != _selectedAgeGroup) {
+        return false;
+      }
+      if (query.isEmpty) {
+        return true;
+      }
+      return normalizeVietnamese(
+        [
+          schoolClass.className,
+          schoolClass.ageGroup,
+          schoolClass.room,
+          schoolClass.teacherName,
+        ].join(' '),
+      ).contains(query);
+    }).toList();
+  }
+
+  List<_ClassGroupData> _groupedClasses(List<SchoolClass> classes) {
+    final groups = <String, List<SchoolClass>>{};
+    for (final schoolClass in classes) {
+      final group = _displayAgeGroup(schoolClass.ageGroup);
+      groups.putIfAbsent(group, () => []).add(schoolClass);
+    }
+
+    final sortedNames = groups.keys.toList()
+      ..sort((a, b) => _ageGroupRank(a).compareTo(_ageGroupRank(b)));
+    return [
+      for (final name in sortedNames)
+        _ClassGroupData(name: name, classes: groups[name]!),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
+    final yearId = context.watch<ActiveAcademicYearProvider>().selectedYearId;
+    if (yearId != _lastAcademicYearId) {
+      _lastAcademicYearId = yearId;
+      _selectedAgeGroup = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadForSelectedYear();
+      });
+    }
+
+    final provider = context.watch<ClassProvider>();
     final isPrincipal =
         context.watch<AuthProvider>().currentUser?.role.toUpperCase() ==
         'PRINCIPAL';
-    return Consumer<ClassProvider>(
-      builder: (context, provider, _) {
-        return ModuleListScreen<SchoolClass>(
-          title: 'Lớp học',
-          showAppBar: widget.showAppBar,
-          items: provider.items,
-          isLoading: provider.isLoading,
-          errorMessage: provider.errorMessage,
-          onRefresh: provider.loadItems,
-          onAdd: () => _openForm(),
-          itemTitle: (item) => item.className,
-          itemSubtitle: (item) =>
-              'Phòng ${item.room} | ${item.ageGroup} | ${item.teacherName}',
-          itemFilterValue: (item) => item.ageGroup,
-          onEdit: _openForm,
-          onDelete: (item) => provider.archiveItem(item.id),
-          showAdd: isPrincipal,
-          showEdit: isPrincipal,
-          showDelete: isPrincipal,
-          onDetail: (item) {
-            Navigator.push(
+    final ageGroupOptions = _ageGroupOptions(
+      provider.items,
+      isPrincipal: isPrincipal,
+    );
+    _resetInvalidAgeGroupFilter(ageGroupOptions, provider.isLoading);
+    final classes = _filteredClasses(provider.items);
+    final groups = _groupedClasses(classes);
+
+    return Scaffold(
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text('Lớp học'),
+              actions: [
+                IconButton(
+                  tooltip: 'Làm mới',
+                  onPressed: provider.isLoading ? null : _loadForSelectedYear,
+                  icon: const Icon(LucideIcons.refreshCcw, size: 20),
+                ),
+              ],
+            )
+          : null,
+      floatingActionButton: isPrincipal
+          ? FloatingActionButton(
+              key: const ValueKey('module_add_button'),
+              tooltip: 'Thêm lớp học',
+              onPressed: () => _openForm(),
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              0,
+            ),
+            child: AppSearchBar(
+              controller: _searchController,
+              hintText: 'Tìm tên lớp / phòng / giáo viên',
+              onChanged: (value) => setState(() => _search = value),
+              onClear: () {
+                _searchController.clear();
+                setState(() => _search = '');
+              },
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: AppDropdownField<String>(
+              key: ValueKey('class_grade_filter_${_selectedAgeGroup ?? ''}'),
+              label: 'Lọc theo khối',
+              showLabel: false,
+              options: ageGroupOptions,
+              value: _selectedAgeGroup ?? '',
+              hintText: 'Tất cả khối',
+              onChanged: (value) => setState(() {
+                _selectedAgeGroup = value == null || value.isEmpty
+                    ? null
+                    : value;
+              }),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (provider.isLoading) const LinearProgressIndicator(minHeight: 2),
+          Expanded(
+            child: _buildContent(
               context,
-              MaterialPageRoute(
-                builder: (_) => ClassDetailScreen(schoolClass: item),
-              ),
-            );
-          },
-        );
-      },
+              provider,
+              classes,
+              groups,
+              isPrincipal,
+            ),
+          ),
+        ],
+      ),
     );
   }
+
+  List<AppOption<String>> _ageGroupOptions(
+    List<SchoolClass> classes, {
+    required bool isPrincipal,
+  }) {
+    if (isPrincipal) {
+      return const [
+        AppOption(value: '', label: 'Tất cả khối'),
+        ...GradeOptions.all,
+      ];
+    }
+
+    final assignedAgeGroups = classes
+        .map((schoolClass) => _normalizedAgeGroup(schoolClass.ageGroup))
+        .where((value) => value.isNotEmpty)
+        .toSet();
+    return [
+      const AppOption(value: '', label: 'Tất cả khối'),
+      ...GradeOptions.all.where(
+        (option) => assignedAgeGroups.contains(option.value),
+      ),
+    ];
+  }
+
+  void _resetInvalidAgeGroupFilter(
+    List<AppOption<String>> options,
+    bool isLoading,
+  ) {
+    final selected = _selectedAgeGroup;
+    if (isLoading ||
+        selected == null ||
+        options.any((option) => option.value == selected)) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedAgeGroup != null) {
+        setState(() => _selectedAgeGroup = null);
+      }
+    });
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    ClassProvider provider,
+    List<SchoolClass> classes,
+    List<_ClassGroupData> groups,
+    bool isPrincipal,
+  ) {
+    if (provider.isLoading && provider.items.isEmpty) {
+      return const LoadingView();
+    }
+    if (provider.errorMessage != null && provider.items.isEmpty) {
+      return ErrorView(
+        message: provider.errorMessage!,
+        onRetry: _loadForSelectedYear,
+      );
+    }
+    if (provider.items.isEmpty) {
+      return EmptyView(
+        title: 'Chưa có lớp học',
+        message: 'Chưa có dữ liệu trong năm học đang chọn.',
+        actionLabel: isPrincipal ? 'Thêm lớp học' : null,
+        onAction: isPrincipal ? () => _openForm() : null,
+      );
+    }
+    if (classes.isEmpty) {
+      return EmptyView(
+        title: 'Không tìm thấy lớp học',
+        message: 'Thử tên lớp, phòng, giáo viên hoặc đổi khối.',
+        type: EmptyViewType.search,
+        actionLabel: 'Xóa bộ lọc',
+        onAction: () {
+          _searchController.clear();
+          setState(() {
+            _search = '';
+            _selectedAgeGroup = null;
+          });
+        },
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadForSelectedYear,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.xs,
+          AppSpacing.md,
+          96,
+        ),
+        itemCount: groups.length,
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.lg),
+        itemBuilder: (context, groupIndex) {
+          final group = groups[groupIndex];
+          return _ClassFolderGroup(
+            group: group,
+            canManage: isPrincipal,
+            onEdit: _openForm,
+            onArchive: _archiveClass,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _archiveClass(SchoolClass schoolClass) async {
+    final confirmed = await showConfirmArchiveDialog(
+      context: context,
+      title: 'Xóa lớp học?',
+      message:
+          'Lớp học sẽ được ẩn khỏi danh sách đang hoạt động và không bị xóa vĩnh viễn.',
+    );
+    if (!confirmed || !mounted) {
+      return;
+    }
+    await context.read<ClassProvider>().archiveItem(schoolClass.id);
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Đã xóa lớp học khỏi danh sách')),
+    );
+  }
+}
+
+class _ClassGroupData {
+  const _ClassGroupData({required this.name, required this.classes});
+
+  final String name;
+  final List<SchoolClass> classes;
+}
+
+class _ClassFolderGroup extends StatelessWidget {
+  const _ClassFolderGroup({
+    required this.group,
+    required this.canManage,
+    required this.onEdit,
+    required this.onArchive,
+  });
+
+  final _ClassGroupData group;
+  final bool canManage;
+  final ValueChanged<SchoolClass> onEdit;
+  final ValueChanged<SchoolClass> onArchive;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(LucideIcons.folder, size: 20, color: AppColors.primary),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: Text(
+                group.name == 'Chưa phân khối'
+                    ? group.name
+                    : 'Khối ${group.name}',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+            Text(
+              '${group.classes.length} lớp',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        for (var index = 0; index < group.classes.length; index++) ...[
+          _ClassCard(
+            key: ValueKey('class_card_${group.classes[index].id}'),
+            schoolClass: group.classes[index],
+            grade: group.name,
+            canManage: canManage,
+            onEdit: () => onEdit(group.classes[index]),
+            onArchive: () => onArchive(group.classes[index]),
+          ),
+          if (index != group.classes.length - 1)
+            const SizedBox(height: AppSpacing.sm),
+        ],
+      ],
+    );
+  }
+}
+
+class _ClassCard extends StatelessWidget {
+  const _ClassCard({
+    super.key,
+    required this.schoolClass,
+    required this.grade,
+    required this.canManage,
+    required this.onEdit,
+    required this.onArchive,
+  });
+
+  final SchoolClass schoolClass;
+  final String grade;
+  final bool canManage;
+  final VoidCallback onEdit;
+  final VoidCallback onArchive;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SorakAvatar(
+                  seed: 'class-${schoolClass.id}',
+                  fallbackLabel: schoolClass.className,
+                  diceBearStyle: 'pixel-art-neutral',
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _valueOrMissing(schoolClass.className),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 2),
+                      _ClassGradePill(label: grade),
+                    ],
+                  ),
+                ),
+                if (canManage)
+                  PopupMenuButton<_ClassAction>(
+                    tooltip: 'Thao tác với lớp học',
+                    icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
+                    onSelected: (action) {
+                      if (action == _ClassAction.edit) {
+                        onEdit();
+                      } else {
+                        onArchive();
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: _ClassAction.edit,
+                        child: Text('Chỉnh sửa'),
+                      ),
+                      PopupMenuItem(
+                        value: _ClassAction.archive,
+                        child: Text(
+                          'Xóa',
+                          style: TextStyle(color: AppColors.destructive),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.muted,
+                borderRadius: BorderRadius.circular(AppSpacing.radius),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                children: [
+                  _ClassInfoLine(label: 'Khối', value: grade),
+                  _ClassInfoLine(label: 'Phòng', value: schoolClass.room),
+                  _ClassInfoLine(
+                    label: 'Sĩ số',
+                    value: '${schoolClass.studentCount} trẻ',
+                  ),
+                  _ClassInfoLine(
+                    label: 'Giáo viên',
+                    value: schoolClass.teacherName,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _ClassAction { edit, archive }
+
+class _ClassGradePill extends StatelessWidget {
+  const _ClassGradePill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.secondary,
+        borderRadius: BorderRadius.circular(AppSpacing.radius),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: AppColors.secondaryForeground,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _ClassInfoLine extends StatelessWidget {
+  const _ClassInfoLine({required this.label, required this.value});
+
+  final String label;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final isMissing = _isMissingValue(value);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 2,
+            child: Text(
+              _valueOrMissing(value),
+              textAlign: TextAlign.right,
+              softWrap: true,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isMissing ? AppColors.primary : AppColors.foreground,
+                fontWeight: isMissing ? FontWeight.w600 : FontWeight.w700,
+                fontStyle: isMissing ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _normalizedAgeGroup(String value) {
+  return switch (value.trim().toLowerCase()) {
+    'nhà trẻ' || 'nha tre' => GradeOptions.nursery,
+    '3-4' || 'mầm' || 'mam' => GradeOptions.mam,
+    '4-5' || 'chồi' || 'choi' => GradeOptions.choi,
+    '5-6' || 'lá' || 'la' => GradeOptions.la,
+    _ => value.trim(),
+  };
+}
+
+String _displayAgeGroup(String value) {
+  final normalized = _normalizedAgeGroup(value);
+  return normalized.isEmpty ? 'Chưa phân khối' : normalized;
+}
+
+int _ageGroupRank(String value) {
+  return switch (value) {
+    GradeOptions.nursery => 0,
+    GradeOptions.mam => 1,
+    GradeOptions.choi => 2,
+    GradeOptions.la => 3,
+    'Chưa phân khối' => 4,
+    _ => 5,
+  };
+}
+
+String _valueOrMissing(String? value) {
+  final trimmed = value?.trim() ?? '';
+  return trimmed.isEmpty || trimmed == '-' ? 'Chưa có' : trimmed;
+}
+
+bool _isMissingValue(String? value) {
+  final trimmed = value?.trim() ?? '';
+  return trimmed.isEmpty || trimmed == '-';
 }

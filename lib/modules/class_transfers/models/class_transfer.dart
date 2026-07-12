@@ -15,6 +15,7 @@ class ClassTransfer {
     this.fromClassName = '',
     this.status = 'Pending',
     this.note = '',
+    this.requesterName = '',
   });
 
   @JsonKey(name: 'request_id')
@@ -33,6 +34,9 @@ class ClassTransfer {
   final String status;
   @JsonKey(readValue: _readNote)
   final String note;
+  /// Display name of requester (web: requester.teacher.full_name).
+  @JsonKey(readValue: _readRequesterName, defaultValue: '')
+  final String requesterName;
 
   factory ClassTransfer.fromJson(Map<String, dynamic> json) {
     return _$ClassTransferFromJson(json);
@@ -53,6 +57,7 @@ class ClassTransfer {
     String? effectiveDate,
     String? status,
     String? note,
+    String? requesterName,
   }) {
     return ClassTransfer(
       id: id ?? this.id,
@@ -65,6 +70,7 @@ class ClassTransfer {
       effectiveDate: effectiveDate ?? this.effectiveDate,
       status: status ?? this.status,
       note: note ?? this.note,
+      requesterName: requesterName ?? this.requesterName,
     );
   }
 
@@ -94,5 +100,23 @@ class ClassTransfer {
 
   static Object? _readNote(Map<dynamic, dynamic> json, String key) {
     return json['review_note'] ?? json[key] ?? '';
+  }
+
+  static Object? _readRequesterName(Map<dynamic, dynamic> json, String key) {
+    final requester = json['requester'];
+    if (requester is Map) {
+      final teacher = requester['teacher'];
+      if (teacher is Map) {
+        final name = teacher['full_name'];
+        if (name != null && '$name'.trim().isNotEmpty) {
+          return name;
+        }
+      }
+      final direct = requester['full_name'];
+      if (direct != null && '$direct'.trim().isNotEmpty) {
+        return direct;
+      }
+    }
+    return json[key] ?? '';
   }
 }

@@ -14,6 +14,9 @@ class IncomingTransfer {
     this.note = '',
     this.status = 'Recorded',
     this.isDeleted = false,
+    this.className = '',
+    this.schoolYearName = '',
+    this.cardNumber = '',
   });
 
   @JsonKey(name: 'transfer_id')
@@ -31,6 +34,12 @@ class IncomingTransfer {
   final String status;
   @JsonKey(readValue: _readIsDeleted)
   final bool isDeleted;
+  @JsonKey(readValue: _readClassName, defaultValue: '')
+  final String className;
+  @JsonKey(readValue: _readSchoolYearName, defaultValue: '')
+  final String schoolYearName;
+  @JsonKey(readValue: _readCardNumber, defaultValue: '')
+  final String cardNumber;
 
   factory IncomingTransfer.fromJson(Map<String, dynamic> json) {
     return _$IncomingTransferFromJson(json);
@@ -50,6 +59,9 @@ class IncomingTransfer {
     String? note,
     String? status,
     bool? isDeleted,
+    String? className,
+    String? schoolYearName,
+    String? cardNumber,
   }) {
     return IncomingTransfer(
       id: id ?? this.id,
@@ -61,6 +73,9 @@ class IncomingTransfer {
       note: note ?? this.note,
       status: status ?? this.status,
       isDeleted: isDeleted ?? this.isDeleted,
+      className: className ?? this.className,
+      schoolYearName: schoolYearName ?? this.schoolYearName,
+      cardNumber: cardNumber ?? this.cardNumber,
     );
   }
 
@@ -74,5 +89,29 @@ class IncomingTransfer {
 
   static Object? _readIsDeleted(Map<dynamic, dynamic> json, String key) {
     return json['is_deleted'] == true || json['deleted_at'] != null;
+  }
+
+  static Object? _readClassName(Map<dynamic, dynamic> json, String key) {
+    final schoolClass = json['class'];
+    if (schoolClass is Map) {
+      return schoolClass['class_name'] ?? '';
+    }
+    return json[key] ?? '';
+  }
+
+  static Object? _readSchoolYearName(Map<dynamic, dynamic> json, String key) {
+    final year = json['school_year'];
+    if (year is Map) {
+      return year['name'] ?? '';
+    }
+    return json[key] ?? '';
+  }
+
+  static Object? _readCardNumber(Map<dynamic, dynamic> json, String key) {
+    final student = json['student'];
+    if (student is Map) {
+      return student['student_id_card_number'] ?? '';
+    }
+    return json[key] ?? '';
   }
 }

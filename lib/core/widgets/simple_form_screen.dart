@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../constants/app_options.dart';
 import '../theme/app_colors.dart';
@@ -40,12 +39,14 @@ class SimpleFormScreen extends StatefulWidget {
     required this.fields,
     required this.onSave,
     this.initialValues = const {},
+    this.extraContent,
   });
 
   final String title;
   final List<FormFieldConfig> fields;
   final Map<String, String> initialValues;
   final Future<bool> Function(Map<String, dynamic> data) onSave;
+  final Widget? extraContent;
 
   @override
   State<SimpleFormScreen> createState() => _SimpleFormScreenState();
@@ -117,7 +118,8 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
 
     return (value) {
       if (value == null || value.trim().isEmpty) {
-        return 'Vui lòng nhập ${field.label.toLowerCase()}';
+        final fieldName = field.label.replaceAll('*', '').trim().toLowerCase();
+        return 'Vui lòng nhập $fieldName';
       }
       return null;
     };
@@ -136,10 +138,14 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
             AppSpacing.md,
             96,
           ),
-          itemCount: widget.fields.length,
+          itemCount:
+              widget.fields.length + (widget.extraContent == null ? 0 : 1),
           separatorBuilder: (context, index) =>
               const SizedBox(height: AppSpacing.sm),
           itemBuilder: (context, index) {
+            if (index == widget.fields.length) {
+              return widget.extraContent!;
+            }
             final field = widget.fields[index];
             return _FieldBuilder(
               field: field,
@@ -167,9 +173,9 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: FilledButton.icon(
+                child: FilledButton(
                   onPressed: _isSaving ? null : _save,
-                  icon: _isSaving
+                  child: _isSaving
                       ? const SizedBox(
                           width: 18,
                           height: 18,
@@ -178,8 +184,7 @@ class _SimpleFormScreenState extends State<SimpleFormScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(LucideIcons.save, size: 18),
-                  label: const Text('Lưu'),
+                      : const Text('Lưu'),
                 ),
               ),
             ],

@@ -186,12 +186,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: AppSpacing.md),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton.icon(
+                      child: FilledButton(
                         key: const ValueKey('change_password_button'),
                         onPressed: authProvider.isSavingPassword
                             ? null
                             : _changePassword,
-                        icon: authProvider.isSavingPassword
+                        child: authProvider.isSavingPassword
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
@@ -200,8 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(LucideIcons.save, size: 18),
-                        label: const Text('Đổi mật khẩu'),
+                            : const Text('Đổi mật khẩu'),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),

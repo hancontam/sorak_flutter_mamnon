@@ -9,6 +9,7 @@ import 'package:sorak_flutter_mamnon/core/network/api_page.dart';
 import 'package:sorak_flutter_mamnon/modules/accounts/repositories/account_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/academic_years/repositories/academic_year_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/class_transfers/repositories/class_transfer_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/classes/providers/class_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/repositories/class_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/health/repositories/growth_who_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/health/repositories/health_assessment_repository.dart';
@@ -18,7 +19,21 @@ import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/out
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
+/// Only execute when the process is started with
+/// `--dart-define=USE_MOCK_API=false`. Default app config is live, but the
+/// shared test bootstrap forces mock — so we clear the override here.
+const bool _runLiveContract =
+    bool.hasEnvironment('USE_MOCK_API') &&
+    !bool.fromEnvironment('USE_MOCK_API');
+
 void main() {
+  setUpAll(() {
+    if (_runLiveContract) {
+      AppConfig.clearUseMockApiOverride();
+    }
+  });
+  tearDownAll(AppConfig.forceMockApiForTests);
+
   group('Live API contract functional test', () {
     test(
       'core and transfer repositories use backend paths, query names, and ids',
@@ -35,12 +50,21 @@ void main() {
           sortOrder: 'asc',
         );
 
-        await AcademicYearRepository(
-          apiClient: apiClient,
-        ).getPage(query: query);
-        await ClassRepository(
-          apiClient: apiClient,
-        ).getPage(query: query, schoolYearId: 2, ageGroup: '4-5');
+        final academicYears = AcademicYearRepository(apiClient: apiClient);
+        await academicYears.getPage(query: query);
+        final promotion = await academicYears.promoteStudents(2);
+        expect(promotion['promoted'], 3);
+
+        final classes = ClassRepository(apiClient: apiClient);
+        await classes.getPage(query: query, schoolYearId: 2, ageGroup: '4-5');
+        final classProvider = ClassProvider(classRepository: classes);
+        final classUpdated = await classProvider.updateClassSetup(
+          classId: 5,
+          room: 'A102',
+          teacherAccountIdsToAdd: const [81],
+          teacherIdsToRemove: const [91],
+        );
+        expect(classUpdated, isTrue);
         await TeacherRepository(apiClient: apiClient).getPage(
           query: query,
           schoolYearId: 2,
@@ -116,6 +140,15 @@ void main() {
         await accounts.changePassword(accountId: 31, password: 'password456');
 
         expect(adapter.query('/academic-years'), isEmpty);
+        expect(
+          adapter.request('POST', '/academic-years/2/promote').body,
+          isNull,
+        );
+        expect(adapter.request('PATCH', '/classes/5').body, {'room': 'A102'});
+        expect(
+          adapter.requestIndex('POST', '/classes/5/teachers'),
+          lessThan(adapter.requestIndex('DELETE', '/classes/5/teachers/91')),
+        );
         expect(adapter.query('/classes'), {
           'page': '2',
           'pageSize': '10',
@@ -171,9 +204,9 @@ void main() {
           'password': 'password456',
         });
       },
-      skip: AppConfig.useMockApi
-          ? 'Run with --dart-define=USE_MOCK_API=false.'
-          : false,
+      skip: _runLiveContract
+          ? false
+          : 'Run with --dart-define=USE_MOCK_API=false.',
     );
 
     test(
@@ -268,9 +301,9 @@ void main() {
         expect(adapter.query('/health-assessments')['latest'], 'true');
         expect(adapter.query('/health-assessments')['school_year_id'], '2');
       },
-      skip: AppConfig.useMockApi
-          ? 'Run with --dart-define=USE_MOCK_API=false.'
-          : false,
+      skip: _runLiveContract
+          ? false
+          : 'Run with --dart-define=USE_MOCK_API=false.',
     );
   });
 }
@@ -317,6 +350,12 @@ class _ContractAdapter implements HttpClientAdapter {
     );
   }
 
+  int requestIndex(String method, String path) {
+    return _requests.indexWhere(
+      (request) => request.method == method && request.path == path,
+    );
+  }
+
   bool hasDeleteFor(String pathFragment) {
     return _requests.any(
       (request) =>
@@ -325,6 +364,12 @@ class _ContractAdapter implements HttpClientAdapter {
   }
 
   Map<String, dynamic> _responseFor(String path, String method) {
+    if (path == '/academic-years/2/promote' && method == 'POST') {
+      return {
+        'success': true,
+        'data': {'promoted': 3, 'graduated': 1, 'skipped': 2, 'inactivated': 0},
+      };
+    }
     if (path == '/health-assessments/by-class-date') {
       return {
         'success': true,
@@ -435,6 +480,9 @@ class _ContractAdapter implements HttpClientAdapter {
         '/outgoing-transfers',
       final value when value.contains('accounts') => '/accounts',
       final value when value.contains('students') => '/students',
+      final value when value.startsWith('/classes/') => '/classes',
+      final value when value.startsWith('/academic-years/') =>
+        '/academic-years',
       _ => path,
     };
     final item = switch (collectionPath) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
@@ -17,6 +16,8 @@ class EmptyView extends StatelessWidget {
     this.onAction,
     this.type = EmptyViewType.data,
   });
+
+  static const String mascotAsset = 'assets/images/mascot_sorak.png';
 
   final String title;
   final String message;
@@ -37,12 +38,14 @@ class EmptyView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 128,
-                height: 128,
-                child: Lottie.asset(
-                  'assets/lottie/empty.json',
-                  repeat: false,
+              // Empty-data illustration: app mascot instead of orange Lottie.
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppSpacing.radius),
+                child: Image.asset(
+                  mascotAsset,
+                  width: 140,
+                  height: 140,
+                  fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return Icon(
                       icon,

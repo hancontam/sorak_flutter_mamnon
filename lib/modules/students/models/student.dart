@@ -13,6 +13,15 @@ class Student {
     this.className = '',
     this.studentStatus = 'Đang học',
     this.contactPhone = '',
+    this.studentIdCardNumber = '',
+    this.gradeLevel = '',
+    this.enrollmentDate = '',
+    this.ethnicity = '',
+    this.nationality = '',
+    this.religion = '',
+    this.bloodType = '',
+    this.birthPlace = '',
+    this.currentAddress = '',
     this.isActive = true,
     this.isDeleted = false,
   });
@@ -30,6 +39,24 @@ class Student {
   final String studentStatus;
   @JsonKey(defaultValue: '')
   final String contactPhone;
+  @JsonKey(name: 'student_id_card_number', defaultValue: '')
+  final String studentIdCardNumber;
+  @JsonKey(defaultValue: '')
+  final String gradeLevel;
+  @JsonKey(defaultValue: '')
+  final String enrollmentDate;
+  @JsonKey(defaultValue: '')
+  final String ethnicity;
+  @JsonKey(defaultValue: '')
+  final String nationality;
+  @JsonKey(defaultValue: '')
+  final String religion;
+  @JsonKey(defaultValue: '')
+  final String bloodType;
+  @JsonKey(defaultValue: '')
+  final String birthPlace;
+  @JsonKey(defaultValue: '')
+  final String currentAddress;
   @JsonKey(readValue: _readIsActive)
   final bool isActive;
   @JsonKey(readValue: _readIsDeleted)
@@ -48,10 +75,19 @@ class Student {
     String? fullName,
     String? dateOfBirth,
     String? gender,
+    String? studentIdCardNumber,
     int? classId,
     String? className,
     String? studentStatus,
     String? contactPhone,
+    String? gradeLevel,
+    String? enrollmentDate,
+    String? ethnicity,
+    String? nationality,
+    String? religion,
+    String? bloodType,
+    String? birthPlace,
+    String? currentAddress,
     bool? isActive,
     bool? isDeleted,
   }) {
@@ -64,6 +100,15 @@ class Student {
       className: className ?? this.className,
       studentStatus: studentStatus ?? this.studentStatus,
       contactPhone: contactPhone ?? this.contactPhone,
+      studentIdCardNumber: studentIdCardNumber ?? this.studentIdCardNumber,
+      gradeLevel: gradeLevel ?? this.gradeLevel,
+      enrollmentDate: enrollmentDate ?? this.enrollmentDate,
+      ethnicity: ethnicity ?? this.ethnicity,
+      nationality: nationality ?? this.nationality,
+      religion: religion ?? this.religion,
+      bloodType: bloodType ?? this.bloodType,
+      birthPlace: birthPlace ?? this.birthPlace,
+      currentAddress: currentAddress ?? this.currentAddress,
       isActive: isActive ?? this.isActive,
       isDeleted: isDeleted ?? this.isDeleted,
     );

@@ -39,18 +39,24 @@ class _AppShellState extends State<AppShell> {
   int _yearRevision = 0;
   int? _lastAcademicYearId;
   ActiveAcademicYearProvider? _academicYearProvider;
+  bool _didRefreshRoleScopedOptions = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final provider = context.read<ActiveAcademicYearProvider>();
-    if (identical(provider, _academicYearProvider)) {
-      return;
+    if (!identical(provider, _academicYearProvider)) {
+      _academicYearProvider?.removeListener(_onAcademicYearChanged);
+      _academicYearProvider = provider..addListener(_onAcademicYearChanged);
+      _lastAcademicYearId = provider.selectedYearId;
     }
 
-    _academicYearProvider?.removeListener(_onAcademicYearChanged);
-    _academicYearProvider = provider..addListener(_onAcademicYearChanged);
-    _lastAcademicYearId = provider.selectedYearId;
+    if (!_didRefreshRoleScopedOptions) {
+      _didRefreshRoleScopedOptions = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_refreshOptionsForCurrentStaff());
+      });
+    }
   }
 
   @override
@@ -67,6 +73,22 @@ class _AppShellState extends State<AppShell> {
     }
 
     Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+  }
+
+  Future<void> _refreshOptionsForCurrentStaff() async {
+    if (!mounted || _currentRole() == 'PARENT') {
+      return;
+    }
+
+    final selectedYearId = context
+        .read<ActiveAcademicYearProvider>()
+        .selectedYearId;
+    final formOptions = context.read<FormOptionsProvider>();
+    await formOptions.refreshOptions();
+    if (!mounted || selectedYearId == null) {
+      return;
+    }
+    await formOptions.applyGlobalAcademicYear(selectedYearId);
   }
 
   void _openDrawerRoute(String routeName) {
@@ -180,8 +202,10 @@ class _AppShellState extends State<AppShell> {
   }
 
   String _normalizedRole(BuildContext context) {
-    return context.watch<AuthProvider>().currentUser?.role.toUpperCase() ??
-        'TEACHER';
+    // Select role only — avoid full shell rebuild when profile reloads.
+    return context.select<AuthProvider, String>(
+      (provider) => provider.currentUser?.role.toUpperCase() ?? 'TEACHER',
+    );
   }
 
   String _currentRole() {

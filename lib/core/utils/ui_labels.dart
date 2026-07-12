@@ -33,6 +33,8 @@ class UiLabels {
       case 'CANCELLED':
       case 'CANCELED':
         return 'Đã hủy';
+      case 'EXPIRED':
+        return 'Quá hạn';
       case 'ARCHIVED':
         return 'Đã lưu trữ';
       case 'COMPLETED':

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
@@ -29,9 +29,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Tạo yêu cầu chuyển lớp'), findsOneWidget);
-      expect(find.text('Lớp hiện tại'), findsOneWidget);
-      expect(find.text('Học sinh'), findsOneWidget);
-      expect(find.text('Lớp chuyển đến'), findsOneWidget);
+      expect(find.text('Lớp hiện tại *'), findsOneWidget);
+      expect(find.text('Học sinh *'), findsOneWidget);
+      expect(find.text('Lớp chuyển đến *'), findsOneWidget);
       expect(find.text('Trạng thái'), findsOneWidget);
 
       final dropdowns = find.byType(DropdownButtonFormField<String>);
@@ -51,10 +51,10 @@ void main() {
       await tester.tap(find.textContaining('Nguyễn Minh An').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(dropdowns.at(2));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Chồi 2B'), findsWidgets);
+      expect(
+        find.text('Hiện tại không có lớp cùng khối phù hợp.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('outgoing transfer uses class student and status dropdowns', (

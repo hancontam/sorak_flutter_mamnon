@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
@@ -9,6 +9,8 @@ import 'package:sorak_flutter_mamnon/modules/form_options/repositories/form_opti
 import 'package:sorak_flutter_mamnon/modules/students/providers/student_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/students/screens/student_form_screen.dart';
+import 'package:sorak_flutter_mamnon/modules/students/screens/student_guardian_form_screen.dart';
+import 'package:sorak_flutter_mamnon/modules/students/models/student.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
 void main() {
@@ -20,11 +22,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Tạo hồ sơ học sinh'), findsOneWidget);
-      expect(find.text('Họ tên'), findsOneWidget);
-      expect(find.text('Ngày sinh'), findsOneWidget);
-      expect(find.text('Giới tính'), findsOneWidget);
+      expect(find.text('Họ tên *'), findsOneWidget);
+      expect(find.text('Ngày sinh *'), findsOneWidget);
+      expect(find.text('Giới tính *'), findsOneWidget);
       expect(find.text('Khối'), findsOneWidget);
-      expect(find.text('Lớp'), findsOneWidget);
+      expect(find.text('Lớp (tùy chọn)'), findsOneWidget);
       expect(find.text('Tình trạng học vụ'), findsOneWidget);
 
       final dropdowns = find.byType(DropdownButtonFormField<String>);
@@ -58,6 +60,32 @@ void main() {
 
       expect(find.textContaining('Chồi 2B'), findsWidgets);
       expect(find.textContaining('Mầm 1A'), findsNothing);
+    });
+
+    testWidgets('guardian flow offers predefined relationship chips', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: StudentGuardianFormScreen(
+            student: Student(
+              id: 401,
+              fullName: 'Nguyễn Minh An',
+              dateOfBirth: '2021-03-10',
+              gender: 'Nam',
+              contactPhone: '0900000401',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Cha'), findsOneWidget);
+      expect(find.text('Mẹ'), findsOneWidget);
+      expect(find.text('Bà ngoại'), findsOneWidget);
+      expect(find.text('Người giám hộ'), findsOneWidget);
+      expect(find.text('Họ tên phụ huynh *'), findsOneWidget);
+      expect(find.text('Số điện thoại *'), findsOneWidget);
+      expect(find.text('Quan hệ với trẻ'), findsOneWidget);
     });
   });
 }

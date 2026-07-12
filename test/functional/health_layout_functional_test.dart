@@ -8,7 +8,7 @@ import 'helpers/test_app.dart';
 void main() {
   group('Health layout regression (Goal 37)', () {
     testWidgets(
-      'small viewport: Health uses SafeArea, scroll padding, no fixed Growth height',
+      'small viewport: Health uses SafeArea and scroll padding for roster',
       (tester) async {
         // Phone-sized surface where NavigationBar often occludes content.
         await tester.binding.setSurfaceSize(const Size(360, 640));
@@ -22,6 +22,9 @@ void main() {
 
         expect(find.byType(HealthScreen), findsOneWidget);
         expect(find.byType(SafeArea), findsWidgets);
+        // Nutrition / Growth toggles are out of current Health UI scope.
+        expect(find.text('Nuôi dưỡng'), findsNothing);
+        expect(find.text('Tăng trưởng'), findsNothing);
 
         final listViews = tester.widgetList<ListView>(find.byType(ListView));
         final healthList = listViews.firstWhere((view) {
@@ -33,19 +36,11 @@ void main() {
         // Dynamic bottom padding must clear nav + safe inset (not a tiny fixed pad).
         expect(padding!.bottom, greaterThan(40));
 
-        // No fixed 720 height trap for Growth-in-Health.
-        final sizedBoxes = tester.widgetList<SizedBox>(find.byType(SizedBox));
-        expect(
-          sizedBoxes.any((box) => box.height == 720),
-          isFalse,
-          reason: 'Growth must not use SizedBox(height: 720) inside Health',
-        );
-
         // Roster last student remains scrollable into view on small screen.
         await _selectMam1A(tester);
-        expect(find.text('Nguyễn Minh An'), findsOneWidget);
+        expect(find.text('Nguyễn Minh An'), findsWidgets);
 
-        await tester.tap(find.text('Nguyễn Minh An'));
+        await tester.tap(find.text('Nguyễn Minh An').first);
         await tester.pumpAndSettle();
 
         expect(
@@ -55,20 +50,6 @@ void main() {
         await tester.ensureVisible(find.text('Lưu sức khỏe'));
         await tester.pumpAndSettle();
         expect(find.text('Lưu sức khỏe'), findsOneWidget);
-
-        // Dismiss bottom sheet via navigator pop so Growth tab is reachable.
-        Navigator.of(tester.element(find.text('Lưu sức khỏe'))).pop();
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('Tăng trưởng'));
-        await tester.pumpAndSettle();
-        expect(find.text('Tăng trưởng WHO'), findsWidgets);
-        expect(
-          tester
-              .widgetList<SizedBox>(find.byType(SizedBox))
-              .any((box) => box.height == 720),
-          isFalse,
-        );
       },
     );
   });

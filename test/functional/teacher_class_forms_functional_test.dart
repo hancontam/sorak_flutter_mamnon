@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
+import 'package:sorak_flutter_mamnon/core/widgets/app_readonly_field.dart';
 import 'package:sorak_flutter_mamnon/modules/academic_years/repositories/academic_year_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/providers/class_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/repositories/class_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/screens/class_form_screen.dart';
+import 'package:sorak_flutter_mamnon/modules/classes/models/school_class.dart';
 import 'package:sorak_flutter_mamnon/modules/form_options/providers/form_options_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/form_options/repositories/form_options_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
@@ -20,12 +22,17 @@ void main() {
         await _buildFormTestApp(home: const TeacherFormScreen()),
       );
 
-      expect(find.text('Tạo giáo viên'), findsOneWidget);
-      expect(find.text('Họ và tên'), findsOneWidget);
+      expect(find.text('Tạo cán bộ'), findsWidgets);
+      expect(find.text('Họ và tên *'), findsOneWidget);
+      expect(find.text('Chức vụ *'), findsOneWidget);
+      expect(find.text('Email *'), findsOneWidget);
       expect(find.text('Giới tính'), findsOneWidget);
       expect(find.text('Trạng thái làm việc'), findsOneWidget);
 
-      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      final genderDropdown = find.byKey(const ValueKey('teacher_gender_'));
+      await tester.ensureVisible(genderDropdown);
+      await tester.pumpAndSettle();
+      await tester.tap(genderDropdown);
       await tester.pumpAndSettle();
 
       expect(find.text('Nam'), findsWidgets);
@@ -34,7 +41,12 @@ void main() {
       await tester.tap(find.text('Nữ').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(DropdownButtonFormField<String>).last);
+      final workStatusDropdown = find.byKey(
+        const ValueKey('teacher_status_Đang làm việc'),
+      );
+      await tester.ensureVisible(workStatusDropdown);
+      await tester.pumpAndSettle();
+      await tester.tap(workStatusDropdown);
       await tester.pumpAndSettle();
 
       expect(find.text('Đang làm việc'), findsWidgets);
@@ -49,10 +61,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Tạo lớp'), findsOneWidget);
-      expect(find.text('Tên lớp'), findsOneWidget);
-      expect(find.text('Năm học'), findsOneWidget);
+      expect(find.text('Tên lớp *'), findsOneWidget);
+      expect(find.text('Năm học *'), findsOneWidget);
       expect(find.text('Khối'), findsOneWidget);
-      expect(find.text('Giáo viên'), findsOneWidget);
+      expect(find.text('Giáo viên phụ trách'), findsWidgets);
 
       final dropdowns = find.byType(DropdownButtonFormField<String>);
       expect(dropdowns, findsNWidgets(3));
@@ -80,6 +92,46 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Nguyễn Thị Lan'), findsWidgets);
+    });
+
+    testWidgets('editing a class locks its name and grade', (tester) async {
+      await tester.pumpWidget(
+        await _buildFormTestApp(
+          home: const ClassFormScreen(
+            schoolClass: SchoolClass(
+              id: 301,
+              className: 'Mầm 1A',
+              schoolYearId: 101,
+              ageGroup: 'Mầm',
+              room: 'A101',
+              assignedTeachers: [
+                ClassTeacher(
+                  id: 201,
+                  accountId: 1002,
+                  fullName: 'Nguyễn Thị Lan',
+                  position: 'Giáo viên',
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AppReadonlyField), findsNWidgets(3));
+      expect(find.text('Tên lớp'), findsOneWidget);
+      expect(find.text('Năm học'), findsOneWidget);
+      expect(find.text('Khối'), findsOneWidget);
+      expect(find.byKey(const ValueKey('class_year_101')), findsNothing);
+      final teacherDropdown = find.byKey(const ValueKey('class_teacher_'));
+      await tester.scrollUntilVisible(
+        teacherDropdown,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(teacherDropdown, findsOneWidget);
+      expect(find.text('Nguyễn Thị Lan'), findsOneWidget);
+      expect(find.byTooltip('Hủy phân công giáo viên'), findsOneWidget);
     });
   });
 }

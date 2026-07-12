@@ -26,12 +26,22 @@ macos/Flutter/ephemeral/
 linux/flutter/ephemeral/
 windows/flutter/ephemeral/
 
-# IDE and editor files
-.idea/
+# IDE - ignore personal state, keep shared Flutter run/module configs
+.idea/**
+!.idea/modules.xml
+!.idea/runConfigurations/
+!.idea/runConfigurations/**
+
 *.iml
+!sorak_flutter_mamnon.iml
+!android/sorak_flutter_mamnon_android.iml
 *.ipr
 *.iws
-.vscode/
+
+.vscode/**
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/extensions.json
 .history/
 *.swp
 *.swo
@@ -51,3 +61,6 @@ Thumbs.db
 # Crash symbols and obfuscation output
 app.*.symbols
 app.*.map.json
+
+# Local MCP / agent tooling (do not ship)
+mcps/

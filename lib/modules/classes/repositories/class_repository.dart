@@ -103,4 +103,13 @@ class ClassRepository implements CrudRepository<SchoolClass> {
       data: {'account_id': accountId},
     );
   }
+
+  Future<void> removeTeacher({
+    required int classId,
+    required int teacherId,
+  }) async {
+    await _apiClient.dio.delete(
+      '${ApiEndpoints.classes}/$classId/teachers/$teacherId',
+    );
+  }
 }

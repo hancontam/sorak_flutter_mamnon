@@ -12,17 +12,18 @@ import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../core/widgets/sorak_avatar.dart';
 import '../../../core/widgets/sorak_status_badge.dart';
-import '../../../core/widgets/sorak_toggle_group.dart';
 import '../models/account.dart';
 import '../providers/account_provider.dart';
 
 enum AccountView { student, staff }
 
-enum _AccountFilter { all, unassigned, assigned, active, inactive }
+/// Account-status filter aligned with web StaffTab/StudentTab selects.
+enum _AccountStatusFilter { all, active, inactive }
 
 class AccountListScreen extends StatefulWidget {
   const AccountListScreen({super.key, this.initialView = AccountView.staff});
 
+  /// Fixed by route: staff vs student accounts (no in-screen toggle).
   final AccountView initialView;
 
   @override
@@ -30,10 +31,14 @@ class AccountListScreen extends StatefulWidget {
 }
 
 class _AccountListScreenState extends State<AccountListScreen> {
-  late AccountView _view = widget.initialView;
-  _AccountFilter _filter = _AccountFilter.all;
+  // Match web defaults: staff work status "Đang làm việc", student "Đang học".
+  String _workStatusFilter = TeacherWorkStatusOptions.working;
+  String _studentStatusFilter = StudentStatusOptions.studying;
+  _AccountStatusFilter _accountStatusFilter = _AccountStatusFilter.all;
   final _searchController = TextEditingController();
   String _search = '';
+
+  AccountView get _view => widget.initialView;
 
   @override
   void initState() {
@@ -82,31 +87,11 @@ class _AccountListScreenState extends State<AccountListScreen> {
                 AppSpacing.lg,
               ),
               children: [
-                SorakToggleGroup<AccountView>(
-                  options: const [
-                    SorakToggleOption(
-                      value: AccountView.staff,
-                      label: 'Cán bộ',
-                      icon: LucideIcons.badgeCheck,
-                    ),
-                    SorakToggleOption(
-                      value: AccountView.student,
-                      label: 'Học sinh',
-                      icon: LucideIcons.users,
-                    ),
-                  ],
-                  selected: _view,
-                  onChanged: (value) {
-                    setState(() {
-                      _view = value;
-                      _filter = _AccountFilter.all;
-                    });
-                  },
-                ),
-                const SizedBox(height: AppSpacing.md),
                 AppSearchBar(
                   controller: _searchController,
-                  hintText: 'Tìm theo họ tên, email, mã thẻ',
+                  hintText: _view == AccountView.staff
+                      ? 'Tìm tên / email'
+                      : 'Tìm tên / mã thẻ',
                   onChanged: (value) => setState(() => _search = value),
                   onClear: () {
                     _searchController.clear();
@@ -114,10 +99,51 @@ class _AccountListScreenState extends State<AccountListScreen> {
                   },
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                _AccountFilterToggle(
-                  selected: _filter,
-                  showAssignedFilters: _view == AccountView.staff,
-                  onSelected: (value) => setState(() => _filter = value),
+                if (_view == AccountView.staff)
+                  _FilterDropdown(
+                    key: const ValueKey('staff_work_status_filter'),
+                    label: 'Trạng thái cán bộ',
+                    value: _workStatusFilter,
+                    options: const [
+                      AppOption(value: '', label: 'Tất cả trạng thái'),
+                      ...TeacherWorkStatusOptions.all,
+                    ],
+                    onChanged: (value) {
+                      setState(() => _workStatusFilter = value ?? '');
+                    },
+                  )
+                else
+                  _FilterDropdown(
+                    key: const ValueKey('student_status_filter'),
+                    label: 'Trạng thái học sinh',
+                    value: _studentStatusFilter,
+                    options: const [
+                      AppOption(value: '', label: 'Tất cả trạng thái'),
+                      ...StudentStatusOptions.all,
+                    ],
+                    onChanged: (value) {
+                      setState(() => _studentStatusFilter = value ?? '');
+                    },
+                  ),
+                const SizedBox(height: AppSpacing.sm),
+                _FilterDropdown(
+                  key: const ValueKey('account_status_filter'),
+                  label: 'Trạng thái tài khoản',
+                  value: _accountStatusFilter.name,
+                  options: const [
+                    AppOption(value: 'all', label: 'Tất cả tài khoản'),
+                    AppOption(value: 'active', label: 'Đang mở'),
+                    AppOption(value: 'inactive', label: 'Đã khóa'),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _accountStatusFilter = switch (value) {
+                        'active' => _AccountStatusFilter.active,
+                        'inactive' => _AccountStatusFilter.inactive,
+                        _ => _AccountStatusFilter.all,
+                      };
+                    });
+                  },
                 ),
                 if (provider.accountsErrorMessage != null) ...[
                   const SizedBox(height: AppSpacing.md),
@@ -180,12 +206,20 @@ class _AccountListScreenState extends State<AccountListScreen> {
         return false;
       }
 
-      return switch (_filter) {
-        _AccountFilter.unassigned => !item.hasAccount,
-        _AccountFilter.assigned => item.hasAccount,
-        _AccountFilter.active => item.hasAccount && item.isActive,
-        _AccountFilter.inactive => item.hasAccount && !item.isActive,
-        _AccountFilter.all => true,
+      if (_view == AccountView.staff) {
+        if (_workStatusFilter.isNotEmpty &&
+            item.workStatus != _workStatusFilter) {
+          return false;
+        }
+      } else if (_studentStatusFilter.isNotEmpty &&
+          item.studentStatus != _studentStatusFilter) {
+        return false;
+      }
+
+      return switch (_accountStatusFilter) {
+        _AccountStatusFilter.active => item.hasAccount && item.isActive,
+        _AccountStatusFilter.inactive => item.hasAccount && !item.isActive,
+        _AccountStatusFilter.all => true,
       };
     }).toList();
   }
@@ -203,57 +237,72 @@ class _AccountListScreenState extends State<AccountListScreen> {
     final success = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
         return AlertDialog(
+          scrollable: true,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: viewInsets.bottom > 0 ? AppSpacing.sm : AppSpacing.lg,
+          ),
           title: Text(account.hasAccount ? 'Đổi vai trò' : 'Cấp tài khoản'),
-          content: ValueListenableBuilder<String>(
-            valueListenable: roleController,
-            builder: (context, role, _) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      account.fullName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: ValueListenableBuilder<String>(
+              valueListenable: roleController,
+              builder: (context, role, _) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        account.fullName,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  DropdownButtonFormField<String>(
-                    initialValue: role,
-                    decoration: const InputDecoration(labelText: 'Vai trò'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: RoleOptions.principal,
-                        child: Text('BGH - Ban Giám hiệu'),
-                      ),
-                      DropdownMenuItem(
-                        value: RoleOptions.teacher,
-                        child: Text('GV - Giáo viên'),
+                    const SizedBox(height: AppSpacing.sm),
+                    DropdownButtonFormField<String>(
+                      initialValue: role,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: 'Vai trò'),
+                      items: const [
+                        DropdownMenuItem(
+                          value: RoleOptions.principal,
+                          child: Text(
+                            'BGH - Ban Giám hiệu',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: RoleOptions.teacher,
+                          child: Text(
+                            'GV - Giáo viên',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          roleController.value = value;
+                        }
+                      },
+                    ),
+                    if (!account.hasAccount) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      TextField(
+                        controller: passwordController,
+                        decoration: const InputDecoration(
+                          labelText: 'Mật khẩu khởi tạo',
+                          helperText: 'Tối thiểu 6 ký tự',
+                        ),
+                        obscureText: true,
                       ),
                     ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        roleController.value = value;
-                      }
-                    },
-                  ),
-                  if (!account.hasAccount) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    TextField(
-                      controller: passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Mật khẩu khởi tạo',
-                        helperText: 'Tối thiểu 6 ký tự',
-                      ),
-                      obscureText: true,
-                    ),
                   ],
-                ],
-              );
-            },
+                );
+              },
+            ),
           ),
           actions: [
             TextButton(
@@ -295,8 +344,12 @@ class _AccountListScreenState extends State<AccountListScreen> {
       },
     );
 
-    roleController.dispose();
-    passwordController.dispose();
+    // showDialog completes when pop starts, while the closing animation still
+    // renders the text field. Dispose after that Material transition finishes.
+    Future<void>.delayed(kThemeAnimationDuration, () {
+      roleController.dispose();
+      passwordController.dispose();
+    });
     _showActionResult(success);
   }
 
@@ -314,7 +367,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
         return AlertDialog(
           title: Text(
             _view == AccountView.student
-                ? 'Đổi mật khẩu phụ huynh'
+                ? 'Đổi mật khẩu PH'
                 : 'Đặt lại mật khẩu',
           ),
           content: Column(
@@ -400,39 +453,51 @@ class _AccountListScreenState extends State<AccountListScreen> {
   }
 }
 
-class _AccountFilterToggle extends StatelessWidget {
-  const _AccountFilterToggle({
-    required this.selected,
-    required this.showAssignedFilters,
-    required this.onSelected,
+class _FilterDropdown extends StatelessWidget {
+  const _FilterDropdown({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.options,
+    required this.onChanged,
   });
 
-  final _AccountFilter selected;
-  final bool showAssignedFilters;
-  final ValueChanged<_AccountFilter> onSelected;
+  final String label;
+  final String value;
+  final List<AppOption<String>> options;
+  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final filters = [
-      const SorakToggleOption(value: _AccountFilter.all, label: 'Tất cả'),
-      if (showAssignedFilters) ...[
-        const SorakToggleOption(
-          value: _AccountFilter.unassigned,
-          label: 'Chưa cấp',
-        ),
-        const SorakToggleOption(
-          value: _AccountFilter.assigned,
-          label: 'Đã cấp',
-        ),
-      ],
-      const SorakToggleOption(value: _AccountFilter.active, label: 'Đang mở'),
-      const SorakToggleOption(value: _AccountFilter.inactive, label: 'Đã khóa'),
-    ];
+    final values = options.map((option) => option.value).toSet();
+    final effectiveValue = values.contains(value) ? value : '';
 
-    return SorakToggleGroup<_AccountFilter>(
-      options: filters,
-      selected: selected,
-      onChanged: onSelected,
+    return DropdownButtonFormField<String>(
+      key: ValueKey('$label-$effectiveValue'),
+      initialValue: effectiveValue,
+      isExpanded: true,
+      decoration: InputDecoration(labelText: label, isDense: true),
+      selectedItemBuilder: (context) {
+        return [
+          for (final option in options)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                option.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ];
+      },
+      items: [
+        for (final option in options)
+          DropdownMenuItem<String>(
+            value: option.value,
+            child: Text(option.label),
+          ),
+      ],
+      onChanged: onChanged,
     );
   }
 }
@@ -454,9 +519,19 @@ class _AccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusLabel = account.hasAccount
-        ? (account.isActive ? 'Active' : 'Inactive')
-        : 'Chưa cấp tài khoản';
+    if (view == AccountView.student) {
+      return _StudentAccountCard(
+        account: account,
+        onResetPassword: onResetPassword,
+        onToggleActive: onToggleActive,
+      );
+    }
+
+    final accountStatus = !account.hasAccount
+        ? (label: 'Chưa cấp', tone: SorakStatusTone.pending)
+        : account.isActive
+        ? (label: 'Đang mở', tone: SorakStatusTone.success)
+        : (label: 'Đã khóa', tone: SorakStatusTone.error);
 
     return Card(
       child: Padding(
@@ -465,6 +540,7 @@ class _AccountCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SorakAvatar(
                   seed: account.accountId == 0 ? account.id : account.accountId,
@@ -478,28 +554,30 @@ class _AccountCard extends StatelessWidget {
                     children: [
                       Text(
                         account.fullName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
                         style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              height: 1.25,
+                            ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.xs / 2),
                       Text(
-                        view == AccountView.staff
-                            ? (account.email.isEmpty ? '-' : account.email)
-                            : 'Mã trẻ: ${account.cardNumber.isEmpty ? '-' : account.cardNumber}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        account.email.isEmpty ? '-' : account.email,
+                        softWrap: true,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.mutedForeground,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _CompactStatusBadge(
+                        label: accountStatus.label,
+                        tone: accountStatus.tone,
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Flexible(child: SorakStatusBadge(label: statusLabel)),
                 _AccountActionMenu(
                   view: view,
                   account: account,
@@ -510,40 +588,167 @@ class _AccountCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            if (view == AccountView.staff) ...[
-              _InfoLine(
-                label: 'Vai trò',
-                value: account.hasAccount
-                    ? UiLabels.role(account.role)
-                    : 'Chưa cấp tài khoản',
-              ),
-              _InfoLine(
-                label: 'Chức vụ',
-                value: account.position.isEmpty ? '-' : account.position,
-              ),
-              _InfoLine(
-                label: 'Trạng thái công tác',
-                value: account.workStatus.isEmpty
-                    ? '-'
-                    : UiLabels.workStatus(account.workStatus),
-              ),
-            ] else ...[
-              _InfoLine(
-                label: 'Lớp',
-                value: account.className.isEmpty ? '-' : account.className,
-              ),
-              _InfoLine(
-                label: 'Trạng thái học sinh',
-                value: account.studentStatus.isEmpty
-                    ? '-'
-                    : UiLabels.status(account.studentStatus),
-              ),
-              _InfoLine(
-                label: 'Số điện thoại phụ huynh',
-                value: account.phone.isEmpty ? '-' : account.phone,
-              ),
-            ],
+            _InfoLine(
+              label: 'Vai trò',
+              value: account.hasAccount
+                  ? UiLabels.role(account.role)
+                  : 'Chưa cấp tài khoản',
+            ),
+            _InfoLine(
+              label: 'Chức vụ',
+              value: account.position.isEmpty ? '-' : account.position,
+            ),
+            _InfoLine(
+              label: 'Trạng thái công tác',
+              value: account.workStatus.isEmpty
+                  ? '-'
+                  : UiLabels.workStatus(account.workStatus),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Student card: same layout as staff (avatar + body), only web fields.
+/// Mã thẻ, họ tên, trạng thái HS, trạng thái TK.
+class _StudentAccountCard extends StatelessWidget {
+  const _StudentAccountCard({
+    required this.account,
+    required this.onResetPassword,
+    required this.onToggleActive,
+  });
+
+  final Account account;
+  final VoidCallback? onResetPassword;
+  final VoidCallback? onToggleActive;
+
+  @override
+  Widget build(BuildContext context) {
+    final cardNumber = account.cardNumber.isEmpty ? '-' : account.cardNumber;
+    final studentStatus = account.studentStatus.isEmpty
+        ? 'Đang học'
+        : UiLabels.status(account.studentStatus);
+    final accountStatus = !account.hasAccount
+        ? (label: 'Chưa cấp', tone: SorakStatusTone.pending)
+        : account.isActive
+        ? (label: 'Đang mở', tone: SorakStatusTone.success)
+        : (label: 'Đã khóa', tone: SorakStatusTone.error);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SorakAvatar(
+                  seed: account.accountId == 0 ? account.id : account.accountId,
+                  fallbackLabel: account.fullName,
+                  size: 44,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        account.fullName,
+                        softWrap: true,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              height: 1.25,
+                            ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs / 2),
+                      Text(
+                        'Mã thẻ: $cardNumber',
+                        softWrap: true,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.mutedForeground,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _CompactStatusBadge(
+                        label: accountStatus.label,
+                        tone: accountStatus.tone,
+                      ),
+                    ],
+                  ),
+                ),
+                _AccountActionMenu(
+                  view: AccountView.student,
+                  account: account,
+                  onAssignRole: () {},
+                  onResetPassword: onResetPassword,
+                  onToggleActive: onToggleActive,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _InfoLine(label: 'Trạng thái HS', value: studentStatus),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact text badge using Claude semantic success/warning/error tokens.
+class _CompactStatusBadge extends StatelessWidget {
+  const _CompactStatusBadge({required this.label, required this.tone});
+
+  final String label;
+  final SorakStatusTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = switch (tone) {
+      SorakStatusTone.success => (
+        text: AppColors.statusSuccessText,
+        background: AppColors.statusSuccessBackground,
+        border: AppColors.statusSuccessBorder,
+      ),
+      SorakStatusTone.pending => (
+        text: AppColors.statusWarningText,
+        background: AppColors.statusWarningBackground,
+        border: AppColors.statusWarningBorder,
+      ),
+      SorakStatusTone.error => (
+        text: AppColors.statusErrorText,
+        background: AppColors.statusErrorBackground,
+        border: AppColors.statusErrorBorder,
+      ),
+      SorakStatusTone.neutral => (
+        text: AppColors.statusNeutralText,
+        background: AppColors.statusNeutralBackground,
+        border: AppColors.statusNeutralBorder,
+      ),
+    };
+
+    return Semantics(
+      label: 'Trạng thái tài khoản: $label',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: scheme.background,
+          borderRadius: BorderRadius.circular(AppSpacing.radius),
+          border: Border.all(color: scheme.border),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: scheme.text,
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            height: 1.15,
+            letterSpacing: 0,
+          ),
         ),
       ),
     );
@@ -592,7 +797,7 @@ class _AccountActionMenu extends StatelessWidget {
               value: 'password',
               child: Text(
                 view == AccountView.student
-                    ? 'Đổi mật khẩu phụ huynh'
+                    ? 'Đổi mật khẩu PH'
                     : 'Đặt lại mật khẩu',
               ),
             ),
@@ -600,7 +805,13 @@ class _AccountActionMenu extends StatelessWidget {
             PopupMenuItem(
               value: 'active',
               child: Text(
-                account.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
+                view == AccountView.student
+                    ? (account.isActive
+                          ? 'Khóa tài khoản PH'
+                          : 'Mở khóa tài khoản PH')
+                    : (account.isActive
+                          ? 'Khóa tài khoản'
+                          : 'Mở khóa tài khoản'),
               ),
             ),
         ];
@@ -636,8 +847,7 @@ class _InfoLine extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.right,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.foreground,
                 fontWeight: FontWeight.w700,

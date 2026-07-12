@@ -12,6 +12,7 @@ class AppDropdownField<T> extends StatelessWidget {
     this.hintText,
     this.validator,
     this.enabled = true,
+    this.showLabel = true,
   });
 
   final String label;
@@ -21,6 +22,8 @@ class AppDropdownField<T> extends StatelessWidget {
   final String? hintText;
   final FormFieldValidator<T>? validator;
   final bool enabled;
+  /// When false, only the dropdown value/hint is shown (no floating label).
+  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +33,9 @@ class AppDropdownField<T> extends StatelessWidget {
     return DropdownButtonFormField<T>(
       initialValue: effectiveValue,
       isExpanded: true,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(
+        labelText: showLabel && label.isNotEmpty ? label : null,
+      ),
       hint: hintText == null ? null : Text(hintText!),
       validator: validator,
       onChanged: enabled ? onChanged : null,

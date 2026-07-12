@@ -82,7 +82,8 @@ class FormOptionsProvider extends ChangeNotifier {
   }
 
   Future<void> loadInitialOptions() async {
-    if (_isLoading || _academicYears.isNotEmpty) {
+    if (_isLoading ||
+        (_academicYears.isNotEmpty && _workingTeachers.isNotEmpty)) {
       return;
     }
 

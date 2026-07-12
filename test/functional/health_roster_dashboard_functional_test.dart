@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/widgets/app_shell.dart';
 
@@ -15,29 +15,36 @@ void main() {
         Navigator.of(shellContext).pushNamed('/health');
         await tester.pumpAndSettle();
 
-        expect(find.text('Đánh giá sức khỏe'), findsOneWidget);
+        expect(find.text('Đánh giá sức khỏe'), findsWidgets);
         expect(find.text('Lớp'), findsOneWidget);
         expect(find.text('Ngày đánh giá'), findsOneWidget);
+        // Current product scope: health entry only (no nutrition/growth toggle).
+        expect(find.text('Nuôi dưỡng'), findsNothing);
+        expect(find.text('Tăng trưởng'), findsNothing);
         await _selectMam1A(tester);
 
-        expect(find.text('Nguyễn Minh An'), findsOneWidget);
+        expect(find.text('Nguyễn Minh An'), findsWidgets);
         expect(find.text('Trần Bảo Ngọc'), findsNothing);
+        expect(find.text('1.'), findsWidgets);
+        expect(find.text('Mã thẻ'), findsWidgets);
+        expect(find.text('Ngày sinh'), findsWidgets);
+        expect(find.text('Giới tính'), findsWidgets);
 
-        await tester.tap(find.text('Nguyễn Minh An'));
+        await tester.tap(find.text('Nguyễn Minh An').first);
         await tester.pumpAndSettle();
 
-        expect(find.text('Preview sức khỏe'), findsOneWidget);
-        expect(find.text('Lịch sử gần đây'), findsOneWidget);
-        expect(find.text('Nhập nhanh sức khỏe'), findsOneWidget);
+        expect(find.text('Số đo gần nhất'), findsOneWidget);
         expect(find.text('Chiều cao (cm)'), findsOneWidget);
         expect(find.text('Cân nặng (kg)'), findsOneWidget);
+        expect(find.text('Ghi chú'), findsWidgets);
+        expect(find.text('100'), findsWidgets);
 
         await tester.enterText(
-          find.widgetWithText(TextFormField, 'Chiều cao (cm)'),
+          find.widgetWithText(TextFormField, 'Nhập chiều cao'),
           '103',
         );
         await tester.enterText(
-          find.widgetWithText(TextFormField, 'Cân nặng (kg)'),
+          find.widgetWithText(TextFormField, 'Nhập cân nặng'),
           '17',
         );
         await tester.ensureVisible(find.text('Lưu sức khỏe'));
@@ -47,35 +54,6 @@ void main() {
         await tester.pump(const Duration(milliseconds: 500));
 
         expect(find.text('Đã lưu đánh giá'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'nutrition dashboard supports period roster and quick preview',
-      (tester) async {
-        await tester.pumpLoggedInSorakApp();
-
-        final shellContext = tester.element(find.byType(AppShell));
-        Navigator.of(shellContext).pushNamed('/health');
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('Nuôi dưỡng'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Đánh giá nuôi dưỡng'), findsOneWidget);
-        expect(find.text('Giai đoạn'), findsOneWidget);
-        await _selectMam1A(tester);
-
-        expect(find.text('Nguyễn Minh An'), findsOneWidget);
-
-        await tester.tap(find.text('Nguyễn Minh An'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Preview nuôi dưỡng'), findsOneWidget);
-        expect(find.text('Nhập nhanh nuôi dưỡng'), findsOneWidget);
-        expect(find.text('Kênh tăng trưởng cân nặng'), findsOneWidget);
-        expect(find.text('SDD thấp còi'), findsOneWidget);
-        expect(find.text('Béo phì'), findsOneWidget);
       },
     );
   });

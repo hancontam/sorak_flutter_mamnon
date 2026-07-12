@@ -5,11 +5,16 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_options.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/text_normalizer.dart';
 import '../../../core/widgets/app_date_field.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
+import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/sorak_avatar.dart';
 import '../../academic_years/providers/active_academic_year_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../classes/models/school_class.dart';
+import '../../classes/providers/class_provider.dart';
 import '../../form_options/providers/form_options_provider.dart';
 import '../../students/models/student.dart';
 import '../models/health_assessment.dart';
@@ -25,13 +30,15 @@ class HealthRosterDashboard extends StatefulWidget {
   final HealthRosterMode mode;
 
   @override
-  State<HealthRosterDashboard> createState() => _HealthRosterDashboardState();
+  HealthRosterDashboardState createState() => HealthRosterDashboardState();
 }
 
-class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
+class HealthRosterDashboardState extends State<HealthRosterDashboard> {
   final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   String? _selectedClassId;
   String _selectedPeriod = 'dau_nam';
+  String _search = '';
   bool _isReloadingRoster = false;
 
   bool get _isHealth => widget.mode == HealthRosterMode.health;
@@ -42,15 +49,38 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
     _dateController.text = DateTime.now().toIso8601String().substring(0, 10);
     _dateController.addListener(_onDateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FormOptionsProvider>().loadInitialOptions();
-      _reloadRoster();
+      _initializeDashboard();
     });
+  }
+
+  Future<void> _initializeDashboard() async {
+    await Future.wait([
+      context.read<FormOptionsProvider>().loadInitialOptions(),
+      _loadRoleScopedClasses(),
+    ]);
+    if (mounted) {
+      await _reloadRoster();
+    }
+  }
+
+  Future<void> _loadRoleScopedClasses() async {
+    if (!_isTeacher(context)) {
+      return;
+    }
+    final classProvider = context.read<ClassProvider>();
+    final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
+    if (yearId == null) {
+      await classProvider.loadItems();
+    } else {
+      await classProvider.loadForAcademicYear(yearId);
+    }
   }
 
   @override
   void dispose() {
     _dateController.removeListener(_onDateChanged);
     _dateController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -60,31 +90,52 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
     }
   }
 
-  Future<void> _reloadRoster() async {
+  /// Public entry for AppBar refresh (same as pull-to-reload path).
+  Future<void> reload() => _reloadRoster(forceOptions: true);
+
+  Future<void> _reloadRoster({bool forceOptions = false}) async {
     if (!mounted || _isReloadingRoster) {
       return;
+    }
+
+    final formOptions = context.read<FormOptionsProvider>();
+    final healthProvider = context.read<HealthAssessmentProvider>();
+    final nutritionProvider = context.read<NutritionAssessmentProvider>();
+    final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
+
+    if (forceOptions) {
+      await Future.wait([
+        formOptions.loadInitialOptions(),
+        _loadRoleScopedClasses(),
+      ]);
+      if (!mounted) {
+        return;
+      }
     }
 
     final classId = int.tryParse(_selectedClassId ?? '');
     if (classId == null) {
       return;
     }
+    if (_isTeacher(context) &&
+        !context.read<ClassProvider>().items.any(
+          (schoolClass) => schoolClass.id == classId,
+        )) {
+      return;
+    }
 
     setState(() => _isReloadingRoster = true);
     try {
       if (_isHealth) {
-        await context.read<HealthAssessmentProvider>().loadByClassDate(
+        await healthProvider.loadByClassDate(
           classId: classId,
           assessmentDate: _dateController.text.trim(),
         );
       } else {
-        final yearId = context
-            .read<ActiveAcademicYearProvider>()
-            .selectedYearId;
         if (yearId == null) {
           return;
         }
-        await context.read<NutritionAssessmentProvider>().loadGrid(
+        await nutritionProvider.loadGrid(
           classId: classId,
           schoolYearId: yearId,
           period: _selectedPeriod,
@@ -103,14 +154,23 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
     final healthProvider = context.watch<HealthAssessmentProvider>();
     final nutritionProvider = context.watch<NutritionAssessmentProvider>();
     final yearId = context.watch<ActiveAcademicYearProvider>().selectedYearId;
-
-    _applyDefaultClass(optionsProvider);
+    final isTeacher =
+        context.watch<AuthProvider>().currentUser?.role.toUpperCase() ==
+        'TEACHER';
+    final classProvider = context.watch<ClassProvider>();
+    final scopedClasses = isTeacher
+        ? classProvider.items
+        : optionsProvider.classes;
+    final isClassScopeLoading = isTeacher && classProvider.isLoading;
+    _applyDefaultClass(scopedClasses);
 
     final students = _studentsForClass(optionsProvider);
+    final visibleStudents = _filterStudentsBySearch(students);
     final isLoading =
         optionsProvider.isLoading ||
         healthProvider.isLoading ||
         nutritionProvider.isLoading ||
+        isClassScopeLoading ||
         _isReloadingRoster;
     final errorMessage = _isHealth
         ? healthProvider.errorMessage
@@ -131,9 +191,13 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
           AppDropdownField<String>(
             key: ValueKey('health_roster_class_${_selectedClassId ?? ''}'),
             label: 'Lớp',
-            options: _classOptions(optionsProvider.classes),
+            options: _classOptions(scopedClasses),
             value: _selectedClassId,
             hintText: 'Chọn lớp',
+            enabled:
+                !optionsProvider.isLoading &&
+                !isClassScopeLoading &&
+                scopedClasses.isNotEmpty,
             onChanged: (value) {
               setState(() => _selectedClassId = value);
               context.read<FormOptionsProvider>().selectClass(
@@ -142,6 +206,10 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
               _reloadRoster();
             },
           ),
+          if (!isClassScopeLoading && scopedClasses.isEmpty) ...[
+            const SizedBox(height: AppSpacing.xs),
+            const _NoCompatibleClassNotice(),
+          ],
           const SizedBox(height: AppSpacing.sm),
           if (_isHealth)
             AppDateField(
@@ -162,6 +230,17 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
                 _reloadRoster();
               },
             ),
+          const SizedBox(height: AppSpacing.sm),
+          // Web: "Lọc theo tên / mã..."
+          AppSearchBar(
+            controller: _searchController,
+            hintText: 'Lọc theo tên / mã...',
+            onChanged: (value) => setState(() => _search = value),
+            onClear: () {
+              _searchController.clear();
+              setState(() => _search = '');
+            },
+          ),
           if (!_isHealth && yearId == null) ...[
             const SizedBox(height: AppSpacing.sm),
             const Text(
@@ -171,9 +250,9 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
           ],
           const SizedBox(height: AppSpacing.md),
           _RosterSummary(
-            total: students.length,
+            total: visibleStudents.length,
             completed: _completedCount(
-              students,
+              visibleStudents,
               healthProvider.items,
               nutritionProvider.items,
             ),
@@ -206,19 +285,33 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
               ),
             if (students.isEmpty)
               const _EmptyRoster()
+            else if (visibleStudents.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Center(
+                  child: Text(
+                    'Không có học sinh khớp tên / mã tìm kiếm.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
             else
-              for (final student in students) ...[
+              for (var index = 0; index < visibleStudents.length; index++) ...[
                 _StudentRosterCard(
-                  student: student,
+                  index: index + 1,
+                  student: visibleStudents[index],
                   mode: widget.mode,
-                  health: _latestHealth(student.id, healthProvider.items),
+                  health: _latestHealth(
+                    visibleStudents[index].id,
+                    healthProvider.items,
+                  ),
                   nutrition: _latestNutrition(
-                    student.id,
+                    visibleStudents[index].id,
                     nutritionProvider.items,
                   ),
                   onTap: () => _openStudentPreview(
                     context,
-                    student,
+                    visibleStudents[index],
                     healthProvider.items,
                     nutritionProvider.items,
                   ),
@@ -231,21 +324,17 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
     );
   }
 
-  void _applyDefaultClass(FormOptionsProvider optionsProvider) {
-    if (_selectedClassId != null || optionsProvider.classes.isEmpty) {
+  void _applyDefaultClass(List<SchoolClass> classes) {
+    if (_selectedClassId != null || classes.isEmpty) {
       return;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted ||
-          _selectedClassId != null ||
-          optionsProvider.classes.isEmpty) {
+      if (!mounted || _selectedClassId != null || classes.isEmpty) {
         return;
       }
-      setState(() => _selectedClassId = '${optionsProvider.classes.first.id}');
-      context.read<FormOptionsProvider>().selectClass(
-        optionsProvider.classes.first.id,
-      );
+      setState(() => _selectedClassId = '${classes.first.id}');
+      context.read<FormOptionsProvider>().selectClass(classes.first.id);
       _reloadRoster();
     });
   }
@@ -257,6 +346,23 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
     }).toList();
   }
 
+  List<Student> _filterStudentsBySearch(List<Student> students) {
+    final query = normalizeVietnamese(_search);
+    if (query.isEmpty) {
+      return students;
+    }
+    return students.where((student) {
+      final haystack = normalizeVietnamese(
+        [
+          student.fullName,
+          student.studentIdCardNumber,
+          '${student.id}',
+        ].join(' '),
+      );
+      return haystack.contains(query);
+    }).toList();
+  }
+
   List<AppOption<String>> _classOptions(List<SchoolClass> classes) {
     return classes.map((schoolClass) {
       final room = schoolClass.room.isEmpty ? '' : ' - ${schoolClass.room}';
@@ -265,6 +371,15 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
         label: '${schoolClass.className}$room',
       );
     }).toList();
+  }
+
+  bool _isTeacher(BuildContext context) {
+    try {
+      return context.read<AuthProvider>().currentUser?.role.toUpperCase() ==
+          'TEACHER';
+    } on ProviderNotFoundException {
+      return false;
+    }
   }
 
   int _completedCount(
@@ -287,7 +402,13 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
   }
 
   HealthAssessment? _latestHealth(int studentId, List<HealthAssessment> items) {
-    final matches = items.where((item) => item.studentId == studentId).toList();
+    final matches = items.where((item) {
+      if (item.studentId != studentId) {
+        return false;
+      }
+      // Treat 0/0 as empty prefill rows (should not happen from by-class-date).
+      return item.heightCm > 0 && item.weightKg > 0;
+    }).toList();
     matches.sort((a, b) => b.assessmentDate.compareTo(a.assessmentDate));
     return matches.isEmpty ? null : matches.first;
   }
@@ -315,6 +436,7 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
         return _StudentPreviewSheet(
           mode: widget.mode,
           student: student,
+          selectedClassId: int.tryParse(_selectedClassId ?? '') ?? 0,
           selectedDate: _dateController.text,
           selectedPeriod: _selectedPeriod,
           history: healthItems
@@ -343,8 +465,25 @@ class _HealthRosterDashboardState extends State<HealthRosterDashboard> {
   }
 }
 
+class _NoCompatibleClassNotice extends StatelessWidget {
+  const _NoCompatibleClassNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Hiện tại không có lớp phù hợp.',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: AppColors.primary,
+        fontWeight: FontWeight.w600,
+        fontStyle: FontStyle.italic,
+      ),
+    );
+  }
+}
+
 class _StudentRosterCard extends StatelessWidget {
   const _StudentRosterCard({
+    required this.index,
     required this.student,
     required this.mode,
     required this.health,
@@ -352,6 +491,7 @@ class _StudentRosterCard extends StatelessWidget {
     required this.onTap,
   });
 
+  final int index;
   final Student student;
   final HealthRosterMode mode;
   final HealthAssessment? health;
@@ -362,39 +502,243 @@ class _StudentRosterCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isHealth = mode == HealthRosterMode.health;
     final healthItem = health;
-    final nutritionItem = nutrition;
-    final subtitle = isHealth
-        ? healthItem == null
-              ? 'Chưa có số đo'
-              : '${healthItem.heightCm.toStringAsFixed(0)} cm · ${healthItem.weightKg.toStringAsFixed(1)} kg · ${healthItem.bmiStatus}'
-        : nutritionItem == null
-        ? 'Chưa có đánh giá'
-        : '${nutritionItem.statusSummary} · BMI ${nutritionItem.latestBmi.toStringAsFixed(1)}';
+    final hasMeasure = healthItem != null;
+    final heightText = hasMeasure
+        ? '${_formatMeasure(healthItem.heightCm)} cm'
+        : 'Chưa đo';
+    final weightText = hasMeasure
+        ? '${_formatMeasure(healthItem.weightKg)} kg'
+        : 'Chưa đo';
 
     return Card(
       elevation: 0,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
         side: const BorderSide(color: AppColors.border),
       ),
-      child: ListTile(
+      child: InkWell(
         onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: AppColors.accent.withValues(alpha: 0.18),
-          child: Text(student.fullName.characters.first),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Light STT outside — no boxed chip.
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      top: 10,
+                      right: AppSpacing.xs,
+                    ),
+                    child: Text(
+                      '$index.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.mutedForeground,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  SorakAvatar(
+                    seed: student.id,
+                    fallbackLabel: student.fullName,
+                    size: 44,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          student.fullName,
+                          softWrap: true,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                height: 1.25,
+                              ),
+                        ),
+                        if (student.studentIdCardNumber.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            student.studentIdCardNumber,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColors.mutedForeground,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'monospace',
+                                ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    LucideIcons.chevronRight,
+                    size: 20,
+                    color: AppColors.mutedForeground,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.muted,
+                  borderRadius: BorderRadius.circular(AppSpacing.radius),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    _RosterInfoLine(
+                      label: 'Mã thẻ',
+                      value: student.studentIdCardNumber.isEmpty
+                          ? '—'
+                          : student.studentIdCardNumber,
+                    ),
+                    _RosterInfoLine(label: 'Họ tên', value: student.fullName),
+                    _RosterInfoLine(
+                      label: 'Ngày sinh',
+                      value: _formatDateVi(student.dateOfBirth),
+                    ),
+                    _RosterInfoLine(
+                      label: 'Giới tính',
+                      value: student.gender.isEmpty ? '—' : student.gender,
+                    ),
+                    if (isHealth) ...[
+                      _RosterInfoLine(
+                        label: 'Cân nặng',
+                        value: weightText,
+                        emphasize: !hasMeasure,
+                      ),
+                      _RosterInfoLine(
+                        label: 'Chiều cao',
+                        value: heightText,
+                        emphasize: !hasMeasure,
+                      ),
+                      if (hasMeasure && healthItem.bmiStatus.isNotEmpty)
+                        _RosterInfoLine(
+                          label: 'BMI',
+                          value:
+                              '${healthItem.bmi.toStringAsFixed(1)} · ${healthItem.bmiStatus}',
+                        ),
+                    ] else ...[
+                      _RosterInfoLine(
+                        label: 'Nuôi dưỡng',
+                        value: nutrition == null
+                            ? 'Chưa có đánh giá'
+                            : nutrition!.statusSummary,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        title: Text(student.fullName),
-        subtitle: Text('${student.className} · $subtitle'),
-        trailing: const Icon(LucideIcons.chevronRight, size: 20),
       ),
     );
   }
+}
+
+class _RosterInfoLine extends StatelessWidget {
+  const _RosterInfoLine({
+    required this.label,
+    required this.value,
+    this.emphasize = false,
+  });
+
+  final String label;
+  final String value;
+
+  /// Primary italic for empty measure state ("Chưa đo").
+  final bool emphasize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 2,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              softWrap: true,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: emphasize ? AppColors.primary : AppColors.foreground,
+                fontWeight: emphasize ? FontWeight.w600 : FontWeight.w700,
+                fontStyle: emphasize ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatDateVi(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) {
+    return '—';
+  }
+  final parsed = DateTime.tryParse(trimmed);
+  if (parsed == null) {
+    return trimmed;
+  }
+  final day = parsed.day.toString().padLeft(2, '0');
+  final month = parsed.month.toString().padLeft(2, '0');
+  return '$day/$month/${parsed.year}';
+}
+
+String _formatMeasure(double value) {
+  if (value == value.roundToDouble()) {
+    return value.toStringAsFixed(0);
+  }
+  return value.toStringAsFixed(1);
+}
+
+/// Prefill input: empty when missing/zero; avoid "0.0" noise.
+String _measureInputText(double? value) {
+  if (value == null || value <= 0) {
+    return '';
+  }
+  if (value == value.roundToDouble()) {
+    return value.toStringAsFixed(0);
+  }
+  return value.toStringAsFixed(1);
+}
+
+/// Accept "16,5" (VN keyboard) as well as "16.5".
+double? _parseMeasure(String raw) {
+  final cleaned = raw.trim().replaceAll(',', '.');
+  if (cleaned.isEmpty) {
+    return null;
+  }
+  return double.tryParse(cleaned);
 }
 
 class _StudentPreviewSheet extends StatefulWidget {
   const _StudentPreviewSheet({
     required this.mode,
     required this.student,
+    required this.selectedClassId,
     required this.selectedDate,
     required this.selectedPeriod,
     required this.history,
@@ -403,6 +747,7 @@ class _StudentPreviewSheet extends StatefulWidget {
 
   final HealthRosterMode mode;
   final Student student;
+  final int selectedClassId;
   final String selectedDate;
   final String selectedPeriod;
   final List<HealthAssessment> history;
@@ -422,6 +767,9 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
   bool _isObese = false;
   bool _isSaving = false;
   bool _allowPop = false;
+
+  /// After a failed save attempt, show which health fields are still missing.
+  bool _showHealthMeasureHint = false;
   late final String _initialHeight;
   late final String _initialWeight;
   late final String _initialNote;
@@ -432,12 +780,22 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
 
   bool get _isHealth => widget.mode == HealthRosterMode.health;
 
+  double? get _parsedHeight => _parseMeasure(_heightController.text);
+  double? get _parsedWeight => _parseMeasure(_weightController.text);
+
+  /// Backend bulk requires both height_cm and weight_kg > 0 to create/update.
+  bool get _hasValidHealthMeasures {
+    final height = _parsedHeight;
+    final weight = _parsedWeight;
+    return height != null && height > 0 && weight != null && weight > 0;
+  }
+
   @override
   void initState() {
     super.initState();
     final latestHealth = _latestHealth;
-    _heightController.text = latestHealth?.heightCm.toString() ?? '';
-    _weightController.text = latestHealth?.weightKg.toString() ?? '';
+    _heightController.text = _measureInputText(latestHealth?.heightCm);
+    _weightController.text = _measureInputText(latestHealth?.weightKg);
     _noteController.text = _isHealth
         ? latestHealth?.note ?? ''
         : _latestNutrition?.note ?? '';
@@ -494,7 +852,12 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
 
   void _onTextChanged() {
     if (mounted) {
-      setState(() {});
+      setState(() {
+        // Clear partial-entry hint once user completes both measures.
+        if (_hasValidHealthMeasures) {
+          _showHealthMeasureHint = false;
+        }
+      });
     }
   }
 
@@ -512,170 +875,357 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
         padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
         child: SafeArea(
           top: false,
-          child: SizedBox(
-            height: availableHeight * 0.9,
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      AppSpacing.md,
-                      AppSpacing.md,
-                      AppSpacing.sm,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.student.fullName,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        Text(
-                          widget.student.className,
-                          style: const TextStyle(color: AppColors.textGray),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          _isHealth ? 'Preview sức khỏe' : 'Preview nuôi dưỡng',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        _PreviewSummary(
-                          health: _latestHealth,
-                          nutrition: _latestNutrition,
-                          mode: widget.mode,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          'Lịch sử gần đây',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        if (_isHealth)
-                          for (final item in widget.history.take(3))
-                            Text(
-                              '${item.assessmentDate.substring(0, 10)} · ${item.heightCm} cm · ${item.weightKg} kg',
-                            )
-                        else
-                          for (final item in widget.nutritionHistory.take(3))
-                            Text('${item.period} · ${item.statusSummary}'),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          _isHealth
-                              ? 'Nhập nhanh sức khỏe'
-                              : 'Nhập nhanh nuôi dưỡng',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        if (_isHealth) ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: AppTextField(
-                                  controller: _heightController,
-                                  label: 'Chiều cao (cm)',
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                ),
+          child: Material(
+            color: AppColors.popover,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppSpacing.radius),
+            ),
+            child: SizedBox(
+              height: availableHeight * 0.9,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md,
+                        AppSpacing.md,
+                        AppSpacing.md,
+                        AppSpacing.sm,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Drag handle
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              margin: const EdgeInsets.only(
+                                bottom: AppSpacing.sm,
                               ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
-                                child: AppTextField(
-                                  controller: _weightController,
-                                  label: 'Cân nặng (kg)',
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
+                              decoration: BoxDecoration(
+                                color: AppColors.border,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            widget.student.fullName,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.foreground,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            [
+                              if (widget.student.studentIdCardNumber.isNotEmpty)
+                                widget.student.studentIdCardNumber,
+                              if (widget.student.className.isNotEmpty)
+                                widget.student.className,
+                              if (widget.student.gender.isNotEmpty)
+                                widget.student.gender,
+                              _formatDateVi(widget.student.dateOfBirth),
+                            ].join(' · '),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColors.mutedForeground,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          if (_isHealth) ...[
+                            _EntryBlock(
+                              title: 'Số đo gần nhất',
+                              child: _PreviewSummary(
+                                health: _latestHealth,
+                                nutrition: _latestNutrition,
+                                mode: widget.mode,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            _EntryBlock(
+                              title: 'Chiều cao (cm)',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  AppTextField(
+                                    controller: _heightController,
+                                    label: 'Nhập chiều cao',
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                  ),
+                                  if (_showHealthMeasureHint &&
+                                      (_parsedHeight == null ||
+                                          _parsedHeight! <= 0))
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 6),
+                                      child: Text(
+                                        'Thiếu chiều cao hợp lệ',
+                                        style: TextStyle(
+                                          color: AppColors.error,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  _PresetChipRow(
+                                    values: _heightPresets,
+                                    selectedText: _heightController.text.trim(),
+                                    onSelected: (value) {
+                                      setState(() {
+                                        _heightController.text = value;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            _EntryBlock(
+                              title: 'Cân nặng (kg)',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  AppTextField(
+                                    controller: _weightController,
+                                    label: 'Nhập cân nặng',
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                  ),
+                                  if (_showHealthMeasureHint &&
+                                      (_parsedWeight == null ||
+                                          _parsedWeight! <= 0))
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 6),
+                                      child: Text(
+                                        'Thiếu cân nặng hợp lệ',
+                                        style: TextStyle(
+                                          color: AppColors.error,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  _PresetChipRow(
+                                    values: _weightPresets,
+                                    selectedText: _weightController.text.trim(),
+                                    onSelected: (value) {
+                                      setState(() {
+                                        _weightController.text = value;
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 6),
+                                  _DeltaChipRow(
+                                    onDelta: (delta) {
+                                      final current =
+                                          _parseMeasure(
+                                            _weightController.text,
+                                          ) ??
+                                          0;
+                                      final next = (current + delta).clamp(
+                                        0,
+                                        100,
+                                      );
+                                      setState(() {
+                                        _weightController.text =
+                                            next == next.roundToDouble()
+                                            ? next.toStringAsFixed(0)
+                                            : next.toStringAsFixed(1);
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.xs,
+                              ),
+                              child: Text(
+                                'Cần nhập đủ cả chiều cao và cân nặng để lưu.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w500,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            _EntryBlock(
+                              title: 'Ghi chú',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  AppTextField(
+                                    controller: _noteController,
+                                    label: 'Nhập ghi chú',
+                                    maxLines: 2,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _NoteChipRow(
+                                    selected: _noteController.text.trim(),
+                                    onSelected: (note) {
+                                      setState(() {
+                                        _noteController.text = note;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (widget.history.isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.sm),
+                              _EntryBlock(
+                                title: 'Lịch sử gần đây',
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    for (final item in widget.history.take(3))
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 4,
+                                        ),
+                                        child: Text(
+                                          '${item.assessmentDate.length >= 10 ? item.assessmentDate.substring(0, 10) : item.assessmentDate} · ${_formatMeasure(item.heightCm)} cm · ${_formatMeasure(item.weightKg)} kg',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color:
+                                                    AppColors.mutedForeground,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                             ],
-                          ),
-                        ] else ...[
-                          AppDropdownField<String>(
-                            key: ValueKey('nutrition_channel_$_weightChannel'),
-                            label: 'Kênh tăng trưởng cân nặng',
-                            options: NutritionOptions.weightChannels,
-                            value: _weightChannel,
-                            onChanged: (value) {
-                              setState(() {
-                                _weightChannel =
-                                    value ?? NutritionOptions.weightNormal;
-                              });
-                            },
-                          ),
-                          CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('SDD thấp còi'),
-                            value: _isStunting,
-                            onChanged: (value) {
-                              setState(() => _isStunting = value ?? false);
-                            },
-                          ),
-                          CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('SDD còi cọc'),
-                            value: _isSevereStunting,
-                            onChanged: (value) {
-                              setState(
-                                () => _isSevereStunting = value ?? false,
-                              );
-                            },
-                          ),
-                          CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('Béo phì'),
-                            value: _isObese,
-                            onChanged: (value) {
-                              setState(() => _isObese = value ?? false);
-                            },
-                          ),
+                          ] else ...[
+                            Text(
+                              'Preview nuôi dưỡng',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            _PreviewSummary(
+                              health: _latestHealth,
+                              nutrition: _latestNutrition,
+                              mode: widget.mode,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            AppDropdownField<String>(
+                              key: ValueKey(
+                                'nutrition_channel_$_weightChannel',
+                              ),
+                              label: 'Kênh tăng trưởng cân nặng',
+                              options: NutritionOptions.weightChannels,
+                              value: _weightChannel,
+                              onChanged: (value) {
+                                setState(() {
+                                  _weightChannel =
+                                      value ?? NutritionOptions.weightNormal;
+                                });
+                              },
+                            ),
+                            CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('SDD thấp còi'),
+                              value: _isStunting,
+                              onChanged: (value) {
+                                setState(() => _isStunting = value ?? false);
+                              },
+                            ),
+                            CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('SDD còi cọc'),
+                              value: _isSevereStunting,
+                              onChanged: (value) {
+                                setState(
+                                  () => _isSevereStunting = value ?? false,
+                                );
+                              },
+                            ),
+                            CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Béo phì'),
+                              value: _isObese,
+                              onChanged: (value) {
+                                setState(() => _isObese = value ?? false);
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            AppTextField(
+                              controller: _noteController,
+                              label: 'Ghi chú',
+                              maxLines: 2,
+                            ),
+                          ],
+                          const SizedBox(height: AppSpacing.md),
                         ],
-                        const SizedBox(height: AppSpacing.sm),
-                        AppTextField(
-                          controller: _noteController,
-                          label: 'Ghi chú',
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: AppColors.background,
-                    border: Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        key: const Key('health_roster_save_button'),
-                        onPressed: _isSaving || !_isDirty ? null : _save,
-                        icon: _isSaving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                  DecoratedBox(
+                    decoration: const BoxDecoration(
+                      color: AppColors.popover,
+                      border: Border(top: BorderSide(color: AppColors.border)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          key: const Key('health_roster_save_button'),
+                          // Enable when dirty so partial height-only entry still
+                          // shows a clear "need weight" message instead of a
+                          // silent disabled button.
+                          onPressed: _isSaving || !_isDirty
+                              ? null
+                              : () {
+                                  if (_isHealth && !_hasValidHealthMeasures) {
+                                    setState(
+                                      () => _showHealthMeasureHint = true,
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          _healthMeasureErrorMessage(),
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  _save();
+                                },
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primaryForeground,
+                                  ),
+                                )
+                              : Text(
+                                  _isHealth ? 'Lưu sức khỏe' : 'Lưu nuôi dưỡng',
                                 ),
-                              )
-                            : const Icon(LucideIcons.save, size: 18),
-                        label: Text(
-                          _isHealth ? 'Lưu sức khỏe' : 'Lưu nuôi dưỡng',
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -715,6 +1265,21 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
     }
   }
 
+  String _healthMeasureErrorMessage() {
+    final heightMissing = _parsedHeight == null || _parsedHeight! <= 0;
+    final weightMissing = _parsedWeight == null || _parsedWeight! <= 0;
+    if (heightMissing && weightMissing) {
+      return 'Vui lòng nhập chiều cao và cân nặng hợp lệ';
+    }
+    if (heightMissing) {
+      return 'Vui lòng nhập chiều cao hợp lệ';
+    }
+    if (weightMissing) {
+      return 'Vui lòng nhập cân nặng hợp lệ (bắt buộc cùng chiều cao)';
+    }
+    return 'Vui lòng nhập chiều cao và cân nặng hợp lệ';
+  }
+
   Future<void> _save() async {
     setState(() => _isSaving = true);
     final healthProvider = context.read<HealthAssessmentProvider>();
@@ -733,7 +1298,36 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
       return;
     }
 
-    final classId = widget.student.classId;
+    // Roster dropdown class wins; student.classId may be 0 from incomplete DTO.
+    final classId = widget.selectedClassId != 0
+        ? widget.selectedClassId
+        : widget.student.classId;
+    if (classId == 0) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Chưa chọn lớp để lưu đánh giá')),
+        );
+      }
+      return;
+    }
+
+    final height = _parsedHeight;
+    final weight = _parsedWeight;
+    if (_isHealth &&
+        (height == null || height <= 0 || weight == null || weight <= 0)) {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+          _showHealthMeasureHint = true;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_healthMeasureErrorMessage())));
+      }
+      return;
+    }
+
     final ok = _isHealth
         ? await healthProvider.bulkSaveRoster(
             schoolYearId: schoolYearId,
@@ -742,8 +1336,8 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
             rows: [
               {
                 'student_id': widget.student.id,
-                'height_cm': _heightController.text.trim(),
-                'weight_kg': _weightController.text.trim(),
+                'height_cm': height,
+                'weight_kg': weight,
                 'note': _noteController.text.trim(),
                 'student_name': widget.student.fullName,
                 'class_name': widget.student.className,
@@ -786,6 +1380,201 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
         SnackBar(content: Text(message ?? 'Chưa thể lưu đánh giá')),
       );
     }
+  }
+}
+
+/// Preset height values for preschool quick entry (cm).
+const _heightPresets = <String>[
+  '90',
+  '95',
+  '100',
+  '105',
+  '110',
+  '115',
+  '120',
+  '125',
+  '130',
+];
+
+/// Preset weight values for preschool quick entry (kg).
+const _weightPresets = <String>[
+  '12',
+  '13',
+  '14',
+  '15',
+  '16',
+  '17',
+  '18',
+  '19',
+  '20',
+  '22',
+  '24',
+];
+
+const _notePresets = <String>[
+  'Khỏe mạnh',
+  'Cảm cúm nhẹ',
+  'Đang theo dõi',
+  'Cần tái kiểm',
+];
+
+class _EntryBlock extends StatelessWidget {
+  const _EntryBlock({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    // Light Claude surface: background + border (no heavy muted fill).
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppSpacing.radius),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.foreground,
+            ),
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _PresetChipRow extends StatelessWidget {
+  const _PresetChipRow({
+    required this.values,
+    required this.selectedText,
+    required this.onSelected,
+  });
+
+  final List<String> values;
+  final String selectedText;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (final value in values)
+          FilterChip(
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+            label: Text(value),
+            selected: selectedText == value,
+            showCheckmark: false,
+            onSelected: (_) => onSelected(value),
+            // Claude selected state: secondary surface, not loud primary fill.
+            backgroundColor: AppColors.popover,
+            selectedColor: AppColors.secondary,
+            side: BorderSide(
+              color: selectedText == value ? AppColors.input : AppColors.border,
+            ),
+            labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: selectedText == value
+                  ? AppColors.foreground
+                  : AppColors.secondaryForeground,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _DeltaChipRow extends StatelessWidget {
+  const _DeltaChipRow({required this.onDelta});
+
+  final ValueChanged<double> onDelta;
+
+  @override
+  Widget build(BuildContext context) {
+    const deltas = <(String, double)>[
+      ('-1', -1),
+      ('-0.5', -0.5),
+      ('+0.5', 0.5),
+      ('+1', 1),
+    ];
+
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (final entry in deltas)
+          ActionChip(
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+            label: Text(entry.$1),
+            onPressed: () => onDelta(entry.$2),
+            backgroundColor: AppColors.popover,
+            side: const BorderSide(color: AppColors.border),
+            labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: AppColors.secondaryForeground,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _NoteChipRow extends StatelessWidget {
+  const _NoteChipRow({required this.selected, required this.onSelected});
+
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (final note in _notePresets)
+          FilterChip(
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+            label: Text(note),
+            selected: selected == note,
+            showCheckmark: false,
+            onSelected: (_) => onSelected(note),
+            backgroundColor: AppColors.popover,
+            selectedColor: AppColors.secondary,
+            side: BorderSide(
+              color: selected == note ? AppColors.input : AppColors.border,
+            ),
+            labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: selected == note
+                  ? AppColors.foreground
+                  : AppColors.secondaryForeground,
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -847,10 +1636,17 @@ class _PreviewSummary extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        color: AppColors.secondary,
+        borderRadius: BorderRadius.circular(AppSpacing.radius),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Text(text),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppColors.foreground,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

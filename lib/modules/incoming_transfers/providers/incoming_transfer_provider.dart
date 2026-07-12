@@ -29,8 +29,8 @@ class IncomingTransferProvider extends CrudProvider<IncomingTransfer> {
     );
   }
 
-  Future<void> cancelTransfer(int id) async {
-    await _incomingTransferRepository.cancel(id);
+  Future<void> cancelTransfer(int id, {String? cancelReason}) async {
+    await _incomingTransferRepository.cancel(id, cancelReason: cancelReason);
     await loadItems();
   }
 }

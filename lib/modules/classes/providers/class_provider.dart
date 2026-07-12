@@ -25,4 +25,35 @@ class ClassProvider extends CrudProvider<SchoolClass> {
     _academicYearId = yearId;
     return loadItemsWith(() => _classRepository.getAll(schoolYearId: yearId));
   }
+
+  Future<bool> updateClassSetup({
+    required int classId,
+    required String room,
+    required List<int> teacherAccountIdsToAdd,
+    required List<int> teacherIdsToRemove,
+  }) async {
+    final updated = await updateItem(classId, {'room': room});
+    if (!updated) return false;
+
+    try {
+      // Match the web flow: add replacements before removing old assignments.
+      for (final accountId in teacherAccountIdsToAdd) {
+        await _classRepository.assignTeacher(
+          classId: classId,
+          accountId: accountId,
+        );
+      }
+      for (final teacherId in teacherIdsToRemove) {
+        await _classRepository.removeTeacher(
+          classId: classId,
+          teacherId: teacherId,
+        );
+      }
+      await loadItems();
+      return true;
+    } catch (_) {
+      await loadItems();
+      return false;
+    }
+  }
 }

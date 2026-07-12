@@ -21,18 +21,34 @@ void main() {
     expect(find.byKey(const ValueKey('nav_classes')), findsOneWidget);
     expect(find.byKey(const ValueKey('nav_teachers')), findsNothing);
     expect(find.byKey(const ValueKey('nav_academic_years')), findsNothing);
+    expect(find.byKey(const ValueKey('module_add_button')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('student_class_filter_')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Mầm 1A'), findsWidgets);
+    expect(find.textContaining('Chồi 2B'), findsNothing);
+    await tester.tap(find.text('Tất cả lớp').last);
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('nav_classes')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('module_add_button')), findsNothing);
     expect(find.byTooltip('Thao tác khác'), findsNothing);
 
+    await tester.tap(find.byKey(const ValueKey('class_grade_filter_')));
+    await tester.pumpAndSettle();
+    expect(find.text('Mầm'), findsWidgets);
+    expect(find.text('Chồi'), findsNothing);
+    expect(find.text('Lá'), findsNothing);
+    await tester.tap(find.text('Tất cả khối').last);
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(const ValueKey('nav_students')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('module_add_button')), findsOneWidget);
-    await tester.tap(find.byTooltip('Thao tác khác').first);
+    expect(find.byKey(const ValueKey('module_add_button')), findsNothing);
+    await tester.tap(find.byTooltip('Thao tác với học sinh').first);
     await tester.pumpAndSettle();
-    expect(find.text('Chỉnh sửa'), findsOneWidget);
+    expect(find.text('Cập nhật trẻ'), findsWidgets);
     expect(find.text('Xóa'), findsNothing);
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
@@ -44,6 +60,85 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('drawer_staff_accounts')), findsNothing);
+  });
+
+  testWidgets('principal keeps full student class and grade filters', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpLoggedInSorakApp();
+
+    await tester.tap(find.byKey(const ValueKey('nav_students')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('module_add_button')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('student_class_filter_')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Mầm 1A'), findsWidgets);
+    expect(find.textContaining('Chồi 2B'), findsWidgets);
+    await tester.tap(find.text('Tất cả lớp').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('nav_classes')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('class_grade_filter_')));
+    await tester.pumpAndSettle();
+    expect(find.text('Nhà trẻ'), findsOneWidget);
+    expect(find.text('Mầm'), findsWidgets);
+    expect(find.text('Chồi'), findsWidgets);
+    expect(find.text('Lá'), findsOneWidget);
+    await tester.tap(find.text('Tất cả khối').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('nav_teachers')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('module_search_field')),
+      'khong ton tai',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Không tìm thấy cán bộ'), findsOneWidget);
+    expect(find.text('Xóa bộ lọc'), findsNothing);
+  });
+
+  testWidgets('teacher direct routes load only assigned classes', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpSorakApp(savedUser: _teacher);
+
+    final shellContext = tester.element(find.byType(NavigationBar));
+    Navigator.of(shellContext).pushNamed('/health');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Mầm 1A'), findsWidgets);
+    expect(find.textContaining('Chồi 2B'), findsNothing);
+    await tester.tap(find.textContaining('Mầm 1A').last);
+    await tester.pumpAndSettle();
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    Navigator.of(shellContext).pushNamed('/health-assessments');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('health_history_class_')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Mầm 1A'), findsWidgets);
+    expect(find.textContaining('Chồi 2B'), findsNothing);
+    await tester.tap(find.textContaining('Mầm 1A').last);
+    await tester.pumpAndSettle();
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    Navigator.of(shellContext).pushNamed('/class-transfers');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Mầm 1A'), findsWidgets);
+    expect(find.textContaining('Chồi 2B'), findsNothing);
   });
 
   test('teacher API requests outside scope are rejected', () async {

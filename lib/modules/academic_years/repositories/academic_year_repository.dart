@@ -53,6 +53,13 @@ class AcademicYearRepository implements CrudRepository<AcademicYear> {
     await _apiClient.dio.patch('${ApiEndpoints.academicYears}/$id/activate');
   }
 
+  Future<Map<String, dynamic>> promoteStudents(int id) async {
+    final response = await _apiClient.dio.post(
+      '${ApiEndpoints.academicYears}/$id/promote',
+    );
+    return ApiResponse.object(response.data);
+  }
+
   @override
   Future<void> archive(int id) async {
     await _apiClient.dio.delete('${ApiEndpoints.academicYears}/$id');

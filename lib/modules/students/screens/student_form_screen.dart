@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_options.dart';
@@ -27,6 +26,15 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _dateOfBirthController = TextEditingController();
   final TextEditingController _contactPhoneController = TextEditingController();
+  final TextEditingController _enrollmentDateController =
+      TextEditingController();
+  final TextEditingController _birthPlaceController = TextEditingController();
+  final TextEditingController _ethnicityController = TextEditingController();
+  final TextEditingController _nationalityController = TextEditingController();
+  final TextEditingController _religionController = TextEditingController();
+  final TextEditingController _bloodTypeController = TextEditingController();
+  final TextEditingController _currentAddressController =
+      TextEditingController();
 
   bool _isSaving = false;
   bool _didApplyInitialClass = false;
@@ -40,8 +48,15 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     super.initState();
     final student = widget.student;
     _fullNameController.text = student?.fullName ?? '';
-    _dateOfBirthController.text = student?.dateOfBirth ?? '';
+    _dateOfBirthController.text = _dateOnlyForField(student?.dateOfBirth);
     _contactPhoneController.text = student?.contactPhone ?? '';
+    _enrollmentDateController.text = _dateOnlyForField(student?.enrollmentDate);
+    _birthPlaceController.text = student?.birthPlace ?? '';
+    _ethnicityController.text = student?.ethnicity ?? '';
+    _nationalityController.text = student?.nationality ?? '';
+    _religionController.text = student?.religion ?? '';
+    _bloodTypeController.text = student?.bloodType ?? '';
+    _currentAddressController.text = student?.currentAddress ?? '';
     _selectedGender = _normalizeGender(student?.gender);
     _selectedClassId = student?.classId == null || student!.classId == 0
         ? null
@@ -53,11 +68,34 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     });
   }
 
+  String _dateOnlyForField(String? raw) {
+    final value = raw?.trim() ?? '';
+    if (value.isEmpty) {
+      return '';
+    }
+
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) {
+      return value.length >= 10 ? value.substring(0, 10) : value;
+    }
+
+    final month = parsed.month.toString().padLeft(2, '0');
+    final day = parsed.day.toString().padLeft(2, '0');
+    return '${parsed.year}-$month-$day';
+  }
+
   @override
   void dispose() {
     _fullNameController.dispose();
     _dateOfBirthController.dispose();
     _contactPhoneController.dispose();
+    _enrollmentDateController.dispose();
+    _birthPlaceController.dispose();
+    _ethnicityController.dispose();
+    _nationalityController.dispose();
+    _religionController.dispose();
+    _bloodTypeController.dispose();
+    _currentAddressController.dispose();
     super.dispose();
   }
 
@@ -69,17 +107,28 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
 
     setState(() => _isSaving = true);
 
-    final selectedClass = _selectedClass(optionsProvider);
     final data = <String, dynamic>{
       'full_name': _fullNameController.text.trim(),
       'date_of_birth': _dateOfBirthController.text.trim(),
       'gender': _selectedGender ?? GenderOptions.male,
-      'grade_level': _selectedGrade ?? '',
-      'class_id': _selectedClassId ?? '',
-      'class_name': selectedClass?.className ?? '',
       'contact_phone': _contactPhoneController.text.trim(),
       'student_status': _selectedStatus ?? StudentStatusOptions.studying,
+      'enrollment_date': _enrollmentDateController.text.trim(),
+      'birth_place': _birthPlaceController.text.trim(),
+      'ethnicity': _ethnicityController.text.trim(),
+      'nationality': _nationalityController.text.trim(),
+      'religion': _religionController.text.trim(),
+      'blood_type': _bloodTypeController.text.trim(),
+      'current_address': _currentAddressController.text.trim(),
     };
+    if (widget.student == null) {
+      final selectedClass = _selectedClass(optionsProvider);
+      data.addAll({
+        'grade_level': _selectedGrade ?? '',
+        'class_id': _selectedClassId ?? '',
+        'class_name': selectedClass?.className ?? '',
+      });
+    }
 
     final provider = context.read<StudentProvider>();
     final success = widget.student == null
@@ -126,90 +175,154 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           ),
           body: Form(
             key: _formKey,
-            child: ListView(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.md,
                 AppSpacing.md,
                 AppSpacing.md,
                 96,
               ),
-              children: [
-                AppTextField(
-                  controller: _fullNameController,
-                  label: 'Họ tên',
-                  validator: _requiredValidator('họ tên'),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppDateField(
-                  controller: _dateOfBirthController,
-                  label: 'Ngày sinh',
-                  firstDate: DateTime(2015),
-                  lastDate: DateTime.now(),
-                  validator: _requiredValidator('ngày sinh'),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppDropdownField<String>(
-                  key: ValueKey('student_gender_${_selectedGender ?? ''}'),
-                  label: 'Giới tính',
-                  options: GenderOptions.student,
-                  value: _selectedGender,
-                  hintText: 'Chọn giới tính',
-                  validator: _dropdownRequiredValidator('giới tính'),
-                  onChanged: (value) {
-                    setState(() => _selectedGender = value);
-                  },
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppDropdownField<String>(
-                  key: ValueKey('student_grade_${_selectedGrade ?? ''}'),
-                  label: 'Khối',
-                  options: GradeOptions.all,
-                  value: _selectedGrade,
-                  hintText: 'Chọn khối',
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedGrade = value;
-                      _selectedClassId = null;
-                    });
-                  },
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppDropdownField<String>(
-                  key: ValueKey(
-                    'student_class_${_selectedGrade ?? ''}_${selectedClassId ?? ''}',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _SectionTitle(
+                    title: 'Thông tin cơ bản',
+                    subtitle:
+                        'Các trường có dấu * là bắt buộc. Các trường còn lại có thể bỏ trống.',
                   ),
-                  label: 'Lớp',
-                  options: classOptions,
-                  value: selectedClassId,
-                  hintText: _selectedGrade == null
-                      ? 'Chọn khối trước'
-                      : optionsProvider.isLoading
-                      ? 'Đang tải lớp...'
-                      : 'Chọn lớp',
-                  enabled: _selectedGrade != null && !optionsProvider.isLoading,
-                  onChanged: (value) {
-                    setState(() => _selectedClassId = value);
-                  },
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppTextField(
-                  controller: _contactPhoneController,
-                  label: 'SĐT phụ huynh',
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppDropdownField<String>(
-                  key: ValueKey('student_status_${_selectedStatus ?? ''}'),
-                  label: 'Tình trạng học vụ',
-                  options: StudentStatusOptions.all,
-                  value: _selectedStatus,
-                  hintText: 'Chọn tình trạng',
-                  validator: _dropdownRequiredValidator('tình trạng học vụ'),
-                  onChanged: (value) {
-                    setState(() => _selectedStatus = value);
-                  },
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _fullNameController,
+                    label: 'Họ tên *',
+                    validator: _requiredValidator('họ tên'),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDateField(
+                    controller: _dateOfBirthController,
+                    label: 'Ngày sinh *',
+                    firstDate: DateTime(2015),
+                    lastDate: DateTime.now(),
+                    validator: _requiredValidator('ngày sinh'),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDropdownField<String>(
+                    key: ValueKey('student_gender_${_selectedGender ?? ''}'),
+                    label: 'Giới tính *',
+                    options: GenderOptions.student,
+                    value: _selectedGender,
+                    hintText: 'Chọn giới tính',
+                    validator: _dropdownRequiredValidator('giới tính'),
+                    onChanged: (value) {
+                      setState(() => _selectedGender = value);
+                    },
+                  ),
+                  if (widget.student == null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    AppDropdownField<String>(
+                      key: ValueKey('student_grade_${_selectedGrade ?? ''}'),
+                      label: 'Khối',
+                      options: GradeOptions.all,
+                      value: _selectedGrade,
+                      hintText: 'Chọn khối',
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedGrade = value;
+                          _selectedClassId = null;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    AppDropdownField<String>(
+                      key: ValueKey(
+                        'student_class_${_selectedGrade ?? ''}_${selectedClassId ?? ''}',
+                      ),
+                      label: 'Lớp (tùy chọn)',
+                      options: classOptions,
+                      value: selectedClassId,
+                      hintText: _selectedGrade == null
+                          ? 'Chọn khối trước'
+                          : optionsProvider.isLoading
+                          ? 'Đang tải lớp...'
+                          : 'Chọn lớp',
+                      enabled:
+                          _selectedGrade != null && !optionsProvider.isLoading,
+                      onChanged: (value) {
+                        setState(() => _selectedClassId = value);
+                      },
+                    ),
+                  ] else ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _EnrollmentReadOnlyCard(
+                      className: widget.student?.className ?? '',
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _contactPhoneController,
+                    label: 'SĐT phụ huynh',
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDropdownField<String>(
+                    key: ValueKey('student_status_${_selectedStatus ?? ''}'),
+                    label: 'Tình trạng học vụ',
+                    options: StudentStatusOptions.all,
+                    value: _selectedStatus,
+                    hintText: 'Chọn tình trạng',
+                    onChanged: (value) {
+                      setState(() => _selectedStatus = value);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const _SectionTitle(
+                    title: 'Nhập học và liên hệ',
+                    subtitle: 'Có thể bổ sung sau nếu chưa đủ thông tin.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppDateField(
+                    controller: _enrollmentDateController,
+                    label: 'Ngày nhập học',
+                    firstDate: DateTime(2015),
+                    lastDate: DateTime(DateTime.now().year + 1, 12, 31),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _birthPlaceController,
+                    label: 'Nơi sinh',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _currentAddressController,
+                    label: 'Địa chỉ hiện tại',
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const _SectionTitle(
+                    title: 'Thông tin bổ sung',
+                    subtitle: 'Dùng để hoàn thiện hồ sơ trẻ.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _ethnicityController,
+                    label: 'Dân tộc',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _nationalityController,
+                    label: 'Quốc tịch',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _religionController,
+                    label: 'Tôn giáo',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _bloodTypeController,
+                    label: 'Nhóm máu',
+                  ),
+                ],
+              ),
             ),
           ),
           bottomNavigationBar: SafeArea(
@@ -232,11 +345,11 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
-                    child: FilledButton.icon(
+                    child: FilledButton(
                       onPressed: _isSaving
                           ? null
                           : () => _save(optionsProvider),
-                      icon: _isSaving
+                      child: _isSaving
                           ? const SizedBox(
                               width: 18,
                               height: 18,
@@ -245,8 +358,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(LucideIcons.save, size: 18),
-                      label: const Text('Lưu'),
+                          : const Text('Lưu'),
                     ),
                   ),
                 ],
@@ -353,5 +465,65 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
       'dang hoc' || 'đang học' => StudentStatusOptions.studying,
       _ => value ?? StudentStatusOptions.studying,
     };
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: AppColors.foreground,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.mutedForeground,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EnrollmentReadOnlyCard extends StatelessWidget {
+  const _EnrollmentReadOnlyCard({required this.className});
+
+  final String className;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.muted,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(AppSpacing.radius),
+      ),
+      child: Text(
+        className.trim().isEmpty
+            ? 'Chưa có lớp. Dùng Chuyển lớp để xếp lớp cho trẻ.'
+            : 'Lớp hiện tại: $className. Dùng Chuyển lớp để thay đổi lớp.',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: AppColors.secondaryForeground,
+          fontWeight: FontWeight.w600,
+          height: 1.35,
+        ),
+      ),
+    );
   }
 }
