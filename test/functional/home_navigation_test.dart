@@ -77,6 +77,42 @@ void main() {
       });
     }
 
+    testWidgets('opens staff detail bottom sheet from card', (tester) async {
+      await _pumpTallHome(tester);
+
+      await tester.tap(find.byKey(const ValueKey('nav_teachers')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Nguyễn Thị Lan').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Chi tiết cán bộ'), findsOneWidget);
+      expect(find.text('Thông tin công việc'), findsOneWidget);
+      expect(find.text('Thông tin liên hệ'), findsOneWidget);
+      expect(find.text('Thông tin cá nhân'), findsOneWidget);
+      expect(find.text('Địa chỉ'), findsOneWidget);
+    });
+
+    testWidgets('opens class detail sheet with scoped students', (
+      tester,
+    ) async {
+      await _pumpTallHome(tester);
+
+      await tester.tap(find.byKey(const ValueKey('nav_classes')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('class_card_301')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Chi tiết lớp học'), findsOneWidget);
+      expect(find.text('Học sinh trong lớp'), findsOneWidget);
+      expect(find.text('Tên lớp'), findsOneWidget);
+      expect(find.text('Phòng học'), findsOneWidget);
+      expect(find.text('Giáo viên phụ trách'), findsOneWidget);
+      expect(find.text('Nguyễn Minh An'), findsOneWidget);
+      expect(find.text('Trần Bảo Ngọc'), findsNothing);
+    });
+
     testWidgets('filters students by name or card number', (tester) async {
       await _pumpTallHome(tester);
 
@@ -118,7 +154,9 @@ void main() {
 
       expect(find.text('Ngày sinh'), findsOneWidget);
       expect(find.text('10/03/2021'), findsOneWidget);
-      expect(find.text('Số điện thoại'), findsOneWidget);
+      expect(find.text('Liên hệ phụ huynh'), findsOneWidget);
+      expect(find.text('Mẹ'), findsOneWidget);
+      expect(find.text('0980000401'), findsOneWidget);
 
       await tester.pageBack();
       await tester.pumpAndSettle();

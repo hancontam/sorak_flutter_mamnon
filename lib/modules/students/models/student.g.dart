@@ -15,6 +15,11 @@ Student _$StudentFromJson(Map<String, dynamic> json) => Student(
   className: Student._readClassName(json, 'class_name') as String? ?? '',
   studentStatus: json['student_status'] as String? ?? 'Đang học',
   contactPhone: json['contact_phone'] as String? ?? '',
+  parents:
+      (json['parents'] as List<dynamic>?)
+          ?.map((e) => StudentParent.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
   studentIdCardNumber: json['student_id_card_number'] as String? ?? '',
   gradeLevel: json['grade_level'] as String? ?? '',
   enrollmentDate: json['enrollment_date'] as String? ?? '',
@@ -37,6 +42,7 @@ Map<String, dynamic> _$StudentToJson(Student instance) => <String, dynamic>{
   'class_name': instance.className,
   'student_status': instance.studentStatus,
   'contact_phone': instance.contactPhone,
+  'parents': instance.parents,
   'student_id_card_number': instance.studentIdCardNumber,
   'grade_level': instance.gradeLevel,
   'enrollment_date': instance.enrollmentDate,
@@ -49,3 +55,19 @@ Map<String, dynamic> _$StudentToJson(Student instance) => <String, dynamic>{
   'is_active': instance.isActive,
   'is_deleted': instance.isDeleted,
 };
+
+StudentParent _$StudentParentFromJson(Map<String, dynamic> json) =>
+    StudentParent(
+      id: (json['parent_id'] as num?)?.toInt(),
+      fullName: json['full_name'] as String? ?? '',
+      relationship: json['relationship'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$StudentParentToJson(StudentParent instance) =>
+    <String, dynamic>{
+      'parent_id': instance.id,
+      'full_name': instance.fullName,
+      'relationship': instance.relationship,
+      'phone': instance.phone,
+    };

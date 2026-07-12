@@ -225,32 +225,30 @@ class _AccountListScreenState extends State<AccountListScreen> {
   }
 
   Future<void> _openRoleDialog(BuildContext context, Account account) async {
-    final roleController = ValueNotifier<String>(
-      account.hasAccount && account.role != 'none'
-          ? account.role
-          : RoleOptions.teacher,
-    );
+    var selectedRole = account.hasAccount && account.role != 'none'
+        ? account.role
+        : RoleOptions.teacher;
     final passwordController = TextEditingController(
       text: account.hasAccount ? '' : _defaultStaffPassword(account.fullName),
     );
+    var passwordVisible = false;
 
     final success = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
-        return AlertDialog(
-          scrollable: true,
-          insetPadding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: viewInsets.bottom > 0 ? AppSpacing.sm : AppSpacing.lg,
-          ),
-          title: Text(account.hasAccount ? 'Đổi vai trò' : 'Cấp tài khoản'),
-          content: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: ValueListenableBuilder<String>(
-              valueListenable: roleController,
-              builder: (context, role, _) {
-                return Column(
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
+            return AlertDialog(
+              scrollable: true,
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: viewInsets.bottom > 0 ? AppSpacing.sm : AppSpacing.lg,
+              ),
+              title: Text(account.hasAccount ? 'Đổi vai trò' : 'Cấp tài khoản'),
+              content: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Align(
@@ -263,7 +261,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     DropdownButtonFormField<String>(
-                      initialValue: role,
+                      initialValue: selectedRole,
                       isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Vai trò'),
                       items: const [
@@ -284,7 +282,7 @@ class _AccountListScreenState extends State<AccountListScreen> {
                       ],
                       onChanged: (value) {
                         if (value != null) {
-                          roleController.value = value;
+                          setDialogState(() => selectedRole = value);
                         }
                       },
                     ),
@@ -292,54 +290,72 @@ class _AccountListScreenState extends State<AccountListScreen> {
                       const SizedBox(height: AppSpacing.sm),
                       TextField(
                         controller: passwordController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Mật khẩu khởi tạo',
                           helperText: 'Tối thiểu 6 ký tự',
+                          suffixIcon: IconButton(
+                            tooltip: passwordVisible
+                                ? 'Ẩn mật khẩu'
+                                : 'Hiện mật khẩu',
+                            onPressed: () {
+                              setDialogState(
+                                () => passwordVisible = !passwordVisible,
+                              );
+                            },
+                            icon: Icon(
+                              passwordVisible
+                                  ? LucideIcons.eyeOff
+                                  : LucideIcons.eye,
+                              size: 20,
+                            ),
+                          ),
                         ),
-                        obscureText: true,
+                        obscureText: !passwordVisible,
                       ),
                     ],
                   ],
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Hủy'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                if (!account.hasAccount &&
-                    passwordController.text.trim().length < 6) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Mật khẩu tối thiểu 6 ký tự')),
-                  );
-                  return;
-                }
-
-                final provider = context.read<AccountProvider>();
-                final teacherId = account.teacherId == 0
-                    ? account.id
-                    : account.teacherId;
-                final ok = account.hasAccount
-                    ? await provider.changeStaffRole(
-                        teacherId: teacherId,
-                        role: roleController.value,
-                      )
-                    : await provider.assignStaffAccount(
-                        teacherId: teacherId,
-                        role: roleController.value,
-                        password: passwordController.text.trim(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Hủy'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (!account.hasAccount &&
+                        passwordController.text.trim().length < 6) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Mật khẩu tối thiểu 6 ký tự'),
+                        ),
                       );
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext, ok);
-                }
-              },
-              child: const Text('Lưu'),
-            ),
-          ],
+                      return;
+                    }
+
+                    final provider = context.read<AccountProvider>();
+                    final teacherId = account.teacherId == 0
+                        ? account.id
+                        : account.teacherId;
+                    final ok = account.hasAccount
+                        ? await provider.changeStaffRole(
+                            teacherId: teacherId,
+                            role: selectedRole,
+                          )
+                        : await provider.assignStaffAccount(
+                            teacherId: teacherId,
+                            role: selectedRole,
+                            password: passwordController.text.trim(),
+                          );
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext, ok);
+                    }
+                  },
+                  child: const Text('Lưu'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -347,7 +363,6 @@ class _AccountListScreenState extends State<AccountListScreen> {
     // showDialog completes when pop starts, while the closing animation still
     // renders the text field. Dispose after that Material transition finishes.
     Future<void>.delayed(kThemeAnimationDuration, () {
-      roleController.dispose();
       passwordController.dispose();
     });
     _showActionResult(success);
@@ -360,61 +375,84 @@ class _AccountListScreenState extends State<AccountListScreen> {
     final passwordController = TextEditingController(
       text: _view == AccountView.student ? account.cardNumber : '',
     );
+    var passwordVisible = false;
 
     final success = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(
-            _view == AccountView.student
-                ? 'Đổi mật khẩu PH'
-                : 'Đặt lại mật khẩu',
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(account.fullName),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Mật khẩu mới',
-                  helperText: 'Tối thiểu 6 ký tự',
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            title: Text(
+              _view == AccountView.student
+                  ? 'Đổi mật khẩu PH'
+                  : 'Đặt lại mật khẩu',
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(account.fullName),
+                const SizedBox(height: AppSpacing.sm),
+                TextField(
+                  controller: passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'Mật khẩu mới',
+                    helperText: 'Tối thiểu 6 ký tự',
+                    suffixIcon: IconButton(
+                      tooltip: passwordVisible
+                          ? 'Ẩn mật khẩu'
+                          : 'Hiện mật khẩu',
+                      onPressed: () {
+                        setDialogState(
+                          () => passwordVisible = !passwordVisible,
+                        );
+                      },
+                      icon: Icon(
+                        passwordVisible ? LucideIcons.eyeOff : LucideIcons.eye,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  obscureText: !passwordVisible,
                 ),
-                obscureText: true,
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Hủy'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  if (passwordController.text.trim().length < 6) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Mật khẩu tối thiểu 6 ký tự'),
+                      ),
+                    );
+                    return;
+                  }
+                  final ok = await context
+                      .read<AccountProvider>()
+                      .changePassword(
+                        accountId: account.accountId,
+                        password: passwordController.text.trim(),
+                      );
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext, ok);
+                  }
+                },
+                child: const Text('Lưu'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Hủy'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                if (passwordController.text.trim().length < 6) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Mật khẩu tối thiểu 6 ký tự')),
-                  );
-                  return;
-                }
-                final ok = await context.read<AccountProvider>().changePassword(
-                  accountId: account.accountId,
-                  password: passwordController.text.trim(),
-                );
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext, ok);
-                }
-              },
-              child: const Text('Lưu'),
-            ),
-          ],
         );
       },
     );
 
-    passwordController.dispose();
+    Future<void>.delayed(kThemeAnimationDuration, () {
+      passwordController.dispose();
+    });
     _showActionResult(success);
   }
 

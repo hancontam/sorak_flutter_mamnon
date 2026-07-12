@@ -13,6 +13,14 @@ void main() {
       'enrollment_date': '2025-09-01T00:00:00.000Z',
       'student_status': 'Đang học',
       'contact_phone': '0901234567',
+      'parents': [
+        {
+          'parent_id': 701,
+          'full_name': 'Nguyễn Thị Mai',
+          'relationship': 'Mẹ',
+          'phone': '0987654321',
+        },
+      ],
       'current_address': '12 Đường Trần Phú, Kiên Giang',
       'ethnicity': 'Kinh',
       'nationality': 'Việt Nam',
@@ -37,5 +45,8 @@ void main() {
     expect(student.religion, 'Không');
     expect(student.bloodType, 'O');
     expect(student.currentAddress, '12 Đường Trần Phú, Kiên Giang');
+    expect(student.parents, hasLength(1));
+    expect(student.parents.single.relationship, 'Mẹ');
+    expect(student.parents.single.phone, '0987654321');
   });
 }
