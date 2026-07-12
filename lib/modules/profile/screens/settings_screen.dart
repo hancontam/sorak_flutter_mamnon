@@ -20,9 +20,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  bool _hideSensitiveData = true;
-  bool _notifyHealthUpdates = true;
-
   @override
   void dispose() {
     _oldPasswordController.dispose();
@@ -69,54 +66,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        LucideIcons.slidersHorizontal,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        'Tùy chọn ứng dụng',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Thông báo sức khỏe'),
-                    subtitle: const Text(
-                      'Hiển thị nhắc nhở và cập nhật sức khỏe.',
-                    ),
-                    value: _notifyHealthUpdates,
-                    onChanged: (value) {
-                      setState(() => _notifyHealthUpdates = value);
-                    },
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Ẩn dữ liệu nhạy cảm'),
-                    subtitle: const Text(
-                      'Che thông tin riêng tư khi dùng thiết bị chung.',
-                    ),
-                    value: _hideSensitiveData,
-                    onChanged: (value) {
-                      setState(() => _hideSensitiveData = value);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.md),

@@ -32,10 +32,10 @@ void main() {
       expect(find.text('Lớp hiện tại *'), findsOneWidget);
       expect(find.text('Học sinh *'), findsOneWidget);
       expect(find.text('Lớp chuyển đến *'), findsOneWidget);
-      expect(find.text('Trạng thái'), findsOneWidget);
+      expect(find.text('Trạng thái'), findsNothing);
 
       final dropdowns = find.byType(DropdownButtonFormField<String>);
-      expect(dropdowns, findsNWidgets(4));
+      expect(dropdowns, findsNWidgets(3));
 
       await tester.tap(dropdowns.at(0));
       await tester.pumpAndSettle();
@@ -57,7 +57,7 @@ void main() {
       );
     });
 
-    testWidgets('outgoing transfer uses class student and status dropdowns', (
+    testWidgets('outgoing transfer marks required fields and hides status', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -66,7 +66,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Ghi nhận chuyển trường đi'), findsOneWidget);
-      expect(find.text('Trường chuyển đến'), findsOneWidget);
+      expect(find.text('Lớp *'), findsOneWidget);
+      expect(find.text('Học sinh *'), findsOneWidget);
+      expect(find.text('Trường chuyển đến *'), findsOneWidget);
+      expect(find.text('Ngày chuyển *'), findsOneWidget);
 
       final dropdowns = find.byType(DropdownButtonFormField<String>);
       expect(dropdowns, findsNWidgets(2));
@@ -85,22 +88,12 @@ void main() {
       await tester.tap(find.textContaining('Trần Bảo Ngọc').last);
       await tester.pumpAndSettle();
 
-      await tester.scrollUntilVisible(
-        find.text('Trạng thái'),
-        160,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-
-      final statusDropdown = find.byType(DropdownButtonFormField<String>).last;
-      await tester.tap(statusDropdown);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Đã ghi nhận'), findsWidgets);
-      expect(find.text('Đã hủy'), findsWidgets);
+      expect(find.text('Trạng thái'), findsNothing);
+      expect(find.text('Lý do'), findsOneWidget);
+      expect(find.text('Ghi chú'), findsOneWidget);
     });
 
-    testWidgets('incoming transfer shows previous school and status dropdown', (
+    testWidgets('incoming transfer shows required fields without status', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -109,17 +102,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Ghi nhận chuyển trường đến'), findsOneWidget);
-      expect(find.text('Trường chuyển từ'), findsOneWidget);
-      expect(find.text('Ngày chuyển'), findsOneWidget);
-
-      await tester.scrollUntilVisible(
-        find.text('Trạng thái'),
-        160,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Trạng thái'), findsOneWidget);
+      expect(find.text('Lớp *'), findsOneWidget);
+      expect(find.text('Học sinh *'), findsOneWidget);
+      expect(find.text('Trường chuyển từ *'), findsOneWidget);
+      expect(find.text('Ngày chuyển *'), findsOneWidget);
+      expect(find.text('Trạng thái'), findsNothing);
     });
   });
 }

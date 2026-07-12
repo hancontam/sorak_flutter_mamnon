@@ -101,6 +101,18 @@ class GrowthWhoProvider extends ChangeNotifier {
     }
   }
 
+  Future<List<HealthAssessment>> getStudentHistory({
+    required int studentId,
+    required String role,
+    int? academicYearId,
+  }) {
+    return _growthWhoRepository.getHistory(
+      studentId: studentId,
+      role: role,
+      schoolYearId: academicYearId,
+    );
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();

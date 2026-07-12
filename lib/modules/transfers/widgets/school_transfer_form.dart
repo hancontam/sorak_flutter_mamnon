@@ -183,7 +183,7 @@ class _SchoolTransferFormState extends State<SchoolTransferForm> {
               children: [
                 AppDropdownField<String>(
                   key: ValueKey('school_transfer_class_$selectedClassId'),
-                  label: 'Lớp',
+                  label: 'Lớp *',
                   options: classOptions,
                   value: selectedClassId,
                   hintText: 'Chọn lớp',
@@ -200,7 +200,7 @@ class _SchoolTransferFormState extends State<SchoolTransferForm> {
                   key: ValueKey(
                     'school_transfer_student_${selectedClassId ?? ''}_${selectedStudentId ?? ''}',
                   ),
-                  label: 'Học sinh',
+                  label: 'Học sinh *',
                   options: studentOptions,
                   value: selectedStudentId,
                   hintText: _selectedClassId == null
@@ -215,13 +215,13 @@ class _SchoolTransferFormState extends State<SchoolTransferForm> {
                 const SizedBox(height: AppSpacing.sm),
                 AppTextField(
                   controller: _schoolController,
-                  label: widget.schoolLabel,
+                  label: '${widget.schoolLabel} *',
                   validator: _requiredText(widget.schoolLabel.toLowerCase()),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 AppDateField(
                   controller: _transferDateController,
-                  label: 'Ngày chuyển',
+                  label: 'Ngày chuyển *',
                   validator: _requiredText('ngày chuyển'),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -235,27 +235,6 @@ class _SchoolTransferFormState extends State<SchoolTransferForm> {
                   controller: _noteController,
                   label: 'Ghi chú',
                   maxLines: 2,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppDropdownField<String>(
-                  key: ValueKey('school_transfer_status_$_selectedStatus'),
-                  label: 'Trạng thái',
-                  options: const [
-                    AppOption(
-                      value: TransferStatusOptions.recorded,
-                      label: 'Đã ghi nhận',
-                    ),
-                    AppOption(
-                      value: TransferStatusOptions.cancelled,
-                      label: 'Đã hủy',
-                    ),
-                  ],
-                  value: _selectedStatus,
-                  hintText: 'Chọn trạng thái',
-                  validator: _requiredDropdown('trạng thái'),
-                  onChanged: (value) {
-                    setState(() => _selectedStatus = value);
-                  },
                 ),
               ],
             ),

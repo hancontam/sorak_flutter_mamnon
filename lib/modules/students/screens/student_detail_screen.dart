@@ -58,10 +58,6 @@ class StudentDetailScreen extends StatelessWidget {
             icon: LucideIcons.school,
             rows: [
               _DetailRowData(
-                'Số điện thoại',
-                _valueOrMissing(student.contactPhone),
-              ),
-              _DetailRowData(
                 'Ngày nhập học',
                 _formatDateOnly(student.enrollmentDate),
               ),
@@ -72,6 +68,8 @@ class StudentDetailScreen extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.sm),
+          _ParentContactSection(parents: student.parents),
           const SizedBox(height: AppSpacing.sm),
           _DetailSection(
             title: 'Thông tin bổ sung',
@@ -96,22 +94,97 @@ class StudentDetailScreen extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: OutlinedButton(
                   onPressed: onEditGuardian,
-                  icon: const Icon(LucideIcons.usersRound, size: 18),
-                  label: const Text('Phụ huynh'),
+                  child: const Text('Phụ huynh'),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: FilledButton.icon(
+                child: FilledButton(
                   onPressed: onEditStudent,
-                  icon: const Icon(LucideIcons.pencil, size: 18),
-                  label: const Text('Cập nhật trẻ'),
+                  child: const Text('Cập nhật trẻ'),
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ParentContactSection extends StatelessWidget {
+  const _ParentContactSection({required this.parents});
+
+  final List<StudentParent> parents;
+
+  @override
+  Widget build(BuildContext context) {
+    final contacts = parents.where((parent) => parent.phone.trim().isNotEmpty);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  LucideIcons.usersRound,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  'Liên hệ phụ huynh',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            if (contacts.isEmpty)
+              Text(
+                'Chưa có',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontStyle: FontStyle.italic,
+                ),
+              )
+            else
+              for (final parent in contacts)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          parent.relationship.trim().isEmpty
+                              ? 'Phụ huynh'
+                              : parent.relationship.trim(),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.mutedForeground,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        parent.phone.trim(),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.foreground,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+          ],
         ),
       ),
     );

@@ -40,6 +40,7 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
   final _searchController = TextEditingController();
   String _search = '';
   String _statusFilter = '';
+  int? _runningActionId;
 
   @override
   void initState() {
@@ -60,6 +61,52 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => ClassTransferFormScreen(classTransfer: item),
+      ),
+    );
+  }
+
+  Future<void> _runAction(
+    ClassTransfer item,
+    String action,
+    String actionLabel,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('$actionLabel yêu cầu chuyển lớp?'),
+        content: Text(
+          '$actionLabel yêu cầu chuyển lớp của ${item.studentName.isEmpty ? 'học sinh này' : item.studentName}.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Đóng'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _runningActionId = item.id);
+    var success = true;
+    try {
+      await context.read<ClassTransferProvider>().updateStatus(item.id, action);
+    } catch (_) {
+      success = false;
+    }
+    if (!mounted) return;
+    setState(() => _runningActionId = null);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Đã ${actionLabel.toLowerCase()} yêu cầu'
+              : 'Chưa thể cập nhật yêu cầu',
+        ),
       ),
     );
   }
@@ -187,10 +234,10 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
                     _ClassTransferCard(
                       item: item,
                       isPrincipal: isPrincipal,
-                      onApprove: () =>
-                          provider.updateStatus(item.id, 'approve'),
-                      onReject: () => provider.updateStatus(item.id, 'reject'),
-                      onCancel: () => provider.updateStatus(item.id, 'cancel'),
+                      isActionRunning: _runningActionId == item.id,
+                      onApprove: () => _runAction(item, 'approve', 'Duyệt'),
+                      onReject: () => _runAction(item, 'reject', 'Từ chối'),
+                      onCancel: () => _runAction(item, 'cancel', 'Hủy'),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                   ],
@@ -208,6 +255,7 @@ class _ClassTransferCard extends StatelessWidget {
   const _ClassTransferCard({
     required this.item,
     required this.isPrincipal,
+    required this.isActionRunning,
     required this.onApprove,
     required this.onReject,
     required this.onCancel,
@@ -215,6 +263,7 @@ class _ClassTransferCard extends StatelessWidget {
 
   final ClassTransfer item;
   final bool isPrincipal;
+  final bool isActionRunning;
   final VoidCallback onApprove;
   final VoidCallback onReject;
   final VoidCallback onCancel;
@@ -268,20 +317,10 @@ class _ClassTransferCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
-                      _CompactStatusBadge(
-                        label: statusLabel,
-                        tone: statusTone,
-                      ),
+                      _CompactStatusBadge(label: statusLabel, tone: statusTone),
                     ],
                   ),
                 ),
-                if (showActions)
-                  _TransferActionMenu(
-                    isPrincipal: isPrincipal,
-                    onApprove: onApprove,
-                    onReject: onReject,
-                    onCancel: onCancel,
-                  ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -325,6 +364,23 @@ class _ClassTransferCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (showActions) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Align(
+                alignment: Alignment.centerRight,
+                child: isActionRunning
+                    ? const SizedBox.square(
+                        dimension: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : _TransferActionChips(
+                        isPrincipal: isPrincipal,
+                        onApprove: onApprove,
+                        onReject: onReject,
+                        onCancel: onCancel,
+                      ),
+              ),
+            ],
           ],
         ),
       ),
@@ -332,8 +388,8 @@ class _ClassTransferCard extends StatelessWidget {
   }
 }
 
-class _TransferActionMenu extends StatelessWidget {
-  const _TransferActionMenu({
+class _TransferActionChips extends StatelessWidget {
+  const _TransferActionChips({
     required this.isPrincipal,
     required this.onApprove,
     required this.onReject,
@@ -347,28 +403,84 @@ class _TransferActionMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      tooltip: 'Thao tác',
-      icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
-      onSelected: (value) {
-        switch (value) {
-          case 'approve':
-            onApprove();
-          case 'reject':
-            onReject();
-          case 'cancel':
-            onCancel();
-        }
-      },
-      itemBuilder: (context) {
-        return [
-          if (isPrincipal) ...[
-            const PopupMenuItem(value: 'approve', child: Text('Duyệt')),
-            const PopupMenuItem(value: 'reject', child: Text('Từ chối')),
-          ],
-          const PopupMenuItem(value: 'cancel', child: Text('Hủy yêu cầu')),
-        ];
-      },
+    return Wrap(
+      alignment: WrapAlignment.end,
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
+      children: [
+        if (isPrincipal) ...[
+          _ActionChip(
+            label: 'Duyệt',
+            icon: LucideIcons.check,
+            foreground: AppColors.statusSuccessText,
+            background: AppColors.statusSuccessBackground,
+            border: AppColors.statusSuccessBorder,
+            onPressed: onApprove,
+          ),
+          _ActionChip(
+            label: 'Từ chối',
+            icon: LucideIcons.x,
+            foreground: AppColors.statusErrorText,
+            background: AppColors.statusErrorBackground,
+            border: AppColors.statusErrorBorder,
+            onPressed: onReject,
+          ),
+        ],
+        _ActionChip(
+          label: 'Hủy',
+          icon: LucideIcons.ban,
+          foreground: AppColors.statusWarningText,
+          background: AppColors.statusWarningBackground,
+          border: AppColors.statusWarningBorder,
+          onPressed: onCancel,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  const _ActionChip({
+    required this.label,
+    required this.icon,
+    required this.foreground,
+    required this.background,
+    required this.border,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color foreground;
+  final Color background;
+  final Color border;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      onPressed: onPressed,
+      visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      side: BorderSide(color: border),
+      backgroundColor: background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radius),
+      ),
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: foreground),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: foreground,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

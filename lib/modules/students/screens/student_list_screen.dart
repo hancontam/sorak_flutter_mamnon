@@ -493,9 +493,9 @@ class _StudentCard extends StatelessWidget {
                       label: 'Học vụ',
                       value: UiLabels.status(student.studentStatus),
                     ),
-                    _StudentInfoLine(
+                    _StudentParentInfoLine(
                       label: 'SĐT phụ huynh',
-                      value: student.contactPhone,
+                      parents: student.parents,
                     ),
                     _StudentInfoLine(
                       label: 'Ngày nhập học',
@@ -608,6 +608,87 @@ class _StudentInfoLine extends StatelessWidget {
                 fontStyle: isMissing ? FontStyle.italic : FontStyle.normal,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StudentParentInfoLine extends StatelessWidget {
+  const _StudentParentInfoLine({required this.label, required this.parents});
+
+  final String label;
+  final List<StudentParent> parents;
+
+  @override
+  Widget build(BuildContext context) {
+    final contacts = parents.where((parent) => parent.phone.trim().isNotEmpty);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 2,
+            child: contacts.isEmpty
+                ? Text(
+                    'Chưa có',
+                    textAlign: TextAlign.right,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      for (final parent in contacts)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  parent.relationship.trim().isEmpty
+                                      ? 'Phụ huynh'
+                                      : parent.relationship.trim(),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: AppColors.mutedForeground,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                parent.phone.trim(),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.foreground,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
           ),
         ],
       ),

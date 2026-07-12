@@ -15,6 +15,8 @@ import '../../../core/widgets/loading_view.dart';
 import '../../../core/widgets/sorak_avatar.dart';
 import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../students/models/student.dart';
+import '../../students/providers/student_provider.dart';
 import '../models/school_class.dart';
 import '../providers/class_provider.dart';
 import 'class_form_screen.dart';
@@ -49,10 +51,16 @@ class _ClassListScreenState extends State<ClassListScreen> {
   Future<void> _loadForSelectedYear() async {
     final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
     if (yearId == null) {
-      await context.read<ClassProvider>().loadItems();
+      await Future.wait([
+        context.read<ClassProvider>().loadItems(),
+        context.read<StudentProvider>().loadItems(),
+      ]);
       return;
     }
-    await context.read<ClassProvider>().loadForAcademicYear(yearId);
+    await Future.wait([
+      context.read<ClassProvider>().loadForAcademicYear(yearId),
+      context.read<StudentProvider>().loadForAcademicYear(yearId),
+    ]);
   }
 
   void _openForm([SchoolClass? schoolClass]) {
@@ -61,6 +69,34 @@ class _ClassListScreenState extends State<ClassListScreen> {
       MaterialPageRoute(
         builder: (_) => ClassFormScreen(schoolClass: schoolClass),
       ),
+    );
+  }
+
+  void _openClassDetail(SchoolClass schoolClass) {
+    final students =
+        context
+            .read<StudentProvider>()
+            .items
+            .where((student) => student.classId == schoolClass.id)
+            .toList()
+          ..sort(
+            (a, b) => normalizeVietnamese(
+              a.fullName,
+            ).compareTo(normalizeVietnamese(b.fullName)),
+          );
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radius),
+        ),
+      ),
+      builder: (_) =>
+          _ClassDetailSheet(schoolClass: schoolClass, students: students),
     );
   }
 
@@ -295,6 +331,7 @@ class _ClassListScreenState extends State<ClassListScreen> {
           return _ClassFolderGroup(
             group: group,
             canManage: isPrincipal,
+            onDetail: _openClassDetail,
             onEdit: _openForm,
             onArchive: _archiveClass,
           );
@@ -334,12 +371,14 @@ class _ClassFolderGroup extends StatelessWidget {
   const _ClassFolderGroup({
     required this.group,
     required this.canManage,
+    required this.onDetail,
     required this.onEdit,
     required this.onArchive,
   });
 
   final _ClassGroupData group;
   final bool canManage;
+  final ValueChanged<SchoolClass> onDetail;
   final ValueChanged<SchoolClass> onEdit;
   final ValueChanged<SchoolClass> onArchive;
 
@@ -378,6 +417,7 @@ class _ClassFolderGroup extends StatelessWidget {
             schoolClass: group.classes[index],
             grade: group.name,
             canManage: canManage,
+            onTap: () => onDetail(group.classes[index]),
             onEdit: () => onEdit(group.classes[index]),
             onArchive: () => onArchive(group.classes[index]),
           ),
@@ -395,6 +435,7 @@ class _ClassCard extends StatelessWidget {
     required this.schoolClass,
     required this.grade,
     required this.canManage,
+    required this.onTap,
     required this.onEdit,
     required this.onArchive,
   });
@@ -402,91 +443,322 @@ class _ClassCard extends StatelessWidget {
   final SchoolClass schoolClass;
   final String grade;
   final bool canManage;
+  final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onArchive;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SorakAvatar(
-                  seed: 'class-${schoolClass.id}',
-                  fallbackLabel: schoolClass.className,
-                  diceBearStyle: 'pixel-art-neutral',
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _valueOrMissing(schoolClass.className),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 2),
-                      _ClassGradePill(label: grade),
-                    ],
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SorakAvatar(
+                    seed: 'class-${schoolClass.id}',
+                    fallbackLabel: schoolClass.className,
+                    diceBearStyle: 'pixel-art-neutral',
                   ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _valueOrMissing(schoolClass.className),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        _ClassGradePill(label: grade),
+                      ],
+                    ),
+                  ),
+                  if (canManage)
+                    PopupMenuButton<_ClassAction>(
+                      tooltip: 'Thao tác với lớp học',
+                      icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
+                      onSelected: (action) {
+                        if (action == _ClassAction.edit) {
+                          onEdit();
+                        } else {
+                          onArchive();
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: _ClassAction.edit,
+                          child: Text('Chỉnh sửa'),
+                        ),
+                        PopupMenuItem(
+                          value: _ClassAction.archive,
+                          child: Text(
+                            'Xóa',
+                            style: TextStyle(color: AppColors.destructive),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.muted,
+                  borderRadius: BorderRadius.circular(AppSpacing.radius),
+                  border: Border.all(color: AppColors.border),
                 ),
-                if (canManage)
-                  PopupMenuButton<_ClassAction>(
-                    tooltip: 'Thao tác với lớp học',
-                    icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
-                    onSelected: (action) {
-                      if (action == _ClassAction.edit) {
-                        onEdit();
-                      } else {
-                        onArchive();
-                      }
-                    },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: _ClassAction.edit,
-                        child: Text('Chỉnh sửa'),
+                child: Column(
+                  children: [
+                    _ClassInfoLine(label: 'Khối', value: grade),
+                    _ClassInfoLine(label: 'Phòng', value: schoolClass.room),
+                    _ClassInfoLine(
+                      label: 'Sĩ số',
+                      value: '${schoolClass.studentCount} trẻ',
+                    ),
+                    _ClassInfoLine(
+                      label: 'Giáo viên',
+                      value: schoolClass.teacherName,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClassDetailSheet extends StatelessWidget {
+  const _ClassDetailSheet({required this.schoolClass, required this.students});
+
+  final SchoolClass schoolClass;
+  final List<Student> students;
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.88,
+      minChildSize: 0.55,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Column(
+          children: [
+            const SizedBox(height: AppSpacing.xs),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.input,
+                borderRadius: BorderRadius.circular(AppSpacing.radius),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  SorakAvatar(
+                    seed: 'class-${schoolClass.id}',
+                    fallbackLabel: schoolClass.className,
+                    diceBearStyle: 'pixel-art-neutral',
+                    size: 52,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _valueOrMissing(schoolClass.className),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _displayAgeGroup(schoolClass.ageGroup),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.mutedForeground,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                ),
+                children: [
+                  Text(
+                    'Chi tiết lớp học',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Column(
+                        children: [
+                          _ClassInfoLine(
+                            label: 'Tên lớp',
+                            value: schoolClass.className,
+                          ),
+                          _ClassInfoLine(
+                            label: 'Khối',
+                            value: _displayAgeGroup(schoolClass.ageGroup),
+                          ),
+                          _ClassInfoLine(
+                            label: 'Phòng học',
+                            value: schoolClass.room,
+                          ),
+                          _ClassInfoLine(
+                            label: 'Sĩ số',
+                            value: '${students.length} trẻ',
+                          ),
+                          _ClassInfoLine(
+                            label: 'Giáo viên phụ trách',
+                            value: schoolClass.teacherName,
+                          ),
+                        ],
                       ),
-                      PopupMenuItem(
-                        value: _ClassAction.archive,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      Expanded(
                         child: Text(
-                          'Xóa',
-                          style: TextStyle(color: AppColors.destructive),
+                          'Học sinh trong lớp',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      Text(
+                        '${students.length} học sinh',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.mutedForeground,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: AppColors.muted,
-                borderRadius: BorderRadius.circular(AppSpacing.radius),
-                border: Border.all(color: AppColors.border),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (students.isEmpty)
+                    const EmptyView(
+                      title: 'Chưa có học sinh',
+                      message: 'Lớp học này chưa có học sinh đang theo học.',
+                      type: EmptyViewType.data,
+                    )
+                  else
+                    for (var index = 0; index < students.length; index++) ...[
+                      _ClassStudentCard(
+                        index: index + 1,
+                        student: students[index],
+                      ),
+                      if (index < students.length - 1)
+                        const SizedBox(height: AppSpacing.sm),
+                    ],
+                ],
               ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ClassStudentCard extends StatelessWidget {
+  const _ClassStudentCard({required this.index, required this.student});
+
+  final int index;
+  final Student student;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 28,
+              child: Text(
+                '$index.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.mutedForeground,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            SorakAvatar(
+              seed: student.id,
+              fallbackLabel: student.fullName,
+              size: 40,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ClassInfoLine(label: 'Khối', value: grade),
-                  _ClassInfoLine(label: 'Phòng', value: schoolClass.room),
-                  _ClassInfoLine(
-                    label: 'Sĩ số',
-                    value: '${schoolClass.studentCount} trẻ',
+                  Text(
+                    _valueOrMissing(student.fullName),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  _ClassInfoLine(
-                    label: 'Giáo viên',
-                    value: schoolClass.teacherName,
+                  const SizedBox(height: 2),
+                  Text(
+                    _valueOrMissing(student.studentIdCardNumber),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.mutedForeground,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'monospace',
+                    ),
                   ),
                 ],
+              ),
+            ),
+            Text(
+              student.studentStatus,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: AppColors.secondaryForeground,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],

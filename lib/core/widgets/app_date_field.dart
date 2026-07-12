@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+
 class AppDateField extends StatelessWidget {
   const AppDateField({
     super.key,
@@ -26,9 +29,28 @@ class AppDateField extends StatelessWidget {
       readOnly: true,
       enabled: enabled,
       validator: validator,
+      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+        color: enabled ? AppColors.foreground : AppColors.mutedForeground,
+        fontWeight: enabled ? FontWeight.w500 : FontWeight.w600,
+      ),
       decoration: InputDecoration(
         labelText: label,
-        suffixIcon: const Icon(LucideIcons.calendarDays, size: 20),
+        filled: !enabled,
+        fillColor: enabled ? AppColors.background : AppColors.muted,
+        disabledBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppSpacing.radius)),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        labelStyle: TextStyle(
+          color: enabled
+              ? AppColors.secondaryForeground
+              : AppColors.mutedForeground,
+        ),
+        suffixIcon: Icon(
+          LucideIcons.calendarDays,
+          size: 20,
+          color: enabled ? AppColors.foreground : AppColors.mutedForeground,
+        ),
       ),
       onTap: enabled ? () => _pickDate(context) : null,
     );

@@ -37,7 +37,6 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
   String? _fromClassId;
   String? _studentId;
   String? _toClassId;
-  String? _status;
 
   @override
   void initState() {
@@ -47,7 +46,6 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     _toClassId = item == null ? null : '${item.toClassId}';
     _reasonController.text = item?.reason ?? '';
     _effectiveDateController.text = item?.effectiveDate ?? '';
-    _status = item?.status ?? TransferStatusOptions.pending;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadOptionsAndClassScope();
@@ -77,10 +75,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     super.dispose();
   }
 
-  Future<void> _save(
-    FormOptionsProvider optionsProvider, {
-    required bool isTeacher,
-  }) async {
+  Future<void> _save(FormOptionsProvider optionsProvider) async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       return;
@@ -97,20 +92,15 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
     setState(() => _isSaving = true);
 
     final provider = context.read<ClassTransferProvider>();
-    final success = widget.classTransfer == null
-        ? await provider.createItem({
-            'student_id': _studentId,
-            'student_name': student.fullName,
-            'from_class_name': fromClass.className,
-            'to_class_id': _toClassId,
-            'to_class_name': toClass.className,
-            'reason': _reasonController.text.trim(),
-            'effective_date': _effectiveDateController.text.trim(),
-            'status': _status ?? TransferStatusOptions.pending,
-          })
-        : await provider.updateItem(widget.classTransfer!.id, {
-            'action': isTeacher ? 'cancel' : _actionFromStatus(_status),
-          });
+    final success = await provider.createItem({
+      'student_id': _studentId,
+      'student_name': student.fullName,
+      'from_class_name': fromClass.className,
+      'to_class_id': _toClassId,
+      'to_class_name': toClass.className,
+      'reason': _reasonController.text.trim(),
+      'effective_date': _effectiveDateController.text.trim(),
+    });
 
     if (!mounted) {
       return;
@@ -254,46 +244,14 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
                   label: 'Ngày hiệu lực *',
                   validator: _requiredText('ngày hiệu lực'),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                if (!isTeacher)
-                  AppDropdownField<String>(
-                    key: ValueKey('class_transfer_status_$_status'),
-                    label: 'Trạng thái',
-                    options: const [
-                      AppOption(
-                        value: TransferStatusOptions.pending,
-                        label: 'Chờ duyệt',
-                      ),
-                      AppOption(
-                        value: TransferStatusOptions.approved,
-                        label: 'Đã duyệt',
-                      ),
-                      AppOption(
-                        value: TransferStatusOptions.rejected,
-                        label: 'Từ chối',
-                      ),
-                      AppOption(
-                        value: TransferStatusOptions.cancelled,
-                        label: 'Đã hủy',
-                      ),
-                    ],
-                    value: _status,
-                    hintText: 'Chọn trạng thái',
-                    validator: _requiredDropdown('trạng thái'),
-                    onChanged: (value) {
-                      setState(() => _status = value);
-                    },
-                  ),
               ],
             ),
           ),
           bottomNavigationBar: _BottomSaveBar(
             isSaving: _isSaving,
             onCancel: () => Navigator.pop(context),
-            saveLabel: isTeacher && widget.classTransfer != null
-                ? 'Hủy yêu cầu'
-                : 'Lưu',
-            onSave: () => _save(optionsProvider, isTeacher: isTeacher),
+            saveLabel: 'Tạo yêu cầu',
+            onSave: () => _save(optionsProvider),
           ),
         );
       },
@@ -455,15 +413,6 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
         ? ''
         : ' - ${schoolClass.ageGroup}';
     return '${schoolClass.className}$grade';
-  }
-
-  String _actionFromStatus(String? status) {
-    return switch (status) {
-      TransferStatusOptions.approved => 'approve',
-      TransferStatusOptions.rejected => 'reject',
-      TransferStatusOptions.pending => 'revert',
-      _ => 'cancel',
-    };
   }
 
   bool _isTeacher(BuildContext context) {

@@ -64,6 +64,21 @@ class _TeacherListScreenState extends State<TeacherListScreen> {
     );
   }
 
+  void _openTeacherDetail(Teacher teacher) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radius),
+        ),
+      ),
+      builder: (_) => _TeacherDetailSheet(teacher: teacher),
+    );
+  }
+
   List<Teacher> _filteredTeachers(List<Teacher> teachers) {
     final query = normalizeVietnamese(_search);
     return teachers.where((teacher) {
@@ -208,6 +223,7 @@ class _TeacherListScreenState extends State<TeacherListScreen> {
           index: index + 1,
           teacher: teachers[index],
           canManage: isPrincipal,
+          onTap: () => _openTeacherDetail(teachers[index]),
           onEdit: () => _openForm(teachers[index]),
           onArchive: () => _archiveTeacher(teachers[index]),
         ),
@@ -240,6 +256,7 @@ class _TeacherCard extends StatelessWidget {
     required this.index,
     required this.teacher,
     required this.canManage,
+    required this.onTap,
     required this.onEdit,
     required this.onArchive,
   });
@@ -247,8 +264,283 @@ class _TeacherCard extends StatelessWidget {
   final int index;
   final Teacher teacher;
   final bool canManage;
+  final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onArchive;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$index.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.mutedForeground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  SorakAvatar(
+                    seed: teacher.accountId == 0
+                        ? teacher.id
+                        : teacher.accountId,
+                    fallbackLabel: teacher.fullName,
+                    size: 48,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _valueOrMissing(teacher.fullName),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _valueOrMissing(teacher.position),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.secondaryForeground,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (canManage)
+                    PopupMenuButton<_TeacherAction>(
+                      tooltip: 'Thao tác với cán bộ',
+                      icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
+                      onSelected: (action) {
+                        if (action == _TeacherAction.edit) {
+                          onEdit();
+                        } else {
+                          onArchive();
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: _TeacherAction.edit,
+                          child: Text('Chỉnh sửa'),
+                        ),
+                        PopupMenuItem(
+                          value: _TeacherAction.archive,
+                          child: Text(
+                            'Xóa',
+                            style: TextStyle(color: AppColors.destructive),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              SorakStatusBadge(label: teacher.workStatus),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.muted,
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(AppSpacing.radius),
+                ),
+                child: Column(
+                  children: [
+                    _TeacherInfoLine(label: 'Email', value: teacher.email),
+                    _TeacherInfoLine(label: 'SĐT', value: teacher.phone),
+                    _TeacherInfoLine(
+                      label: 'Giới tính',
+                      value: UiLabels.gender(teacher.gender),
+                    ),
+                    _TeacherInfoLine(
+                      label: 'Ngày sinh',
+                      value: _formatDateOnly(teacher.dateOfBirth),
+                    ),
+                    _TeacherInfoLine(
+                      label: 'Trình độ',
+                      value: teacher.qualification,
+                    ),
+                    _TeacherInfoLine(
+                      label: 'Ngày vào làm',
+                      value: _formatDateOnly(teacher.workStartDate),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TeacherDetailSheet extends StatelessWidget {
+  const _TeacherDetailSheet({required this.teacher});
+
+  final Teacher teacher;
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.82,
+      minChildSize: 0.5,
+      maxChildSize: 0.94,
+      builder: (context, scrollController) {
+        return Column(
+          children: [
+            const SizedBox(height: AppSpacing.xs),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.input,
+                borderRadius: BorderRadius.circular(AppSpacing.radius),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  SorakAvatar(
+                    seed: teacher.accountId == 0
+                        ? teacher.id
+                        : teacher.accountId,
+                    fallbackLabel: teacher.fullName,
+                    size: 52,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _valueOrMissing(teacher.fullName),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _valueOrMissing(teacher.position),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.mutedForeground,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                ),
+                children: [
+                  Text(
+                    'Chi tiết cán bộ',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: SorakStatusBadge(label: teacher.workStatus),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _TeacherDetailSection(
+                    title: 'Thông tin công việc',
+                    icon: LucideIcons.briefcaseBusiness,
+                    rows: [
+                      _TeacherDetailRow('Chức vụ', teacher.position),
+                      _TeacherDetailRow(
+                        'Trạng thái công tác',
+                        UiLabels.workStatus(teacher.workStatus),
+                      ),
+                      _TeacherDetailRow('Trình độ', teacher.qualification),
+                      _TeacherDetailRow(
+                        'Ngày vào làm',
+                        _formatDateOnly(teacher.workStartDate),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _TeacherDetailSection(
+                    title: 'Thông tin liên hệ',
+                    icon: LucideIcons.contactRound,
+                    rows: [
+                      _TeacherDetailRow('Email', teacher.email),
+                      _TeacherDetailRow('Số điện thoại', teacher.phone),
+                      _TeacherDetailRow('Địa chỉ', teacher.address),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _TeacherDetailSection(
+                    title: 'Thông tin cá nhân',
+                    icon: LucideIcons.userRound,
+                    rows: [
+                      _TeacherDetailRow(
+                        'Giới tính',
+                        UiLabels.gender(teacher.gender),
+                      ),
+                      _TeacherDetailRow(
+                        'Ngày sinh',
+                        _formatDateOnly(teacher.dateOfBirth),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _TeacherDetailSection extends StatelessWidget {
+  const _TeacherDetailSection({
+    required this.title,
+    required this.icon,
+    required this.rows,
+  });
+
+  final String title;
+  final IconData icon;
+  final List<_TeacherDetailRow> rows;
 
   @override
   Widget build(BuildContext context) {
@@ -259,108 +551,72 @@ class _TeacherCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '$index.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.mutedForeground,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Icon(icon, size: 20, color: AppColors.primary),
                 const SizedBox(width: AppSpacing.xs),
-                SorakAvatar(
-                  seed: teacher.accountId == 0 ? teacher.id : teacher.accountId,
-                  fallbackLabel: teacher.fullName,
-                  size: 48,
-                ),
-                const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _valueOrMissing(teacher.fullName),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _valueOrMissing(teacher.position),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryForeground,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-                if (canManage)
-                  PopupMenuButton<_TeacherAction>(
-                    tooltip: 'Thao tác với cán bộ',
-                    icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
-                    onSelected: (action) {
-                      if (action == _TeacherAction.edit) {
-                        onEdit();
-                      } else {
-                        onArchive();
-                      }
-                    },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: _TeacherAction.edit,
-                        child: Text('Chỉnh sửa'),
-                      ),
-                      PopupMenuItem(
-                        value: _TeacherAction.archive,
-                        child: Text(
-                          'Xóa',
-                          style: TextStyle(color: AppColors.destructive),
-                        ),
-                      ),
-                    ],
-                  ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            SorakStatusBadge(label: teacher.workStatus),
-            const SizedBox(height: AppSpacing.sm),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: AppColors.muted,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(AppSpacing.radius),
-              ),
-              child: Column(
-                children: [
-                  _TeacherInfoLine(label: 'Email', value: teacher.email),
-                  _TeacherInfoLine(label: 'SĐT', value: teacher.phone),
-                  _TeacherInfoLine(
-                    label: 'Giới tính',
-                    value: UiLabels.gender(teacher.gender),
-                  ),
-                  _TeacherInfoLine(
-                    label: 'Ngày sinh',
-                    value: _formatDateOnly(teacher.dateOfBirth),
-                  ),
-                  _TeacherInfoLine(
-                    label: 'Trình độ',
-                    value: teacher.qualification,
-                  ),
-                  _TeacherInfoLine(
-                    label: 'Ngày vào làm',
-                    value: _formatDateOnly(teacher.workStartDate),
-                  ),
-                ],
-              ),
-            ),
+            for (var index = 0; index < rows.length; index++) ...[
+              _TeacherDetailValue(data: rows[index]),
+              if (index < rows.length - 1) const Divider(height: AppSpacing.md),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TeacherDetailRow {
+  const _TeacherDetailRow(this.label, this.value);
+
+  final String label;
+  final String? value;
+}
+
+class _TeacherDetailValue extends StatelessWidget {
+  const _TeacherDetailValue({required this.data});
+
+  final _TeacherDetailRow data;
+
+  @override
+  Widget build(BuildContext context) {
+    final isMissing = _isMissingValue(data.value);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            data.label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.mutedForeground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          flex: 2,
+          child: Text(
+            _valueOrMissing(data.value),
+            textAlign: TextAlign.right,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isMissing ? AppColors.primary : AppColors.foreground,
+              fontWeight: isMissing ? FontWeight.w600 : FontWeight.w700,
+              fontStyle: isMissing ? FontStyle.italic : FontStyle.normal,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

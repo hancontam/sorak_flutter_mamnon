@@ -19,6 +19,7 @@ import '../../form_options/providers/form_options_provider.dart';
 import '../../students/models/student.dart';
 import '../models/health_assessment.dart';
 import '../models/nutrition_assessment.dart';
+import '../providers/growth_who_provider.dart';
 import '../providers/health_assessment_provider.dart';
 import '../providers/nutrition_assessment_provider.dart';
 
@@ -310,7 +311,6 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
                     nutritionProvider.items,
                   ),
                   onTap: () => _openStudentPreview(
-                    context,
                     visibleStudents[index],
                     healthProvider.items,
                     nutritionProvider.items,
@@ -422,12 +422,36 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
   }
 
   Future<void> _openStudentPreview(
-    BuildContext context,
     Student student,
     List<HealthAssessment> healthItems,
     List<NutritionAssessment> nutritionItems,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    var studentHealthHistory = healthItems
+        .where((item) => item.studentId == student.id)
+        .toList();
+    if (_isHealth) {
+      final role =
+          context.read<AuthProvider>().currentUser?.role.toUpperCase() ??
+          'TEACHER';
+      final academicYearId = context
+          .read<ActiveAcademicYearProvider>()
+          .selectedYearId;
+      try {
+        studentHealthHistory = await context
+            .read<GrowthWhoProvider>()
+            .getStudentHistory(
+              studentId: student.id,
+              role: role,
+              academicYearId: academicYearId,
+            );
+      } catch (_) {
+        // Keep the date-roster data as a safe fallback when history is offline.
+      }
+    }
+    if (!mounted) {
+      return;
+    }
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -439,9 +463,7 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
           selectedClassId: int.tryParse(_selectedClassId ?? '') ?? 0,
           selectedDate: _dateController.text,
           selectedPeriod: _selectedPeriod,
-          history: healthItems
-              .where((item) => item.studentId == student.id)
-              .toList(),
+          history: studentHealthHistory,
           nutritionHistory: nutritionItems
               .where((item) => item.studentId == student.id)
               .toList(),

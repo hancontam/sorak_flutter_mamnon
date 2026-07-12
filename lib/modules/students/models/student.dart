@@ -13,6 +13,7 @@ class Student {
     this.className = '',
     this.studentStatus = 'Đang học',
     this.contactPhone = '',
+    this.parents = const [],
     this.studentIdCardNumber = '',
     this.gradeLevel = '',
     this.enrollmentDate = '',
@@ -39,6 +40,8 @@ class Student {
   final String studentStatus;
   @JsonKey(defaultValue: '')
   final String contactPhone;
+  @JsonKey(defaultValue: [])
+  final List<StudentParent> parents;
   @JsonKey(name: 'student_id_card_number', defaultValue: '')
   final String studentIdCardNumber;
   @JsonKey(defaultValue: '')
@@ -80,6 +83,7 @@ class Student {
     String? className,
     String? studentStatus,
     String? contactPhone,
+    List<StudentParent>? parents,
     String? gradeLevel,
     String? enrollmentDate,
     String? ethnicity,
@@ -100,6 +104,7 @@ class Student {
       className: className ?? this.className,
       studentStatus: studentStatus ?? this.studentStatus,
       contactPhone: contactPhone ?? this.contactPhone,
+      parents: parents ?? this.parents,
       studentIdCardNumber: studentIdCardNumber ?? this.studentIdCardNumber,
       gradeLevel: gradeLevel ?? this.gradeLevel,
       enrollmentDate: enrollmentDate ?? this.enrollmentDate,
@@ -146,5 +151,32 @@ class Student {
 
   static Object? _readIsDeleted(Map<dynamic, dynamic> json, String key) {
     return json['is_deleted'] == true || json['deleted_at'] != null;
+  }
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class StudentParent {
+  const StudentParent({
+    this.id,
+    this.fullName = '',
+    this.relationship = '',
+    this.phone = '',
+  });
+
+  @JsonKey(name: 'parent_id')
+  final int? id;
+  @JsonKey(defaultValue: '')
+  final String fullName;
+  @JsonKey(defaultValue: '')
+  final String relationship;
+  @JsonKey(defaultValue: '')
+  final String phone;
+
+  factory StudentParent.fromJson(Map<String, dynamic> json) {
+    return _$StudentParentFromJson(json);
+  }
+
+  Map<String, dynamic> toJson() {
+    return _$StudentParentToJson(this);
   }
 }
