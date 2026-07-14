@@ -6,7 +6,9 @@ import '../../../core/constants/app_options.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/text_normalizer.dart';
+import '../../../core/utils/student_enrollment.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
+import '../../../core/widgets/academic_year_app_bar_selector.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/confirm_archive_dialog.dart';
 import '../../../core/widgets/empty_view.dart';
@@ -15,6 +17,9 @@ import '../../../core/widgets/loading_view.dart';
 import '../../../core/widgets/sorak_avatar.dart';
 import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../class_transfers/providers/class_transfer_provider.dart';
+import '../../incoming_transfers/providers/incoming_transfer_provider.dart';
+import '../../outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import '../../students/models/student.dart';
 import '../../students/providers/student_provider.dart';
 import '../models/school_class.dart';
@@ -54,12 +59,18 @@ class _ClassListScreenState extends State<ClassListScreen> {
       await Future.wait([
         context.read<ClassProvider>().loadItems(),
         context.read<StudentProvider>().loadItems(),
+        context.read<ClassTransferProvider>().loadItems(),
+        context.read<IncomingTransferProvider>().loadItems(),
+        context.read<OutgoingTransferProvider>().loadItems(),
       ]);
       return;
     }
     await Future.wait([
       context.read<ClassProvider>().loadForAcademicYear(yearId),
       context.read<StudentProvider>().loadForAcademicYear(yearId),
+      context.read<ClassTransferProvider>().loadForAcademicYear(yearId),
+      context.read<IncomingTransferProvider>().loadForAcademicYear(yearId),
+      context.read<OutgoingTransferProvider>().loadForAcademicYear(yearId),
     ]);
   }
 
@@ -73,17 +84,21 @@ class _ClassListScreenState extends State<ClassListScreen> {
   }
 
   void _openClassDetail(SchoolClass schoolClass) {
+    final allStudents = context.read<StudentProvider>().items;
     final students =
-        context
-            .read<StudentProvider>()
-            .items
-            .where((student) => student.classId == schoolClass.id)
+        allStudents
+            .where(
+              (student) =>
+                  student.classId == schoolClass.id &&
+                  isStudentCurrentlyEnrolled(student),
+            )
             .toList()
           ..sort(
             (a, b) => normalizeVietnamese(
               a.fullName,
             ).compareTo(normalizeVietnamese(b.fullName)),
           );
+    final history = _movementHistory(schoolClass, allStudents);
 
     showModalBottomSheet<void>(
       context: context,
@@ -95,9 +110,116 @@ class _ClassListScreenState extends State<ClassListScreen> {
           top: Radius.circular(AppSpacing.radius),
         ),
       ),
-      builder: (_) =>
-          _ClassDetailSheet(schoolClass: schoolClass, students: students),
+      builder: (_) => _ClassDetailSheet(
+        schoolClass: schoolClass,
+        students: students,
+        history: history,
+      ),
     );
+  }
+
+  List<_ClassMovementEvent> _movementHistory(
+    SchoolClass schoolClass,
+    List<Student> allStudents,
+  ) {
+    final result = <_ClassMovementEvent>[];
+    Student? findStudent(int id) {
+      for (final student in allStudents) {
+        if (student.id == id) return student;
+      }
+      return null;
+    }
+
+    for (final student in allStudents.where(
+      (item) =>
+          item.classId == schoolClass.id && !isStudentCurrentlyEnrolled(item),
+    )) {
+      result.add(
+        _ClassMovementEvent(
+          key: 'status-${student.id}',
+          student: student,
+          title: student.studentStatus,
+          date: student.currentEnrollmentLeftDate,
+        ),
+      );
+    }
+
+    for (final transfer in context.read<ClassTransferProvider>().items) {
+      if (transfer.appliedAt.isEmpty ||
+          (transfer.fromClassId != schoolClass.id &&
+              transfer.toClassId != schoolClass.id)) {
+        continue;
+      }
+      final student = findStudent(transfer.studentId);
+      result.add(
+        _ClassMovementEvent(
+          key: 'class-${transfer.id}',
+          student: student,
+          fallbackName: transfer.studentName,
+          title: transfer.fromClassId == schoolClass.id
+              ? 'Đã chuyển sang ${transfer.toClassName}'
+              : 'Chuyển đến từ ${transfer.fromClassName}',
+          date: transfer.effectiveDate,
+        ),
+      );
+    }
+
+    final today = DateTime.now();
+    bool isEffective(String value) {
+      final date = DateTime.tryParse(value);
+      return date == null || !date.isAfter(today);
+    }
+
+    for (final transfer in context.read<OutgoingTransferProvider>().items) {
+      if (transfer.className != schoolClass.className ||
+          transfer.status.toLowerCase() != 'recorded' ||
+          !isEffective(transfer.transferDate)) {
+        continue;
+      }
+      result.add(
+        _ClassMovementEvent(
+          key: 'outgoing-${transfer.id}',
+          student: findStudent(transfer.studentId),
+          fallbackName: transfer.studentName,
+          title: 'Đã chuyển trường đi',
+          date: transfer.transferDate,
+        ),
+      );
+    }
+
+    for (final transfer in context.read<IncomingTransferProvider>().items) {
+      if (transfer.className != schoolClass.className ||
+          transfer.status.toLowerCase() != 'recorded' ||
+          !isEffective(transfer.transferDate)) {
+        continue;
+      }
+      result.add(
+        _ClassMovementEvent(
+          key: 'incoming-${transfer.id}',
+          student: findStudent(transfer.studentId),
+          fallbackName: transfer.studentName,
+          title: 'Chuyển trường đến',
+          date: transfer.transferDate,
+        ),
+      );
+    }
+
+    final explicitStudentIds = result
+        .where((event) => !event.key.startsWith('status-'))
+        .map((event) => event.student?.id)
+        .whereType<int>()
+        .toSet();
+    final unique = <String, _ClassMovementEvent>{};
+    for (final event in result.where(
+      (item) =>
+          !item.key.startsWith('status-') ||
+          !explicitStudentIds.contains(item.student?.id),
+    )) {
+      unique[event.key] = event;
+    }
+    final events = unique.values.toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    return events;
   }
 
   List<SchoolClass> _filteredClasses(List<SchoolClass> classes) {
@@ -165,6 +287,7 @@ class _ClassListScreenState extends State<ClassListScreen> {
           ? AppBar(
               title: const Text('Lớp học'),
               actions: [
+                const AcademicYearAppBarSelector(),
                 IconButton(
                   tooltip: 'Làm mới',
                   onPressed: provider.isLoading ? null : _loadForSelectedYear,
@@ -449,6 +572,15 @@ class _ClassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentStudentCount = context
+        .watch<StudentProvider>()
+        .items
+        .where(
+          (student) =>
+              student.classId == schoolClass.id &&
+              isStudentCurrentlyEnrolled(student),
+        )
+        .length;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -525,7 +657,7 @@ class _ClassCard extends StatelessWidget {
                     _ClassInfoLine(label: 'Phòng', value: schoolClass.room),
                     _ClassInfoLine(
                       label: 'Sĩ số',
-                      value: '${schoolClass.studentCount} trẻ',
+                      value: '$currentStudentCount trẻ',
                     ),
                     _ClassInfoLine(
                       label: 'Giáo viên',
@@ -543,10 +675,15 @@ class _ClassCard extends StatelessWidget {
 }
 
 class _ClassDetailSheet extends StatelessWidget {
-  const _ClassDetailSheet({required this.schoolClass, required this.students});
+  const _ClassDetailSheet({
+    required this.schoolClass,
+    required this.students,
+    required this.history,
+  });
 
   final SchoolClass schoolClass;
   final List<Student> students;
+  final List<_ClassMovementEvent> history;
 
   @override
   Widget build(BuildContext context) {
@@ -691,12 +828,121 @@ class _ClassDetailSheet extends StatelessWidget {
                       if (index < students.length - 1)
                         const SizedBox(height: AppSpacing.sm),
                     ],
+                  if (history.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: ExpansionTile(
+                        key: const ValueKey('class_movement_history'),
+                        initiallyExpanded: false,
+                        leading: const Icon(
+                          LucideIcons.folderClock,
+                          color: AppColors.primary,
+                        ),
+                        title: const Text('Lịch sử biến động'),
+                        subtitle: Text('${history.length} lượt chuyển'),
+                        childrenPadding: const EdgeInsets.fromLTRB(
+                          AppSpacing.sm,
+                          0,
+                          AppSpacing.sm,
+                          AppSpacing.sm,
+                        ),
+                        children: [
+                          for (var index = 0; index < history.length; index++)
+                            _MovementHistoryCard(event: history[index]),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _ClassMovementEvent {
+  const _ClassMovementEvent({
+    required this.key,
+    required this.title,
+    required this.date,
+    this.student,
+    this.fallbackName = '',
+  });
+
+  final String key;
+  final Student? student;
+  final String fallbackName;
+  final String title;
+  final String date;
+}
+
+class _MovementHistoryCard extends StatelessWidget {
+  const _MovementHistoryCard({required this.event});
+
+  final _ClassMovementEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = event.student?.fullName ?? event.fallbackName;
+    final code = event.student?.studentIdCardNumber ?? '';
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.muted,
+          borderRadius: BorderRadius.circular(AppSpacing.radius),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            SorakAvatar(
+              seed: event.student?.id ?? event.key,
+              fallbackLabel: name,
+              size: 40,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _valueOrMissing(name),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (code.isNotEmpty)
+                    Text(
+                      code,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.mutedForeground,
+                      ),
+                    ),
+                  Text(
+                    event.title,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.secondaryForeground,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (event.date.isNotEmpty)
+              Text(
+                _formatDate(event.date),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColors.mutedForeground,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -876,4 +1122,12 @@ String _valueOrMissing(String? value) {
 bool _isMissingValue(String? value) {
   final trimmed = value?.trim() ?? '';
   return trimmed.isEmpty || trimmed == '-';
+}
+
+String _formatDate(String value) {
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) return value;
+  final day = parsed.day.toString().padLeft(2, '0');
+  final month = parsed.month.toString().padLeft(2, '0');
+  return '$day/$month/${parsed.year}';
 }

@@ -33,6 +33,9 @@ void main() {
       );
       expect(find.text('Tình trạng sức khỏe'), findsNothing);
       expect(find.text('Tình trạng nuôi dưỡng'), findsNothing);
+      expect(find.text('Lịch sử khám sức khỏe'), findsOneWidget);
+      expect(find.text('10/05/2026'), findsOneWidget);
+      expect(find.text('10/01/2026'), findsOneWidget);
     });
   });
 }

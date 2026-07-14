@@ -28,13 +28,13 @@ void main() {
       expect(provider.workingTeacherOptions, isNotEmpty);
       expect(provider.studentOptions, isNotEmpty);
       expect(provider.selectedAcademicYearId, 101);
-      expect(provider.selectedClassId, 302);
-      expect(provider.studentOptions.single.label, 'Trần Bảo Ngọc');
-
-      await provider.selectClass(301);
-
       expect(provider.selectedClassId, 301);
       expect(provider.studentOptions.single.label, 'Nguyễn Minh An');
+
+      await provider.selectClass(302);
+
+      expect(provider.selectedClassId, 302);
+      expect(provider.studentOptions.single.label, 'Trần Bảo Ngọc');
 
       await provider.selectAcademicYear(103);
 

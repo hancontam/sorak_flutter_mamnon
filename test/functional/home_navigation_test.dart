@@ -12,10 +12,7 @@ void main() {
     ) async {
       await _pumpTallHome(tester);
 
-      expect(
-        find.byKey(const ValueKey('active_year_dropdown')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const ValueKey('active_year_dropdown')), findsNothing);
       expect(find.byKey(const ValueKey('nav_academic_years')), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_students')), findsOneWidget);
       expect(find.byKey(const ValueKey('nav_teachers')), findsOneWidget);
@@ -23,6 +20,13 @@ void main() {
       expect(find.byKey(const ValueKey('nav_home')), findsNothing);
       expect(find.byKey(const ValueKey('nav_transfers')), findsNothing);
       expect(find.byKey(const ValueKey('nav_health')), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('nav_students')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('active_year_dropdown')),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byKey(const ValueKey('open_drawer_button')));
       await tester.pumpAndSettle();
@@ -111,6 +115,11 @@ void main() {
       expect(find.text('Giáo viên phụ trách'), findsOneWidget);
       expect(find.text('Nguyễn Minh An'), findsOneWidget);
       expect(find.text('Trần Bảo Ngọc'), findsNothing);
+      expect(find.text('Lịch sử biến động'), findsOneWidget);
+      expect(find.text('Chuyển trường đến'), findsNothing);
+      await tester.tap(find.text('Lịch sử biến động'));
+      await tester.pumpAndSettle();
+      expect(find.text('Chuyển trường đến'), findsOneWidget);
     });
 
     testWidgets('filters students by name or card number', (tester) async {

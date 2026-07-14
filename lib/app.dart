@@ -41,6 +41,8 @@ import 'modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import 'modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
 import 'modules/outgoing_transfers/screens/outgoing_transfer_list_screen.dart';
 import 'modules/parent/screens/parent_portal_screen.dart';
+import 'modules/parent/providers/parent_health_history_provider.dart';
+import 'modules/parent/repositories/parent_health_history_repository.dart';
 import 'modules/profile/screens/profile_screen.dart';
 import 'modules/profile/screens/settings_screen.dart';
 import 'modules/students/providers/student_provider.dart';
@@ -196,6 +198,13 @@ class SorakApp extends StatelessWidget {
             ),
           ),
         ),
+        ChangeNotifierProvider<ParentHealthHistoryProvider>(
+          create: (context) => ParentHealthHistoryProvider(
+            repository: ParentHealthHistoryRepository(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+        ),
       ],
       child: MaterialApp(
         navigatorKey: appNavigatorKey,
@@ -253,10 +262,8 @@ class SorakApp extends StatelessWidget {
             allowedRoles: _staffRoles,
             child: TransfersScreen(),
           ),
-          '/health': (_) => const RoleGuard(
-            allowedRoles: _staffRoles,
-            child: HealthScreen(),
-          ),
+          '/health': (_) =>
+              const RoleGuard(allowedRoles: _staffRoles, child: HealthScreen()),
           '/health-assessments': (_) => const RoleGuard(
             allowedRoles: _staffRoles,
             child: HealthAssessmentListScreen(),

@@ -1,7 +1,10 @@
-# Parent Health/Growth Read API Contract Proposal
+# Parent Health/Growth Read API Contract
 
-Status: **proposal only**. Flutter must not call these paths until the backend
-implements and documents them.
+Status: **Health deployed; Nutrition/Growth remain proposals**.
+
+The deployed Health contract is `GET /api/parent/health-history`. It derives
+the student from the authenticated Parent account and accepts no
+`student_id`, `class_id` or `school_year_id` query from Flutter.
 
 ## Current Backend Evidence
 
@@ -28,12 +31,12 @@ Current source:
 6. Response and error envelopes keep the existing `{success,data}` and
    `{success:false,message,errors,traceId}` contracts.
 
-## Proposed Endpoints
+## Deployed Endpoint
 
 ### `GET /api/parent/health-history`
 
-Optional query: `from`, `to`. The backend resolves the current student and
-enrollment.
+No query parameters. The backend resolves the owned student from the current
+cookie session.
 
 ```json
 {
@@ -64,6 +67,8 @@ enrollment.
 ```
 
 Each record must parse with Flutter `HealthAssessment.fromJson`.
+
+## Proposed Endpoints
 
 ### `GET /api/parent/nutrition`
 
@@ -135,12 +140,10 @@ student, not client input.
 
 ## Flutter Rollout
 
-1. Merge and deploy the backend contract first.
-2. Add exact paths to `ApiEndpoints`; do not guess or probe alternatives.
-3. Add Parent repository methods that use the existing `ApiClient`,
-   `ApiResponse` and model parsers.
-4. Replace unavailable cards only after 2xx parsing succeeds. Never fall back
-   to mock when `USE_MOCK_API=false`.
-5. Add canonical mock fixtures and Parent widget journeys for data, empty,
-   401/403, malformed response and retry.
-6. Repeat Parent Android live smoke with a prefixed student and archive it.
+1. Health uses the exact deployed path in `ApiEndpoints`, existing
+   `ApiClient`, `ApiResponse`, and `HealthAssessment` parser.
+2. Parent report renders Health read-only, newest first, with loading/error/
+   empty states and no live-to-mock fallback.
+3. Nutrition/Growth stay hidden until their contracts are deployed and pass
+   2xx parsing.
+4. Repeat Parent Android live smoke for Health history and ownership.

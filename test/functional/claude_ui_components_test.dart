@@ -105,22 +105,29 @@ void main() {
       expect(find.text('student'), findsOneWidget);
     });
 
-    testWidgets('academic year accordion opens and selects year', (
+    testWidgets('academic year AppBar selector opens and selects year', (
       tester,
     ) async {
-      await tester.binding.setSurfaceSize(const Size(400, 900));
+      await tester.binding.setSurfaceSize(const Size(360, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpSorakApp(savedUser: testAuthUser);
+      await tester.tap(find.byKey(const ValueKey('nav_students')));
+      await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const ValueKey('active_year_accordion_trigger')),
+        find.byKey(const ValueKey('active_year_dropdown')),
         findsOneWidget,
       );
-
-      await tester.tap(
-        find.byKey(const ValueKey('active_year_accordion_trigger')),
+      expect(
+        tester
+            .getSize(find.byKey(const ValueKey('active_year_selector_surface')))
+            .width,
+        140,
       );
+      expect(find.text('2025-2026'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('active_year_dropdown')));
       await tester.pumpAndSettle();
 
       expect(

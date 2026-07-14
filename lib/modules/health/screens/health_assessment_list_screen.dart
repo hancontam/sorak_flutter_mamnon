@@ -6,6 +6,8 @@ import '../../../core/constants/app_options.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/text_normalizer.dart';
+import '../../../core/utils/class_sort.dart';
+import '../../../core/utils/student_enrollment.dart';
 import '../../../core/widgets/app_date_field.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
 import '../../../core/widgets/app_search_bar.dart';
@@ -125,6 +127,7 @@ class _HealthAssessmentListScreenState
     final classId = int.tryParse(_selectedClassId ?? '');
 
     final items = source.where((item) {
+      if (!isStudentCurrentlyEnrolled(item)) return false;
       if (allowedClassIds != null && !allowedClassIds.contains(item.classId)) {
         return false;
       }
@@ -154,19 +157,7 @@ class _HealthAssessmentListScreenState
   }
 
   List<AppOption<String>> _classOptions(List<SchoolClass> classes) {
-    const gradeRank = {'Nhà trẻ': 0, 'Mầm': 1, 'Chồi': 2, 'Lá': 3};
-    final sortedClasses = [...classes]
-      ..sort((a, b) {
-        final byGrade = (gradeRank[a.ageGroup] ?? 99).compareTo(
-          gradeRank[b.ageGroup] ?? 99,
-        );
-        if (byGrade != 0) {
-          return byGrade;
-        }
-        return normalizeVietnamese(
-          a.className,
-        ).compareTo(normalizeVietnamese(b.className));
-      });
+    final sortedClasses = sortedClassesByGrade(classes);
 
     return [
       const AppOption(value: '', label: 'Tất cả lớp'),

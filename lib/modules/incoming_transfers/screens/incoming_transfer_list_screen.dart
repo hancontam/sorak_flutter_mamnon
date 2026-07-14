@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_options.dart';
+import '../../../core/services/academic_data_refresh_service.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/text_normalizer.dart';
 import '../../../core/widgets/app_search_bar.dart';
@@ -131,6 +132,12 @@ class _IncomingTransferListScreenState
       item.id,
       cancelReason: reason.isEmpty ? null : reason,
     );
+    if (mounted) {
+      await AcademicDataRefreshService.afterEnrollmentMutation(
+        context,
+        refreshAccounts: true,
+      );
+    }
     if (!mounted) {
       return;
     }
@@ -150,6 +157,12 @@ class _IncomingTransferListScreenState
       return;
     }
     await context.read<IncomingTransferProvider>().archiveItem(item.id);
+    if (mounted) {
+      await AcademicDataRefreshService.afterEnrollmentMutation(
+        context,
+        refreshAccounts: true,
+      );
+    }
     if (!mounted) {
       return;
     }

@@ -23,6 +23,13 @@ Student _$StudentFromJson(Map<String, dynamic> json) => Student(
   studentIdCardNumber: json['student_id_card_number'] as String? ?? '',
   gradeLevel: json['grade_level'] as String? ?? '',
   enrollmentDate: json['enrollment_date'] as String? ?? '',
+  currentEnrollmentLeftDate:
+      Student._readCurrentEnrollmentLeftDate(
+            json,
+            'current_enrollment_left_date',
+          )
+          as String? ??
+      '',
   ethnicity: json['ethnicity'] as String? ?? '',
   nationality: json['nationality'] as String? ?? '',
   religion: json['religion'] as String? ?? '',
@@ -46,6 +53,7 @@ Map<String, dynamic> _$StudentToJson(Student instance) => <String, dynamic>{
   'student_id_card_number': instance.studentIdCardNumber,
   'grade_level': instance.gradeLevel,
   'enrollment_date': instance.enrollmentDate,
+  'current_enrollment_left_date': instance.currentEnrollmentLeftDate,
   'ethnicity': instance.ethnicity,
   'nationality': instance.nationality,
   'religion': instance.religion,

@@ -18,4 +18,5 @@ class ApiEndpoints {
   static const classTransfers = '/class-transfers';
   static const outgoingTransfers = '/outgoing-transfers';
   static const incomingTransfers = '/incoming-transfers';
+  static const parentHealthHistory = '/parent/health-history';
 }

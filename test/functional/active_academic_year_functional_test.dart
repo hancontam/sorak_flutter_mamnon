@@ -58,6 +58,9 @@ void main() {
       expect(initialShellContext.read<TeacherProvider>().isLoading, isFalse);
       expect(initialShellContext.read<TeacherProvider>().items, isNotEmpty);
 
+      await tester.tap(find.byKey(const ValueKey('nav_students')));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.byKey(const ValueKey('active_year_dropdown')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('2026-2027').last);

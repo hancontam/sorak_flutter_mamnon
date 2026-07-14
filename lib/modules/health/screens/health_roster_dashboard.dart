@@ -6,6 +6,8 @@ import '../../../core/constants/app_options.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/text_normalizer.dart';
+import '../../../core/utils/class_sort.dart';
+import '../../../core/utils/student_enrollment.dart';
 import '../../../core/widgets/app_date_field.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
 import '../../../core/widgets/app_search_bar.dart';
@@ -342,7 +344,8 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
   List<Student> _studentsForClass(FormOptionsProvider optionsProvider) {
     final classId = int.tryParse(_selectedClassId ?? '');
     return optionsProvider.allStudents.where((student) {
-      return classId == null || student.classId == classId;
+      return isStudentCurrentlyEnrolled(student) &&
+          (classId == null || student.classId == classId);
     }).toList();
   }
 
@@ -364,7 +367,7 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
   }
 
   List<AppOption<String>> _classOptions(List<SchoolClass> classes) {
-    return classes.map((schoolClass) {
+    return sortedClassesByGrade(classes).map((schoolClass) {
       final room = schoolClass.room.isEmpty ? '' : ' - ${schoolClass.room}';
       return AppOption(
         value: '${schoolClass.id}',

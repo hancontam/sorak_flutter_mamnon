@@ -760,6 +760,9 @@ class MockApiBackend implements HttpClientAdapter {
               )['name'],
             },
           };
+          item['applied_at'] = action == 'approve'
+              ? '2026-07-14T00:00:00.000Z'
+              : null;
         }
         return _object(item);
       }
@@ -814,21 +817,54 @@ class MockApiBackend implements HttpClientAdapter {
                 'note',
               ];
         _rejectUnknown(body, allowed);
+        final studentId = _asInt(body['student_id'])!;
+        final student = _find(students, 'student_id', studentId);
+        final classId = _studentClass(student);
+        final yearId = _asInt(body['school_year_id'])!;
         final item = {
           'transfer_id': _nextId(source, 'transfer_id'),
           ...body,
           'status': 'Recorded',
-          'student': _studentSummary(
-            _find(students, 'student_id', _asInt(body['student_id'])!),
-          ),
+          'student': _studentSummary(student),
+          'class': {'class_id': classId, 'class_name': _className(classId)},
+          'school_year': {
+            'school_year_id': yearId,
+            'name': _find(years, 'school_year_id', yearId)['name'],
+          },
           'deleted_at': null,
         };
         source.add(item);
+        if (path.startsWith('/incoming')) {
+          student['student_status'] = 'Đang học';
+          final account = student['account'];
+          if (account is Map) account['is_active'] = true;
+        } else {
+          student['student_status'] = 'Đã chuyển trường';
+          final account = student['account'];
+          if (account is Map) account['is_active'] = false;
+        }
         return _object(item);
       }
     }
     final schoolTransfer = _schoolTransferRoute(method, path, body);
     if (schoolTransfer != null) return schoolTransfer;
+
+    if (path == '/parent/health-history' && method == 'GET') {
+      if (_role != 'PARENT' || _studentId == null) {
+        throw const _MockApiFailure(403, 'Chỉ phụ huynh được truy cập');
+      }
+      final student = _find(students, 'student_id', _studentId!);
+      final records =
+          healthAssessments
+              .where((item) => item['student_id'] == _studentId)
+              .toList()
+            ..sort(
+              (a, b) => '${b['assessment_date']}'.compareTo(
+                '${a['assessment_date']}',
+              ),
+            );
+      return _object({'student': student, 'records': records});
+    }
 
     final healthResult = _healthRoute(method, path, query, body);
     if (healthResult != null) return healthResult;
@@ -861,6 +897,16 @@ class MockApiBackend implements HttpClientAdapter {
     if (path.endsWith('/cancel') && method == 'PATCH') {
       item['status'] = 'Cancelled';
       item['cancel_reason'] = body['cancel_reason'];
+      final student = _find(
+        students,
+        'student_id',
+        (item['student_id'] as num).toInt(),
+      );
+      if (outgoing) {
+        student['student_status'] = 'Đang học';
+        final account = student['account'];
+        if (account is Map) account['is_active'] = true;
+      }
     } else if (method == 'PATCH') {
       final allowed = incoming
           ? ['previous_school', 'transfer_date', 'reason', 'note']

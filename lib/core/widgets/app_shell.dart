@@ -24,7 +24,7 @@ import '../../modules/teachers/screens/teacher_list_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../utils/ui_labels.dart';
-import 'academic_year_accordion.dart';
+import 'academic_year_app_bar_selector.dart';
 import 'sorak_avatar.dart';
 
 class AppShell extends StatefulWidget {
@@ -49,6 +49,9 @@ class _AppShellState extends State<AppShell> {
       _academicYearProvider?.removeListener(_onAcademicYearChanged);
       _academicYearProvider = provider..addListener(_onAcademicYearChanged);
       _lastAcademicYearId = provider.selectedYearId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(provider.loadYears());
+      });
     }
 
     if (!_didRefreshRoleScopedOptions) {
@@ -227,10 +230,19 @@ class _AppShellState extends State<AppShell> {
     final body = hasBottomNav
         ? destinations[selectedIndex].screen
         : const ParentPortalScreen();
+    final destinationKey = hasBottomNav
+        ? destinations[selectedIndex].key
+        : 'parent';
+    final showYearSelector = const {
+      'students',
+      'teachers',
+      'classes',
+    }.contains(destinationKey);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
+        actions: [if (showYearSelector) const AcademicYearAppBarSelector()],
         leading: Builder(
           builder: (context) {
             return IconButton(
@@ -256,18 +268,9 @@ class _AppShellState extends State<AppShell> {
         onLogout: _logout,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            if (role != 'PARENT') const AcademicYearAccordion(),
-            Expanded(
-              child: KeyedSubtree(
-                key: ValueKey(
-                  '${hasBottomNav ? destinations[selectedIndex].key : 'parent'}_$_yearRevision',
-                ),
-                child: body,
-              ),
-            ),
-          ],
+        child: KeyedSubtree(
+          key: ValueKey('${destinationKey}_$_yearRevision'),
+          child: body,
         ),
       ),
       bottomNavigationBar: hasBottomNav

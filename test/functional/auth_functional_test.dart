@@ -135,6 +135,9 @@ void main() {
       await tester.pumpLoggedInSorakApp();
 
       expect(find.byKey(const ValueKey('nav_academic_years')), findsOneWidget);
+      expect(find.byKey(const ValueKey('active_year_dropdown')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('nav_students')));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('active_year_dropdown')),
         findsOneWidget,

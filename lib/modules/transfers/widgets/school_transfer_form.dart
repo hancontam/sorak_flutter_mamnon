@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_options.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/class_sort.dart';
+import '../../../core/utils/student_enrollment.dart';
 import '../../../core/widgets/app_date_field.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -55,6 +57,7 @@ class SchoolTransferForm extends StatefulWidget {
     this.initialReason = '',
     this.initialNote = '',
     this.initialStatus,
+    this.allowInactiveStudents = false,
   });
 
   final String title;
@@ -68,6 +71,7 @@ class SchoolTransferForm extends StatefulWidget {
   final String initialReason;
   final String initialNote;
   final String? initialStatus;
+  final bool allowInactiveStudents;
 
   @override
   State<SchoolTransferForm> createState() => _SchoolTransferFormState();
@@ -272,7 +276,7 @@ class _SchoolTransferFormState extends State<SchoolTransferForm> {
   }
 
   List<AppOption<String>> _classOptions(FormOptionsProvider optionsProvider) {
-    return optionsProvider.classes
+    return sortedClassesByGrade(optionsProvider.classes)
         .map(
           (schoolClass) => AppOption(
             value: '${schoolClass.id}',
@@ -285,7 +289,12 @@ class _SchoolTransferFormState extends State<SchoolTransferForm> {
   List<AppOption<String>> _studentOptions(FormOptionsProvider optionsProvider) {
     final classId = int.tryParse(_selectedClassId ?? '');
     return optionsProvider.allStudents
-        .where((student) => classId == null || student.classId == classId)
+        .where(
+          (student) =>
+              (widget.allowInactiveStudents ||
+                  isStudentCurrentlyEnrolled(student)) &&
+              (classId == null || student.classId == classId),
+        )
         .map(
           (student) => AppOption(
             value: '${student.id}',

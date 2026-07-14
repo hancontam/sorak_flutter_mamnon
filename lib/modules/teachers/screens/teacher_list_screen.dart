@@ -8,6 +8,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/text_normalizer.dart';
 import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
+import '../../../core/widgets/academic_year_app_bar_selector.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/confirm_archive_dialog.dart';
 import '../../../core/widgets/empty_view.dart';
@@ -113,6 +114,7 @@ class _TeacherListScreenState extends State<TeacherListScreen> {
           ? AppBar(
               title: const Text('Cán bộ'),
               actions: [
+                const AcademicYearAppBarSelector(),
                 IconButton(
                   tooltip: 'Làm mới',
                   onPressed: provider.isLoading ? null : _loadForSelectedYear,

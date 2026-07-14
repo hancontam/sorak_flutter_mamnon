@@ -10,6 +10,8 @@ import '../../../core/widgets/loading_view.dart';
 import '../../../core/widgets/sorak_avatar.dart';
 import '../../../core/widgets/sorak_status_badge.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../health/models/health_assessment.dart';
+import '../providers/parent_health_history_provider.dart';
 import '../widgets/parent_profile_info_cards.dart';
 
 enum ParentPortalSection { child, health }
@@ -31,8 +33,15 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AuthProvider>().loadProfile();
+      _refresh();
     });
+  }
+
+  Future<void> _refresh() async {
+    await Future.wait([
+      context.read<AuthProvider>().loadProfile(),
+      context.read<ParentHealthHistoryProvider>().load(),
+    ]);
   }
 
   @override
@@ -54,7 +63,7 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
     );
 
     return RefreshIndicator(
-      onRefresh: context.read<AuthProvider>().loadProfile,
+      onRefresh: _refresh,
       child: ListView(
         // Always scrollable so back transition keeps a stable scroll view.
         physics: const AlwaysScrollableScrollPhysics(),
@@ -65,10 +74,7 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
           96,
         ),
         children: [
-          _ReportHeader(
-            accountId: accountId,
-            parentName: parentName,
-          ),
+          _ReportHeader(accountId: accountId, parentName: parentName),
           const SizedBox(height: AppSpacing.md),
           if (isLoading && profile.isEmpty)
             const LoadingView(message: 'Đang tải báo cáo của trẻ...')
@@ -91,12 +97,159 @@ class _ParentPortalScreenState extends State<ParentPortalScreen> {
               showParents: false,
             ),
             const SizedBox(height: AppSpacing.sm),
+            const _ParentHealthHistorySection(),
+            const SizedBox(height: AppSpacing.sm),
             const _ReadOnlyNote(),
           ],
         ],
       ),
     );
   }
+}
+
+class _ParentHealthHistorySection extends StatelessWidget {
+  const _ParentHealthHistorySection();
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<ParentHealthHistoryProvider>();
+    final records = provider.history?.records ?? const <HealthAssessment>[];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  LucideIcons.heartPulse,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    'Lịch sử khám sức khỏe',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SorakStatusBadge(
+                  label: 'Chỉ xem',
+                  tone: SorakStatusTone.neutral,
+                  translate: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            if (provider.isLoading && records.isEmpty)
+              const LoadingView(message: 'Đang tải lịch sử sức khỏe...')
+            else if (provider.errorMessage != null && records.isEmpty)
+              ErrorView(message: provider.errorMessage!, onRetry: provider.load)
+            else if (records.isEmpty)
+              const EmptyView(
+                title: 'Chưa có lịch sử khám',
+                message: 'Trẻ chưa có lần đánh giá sức khỏe nào.',
+                type: EmptyViewType.data,
+              )
+            else
+              for (var index = 0; index < records.length; index++) ...[
+                _ParentHealthRecordCard(record: records[index]),
+                if (index < records.length - 1)
+                  const SizedBox(height: AppSpacing.sm),
+              ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ParentHealthRecordCard extends StatelessWidget {
+  const _ParentHealthRecordCard({required this.record});
+
+  final HealthAssessment record;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.muted,
+        borderRadius: BorderRadius.circular(AppSpacing.radius),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _HealthLine(
+            label: 'Ngày đánh giá',
+            value: _formatHealthDate(record.assessmentDate),
+          ),
+          _HealthLine(label: 'Chiều cao', value: '${record.heightCm} cm'),
+          _HealthLine(label: 'Cân nặng', value: '${record.weightKg} kg'),
+          _HealthLine(label: 'BMI', value: record.bmi.toStringAsFixed(2)),
+          _HealthLine(label: 'BMI/tuổi', value: record.bmiStatus),
+          _HealthLine(label: 'Cao/tuổi', value: record.heightStatus),
+          _HealthLine(label: 'Nặng/tuổi', value: record.weightStatus),
+          _HealthLine(label: 'Ghi chú', value: record.note),
+        ],
+      ),
+    );
+  }
+}
+
+class _HealthLine extends StatelessWidget {
+  const _HealthLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final missing = value.trim().isEmpty;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 2,
+            child: Text(
+              missing ? 'Chưa có' : value,
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: missing ? AppColors.primary : AppColors.foreground,
+                fontWeight: missing ? FontWeight.w600 : FontWeight.w700,
+                fontStyle: missing ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatHealthDate(String raw) {
+  final parsed = DateTime.tryParse(raw);
+  if (parsed == null) return raw;
+  final day = parsed.day.toString().padLeft(2, '0');
+  final month = parsed.month.toString().padLeft(2, '0');
+  return '$day/$month/${parsed.year}';
 }
 
 class _ReportHeader extends StatelessWidget {
@@ -123,9 +276,9 @@ class _ReportHeader extends StatelessWidget {
                 parentName,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
             const SorakStatusBadge(

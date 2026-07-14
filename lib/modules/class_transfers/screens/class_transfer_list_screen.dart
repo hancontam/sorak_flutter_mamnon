@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_options.dart';
+import '../../../core/services/academic_data_refresh_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/text_normalizer.dart';
@@ -95,6 +96,9 @@ class _ClassTransferListScreenState extends State<ClassTransferListScreen> {
     var success = true;
     try {
       await context.read<ClassTransferProvider>().updateStatus(item.id, action);
+      if (mounted) {
+        await AcademicDataRefreshService.afterEnrollmentMutation(context);
+      }
     } catch (_) {
       success = false;
     }
@@ -350,7 +354,11 @@ class _ClassTransferCard extends StatelessWidget {
                   ),
                   _InfoLine(
                     label: 'Ngày hiệu lực',
-                    value: _formatDate(item.effectiveDate),
+                    value: item.status == 'Approved' && item.appliedAt.isEmpty
+                        ? 'Chưa tới ngày (${_formatDate(item.effectiveDate)})'
+                        : _formatDate(item.effectiveDate),
+                    isMissing:
+                        item.status == 'Approved' && item.appliedAt.isEmpty,
                   ),
                   _InfoLine(
                     label: 'Người tạo',
@@ -538,10 +546,15 @@ class _CompactStatusBadge extends StatelessWidget {
 }
 
 class _InfoLine extends StatelessWidget {
-  const _InfoLine({required this.label, required this.value});
+  const _InfoLine({
+    required this.label,
+    required this.value,
+    this.isMissing = false,
+  });
 
   final String label;
   final String value;
+  final bool isMissing;
 
   @override
   Widget build(BuildContext context) {
@@ -567,8 +580,9 @@ class _InfoLine extends StatelessWidget {
               textAlign: TextAlign.right,
               softWrap: true,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.foreground,
-                fontWeight: FontWeight.w700,
+                color: isMissing ? AppColors.primary : AppColors.foreground,
+                fontWeight: isMissing ? FontWeight.w600 : FontWeight.w700,
+                fontStyle: isMissing ? FontStyle.italic : FontStyle.normal,
               ),
             ),
           ),

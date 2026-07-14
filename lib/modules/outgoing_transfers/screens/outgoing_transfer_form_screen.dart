@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/services/academic_data_refresh_service.dart';
 import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../transfers/widgets/school_transfer_form.dart';
 import '../models/outgoing_transfer.dart';
@@ -26,16 +27,30 @@ class OutgoingTransferFormScreen extends StatelessWidget {
       initialReason: outgoingTransfer?.reason ?? '',
       initialNote: outgoingTransfer?.note ?? '',
       initialStatus: outgoingTransfer?.status,
-      onSave: (formData) {
+      onSave: (formData) async {
         final provider = context.read<OutgoingTransferProvider>();
         final data = formData.toJson('destination_school');
         if (outgoingTransfer == null) {
           data['school_year_id'] = context
               .read<ActiveAcademicYearProvider>()
               .selectedYearId;
-          return provider.createItem(data);
+          final success = await provider.createItem(data);
+          if (success && context.mounted) {
+            await AcademicDataRefreshService.afterEnrollmentMutation(
+              context,
+              refreshAccounts: true,
+            );
+          }
+          return success;
         }
-        return provider.updateItem(outgoingTransfer!.id, data);
+        final success = await provider.updateItem(outgoingTransfer!.id, data);
+        if (success && context.mounted) {
+          await AcademicDataRefreshService.afterEnrollmentMutation(
+            context,
+            refreshAccounts: true,
+          );
+        }
+        return success;
       },
     );
   }

@@ -10,7 +10,7 @@ Baseline date: 2026-07-10
 | `flutter test` | 83 passed, 2 skipped live-contract cases |
 | Live-branch adapter contract | 2 passed |
 | Android mock role UI | Pass on Pixel 7 Pro emulator, Android 16/API 36 |
-| Android live UI | Pass role journeys on API 35; Parent Health/Growth remains a backend contract gap |
+| Android live UI | Pass role journeys on API 35; Parent Health History is deployed, Nutrition/Growth remain backend contract gaps |
 
 ## Implemented Evidence
 
@@ -20,7 +20,8 @@ Baseline date: 2026-07-10
 - Exact Class, Student, Class Transfer, Incoming and Outgoing DTO assertions.
 - Three-year dataset, global invalidation and stale-response race regression.
 - Principal account flow, Teacher data/action scope and API 403 checks.
-- Parent `/auth/me` profile with no staff year selector or fake Health/Growth.
+- Parent `/auth/me` profile plus owned `/parent/health-history`; no staff year
+  selector and no fake Nutrition/Growth.
 - Health/Nutrition bulk save then reload, Growth history/WHO curves.
 - Teacher-to-Accounts and class-transfer approve/revert integrity.
 - Android screenshots for login, Principal dashboard/Health, Teacher dashboard,
@@ -60,5 +61,16 @@ Passing widget tests are not sufficient evidence for live behavior. A feature pa
 - Analyze, functional tests, live-contract tests, Android smoke, and debug APK results are recorded.
 
 Current completion status: **Partial**. Automated and all three Android role
-journeys pass, but SORAK-TEST-011 remains an external backend contract gap.
+journeys pass. Parent Health closes part of SORAK-TEST-011; Nutrition/Growth
+remain external backend contract gaps.
+
+## Enrollment refresh regression
+
+- After create/update/approve/reject/cancel/archive of class or school
+  transfers, reload Student, Class, FormOptions, transfer lists, Health roster,
+  and Principal Accounts in the same session.
+- Class list count, class detail current roster, and Health quick-entry roster
+  must all use the same current-enrollment predicate.
+- Applied movement records stay in the collapsed `Lịch sử biến động`; approved
+  future class transfers do not move a student until `applied_at` exists.
 Goal 50 must not start until those High items are closed or explicitly accepted.

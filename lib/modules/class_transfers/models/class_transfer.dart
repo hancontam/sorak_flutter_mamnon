@@ -13,6 +13,8 @@ class ClassTransfer {
     required this.reason,
     required this.effectiveDate,
     this.fromClassName = '',
+    this.fromClassId = 0,
+    this.appliedAt = '',
     this.status = 'Pending',
     this.note = '',
     this.requesterName = '',
@@ -25,15 +27,20 @@ class ClassTransfer {
   final String studentName;
   @JsonKey(readValue: _readFromClassName)
   final String fromClassName;
+  @JsonKey(readValue: _readFromClassId, defaultValue: 0)
+  final int fromClassId;
   final int toClassId;
   @JsonKey(readValue: _readToClassName)
   final String toClassName;
   final String reason;
   final String effectiveDate;
+  @JsonKey(defaultValue: '')
+  final String appliedAt;
   @JsonKey(defaultValue: 'Pending')
   final String status;
   @JsonKey(readValue: _readNote)
   final String note;
+
   /// Display name of requester (web: requester.teacher.full_name).
   @JsonKey(readValue: _readRequesterName, defaultValue: '')
   final String requesterName;
@@ -51,10 +58,12 @@ class ClassTransfer {
     int? studentId,
     String? studentName,
     String? fromClassName,
+    int? fromClassId,
     int? toClassId,
     String? toClassName,
     String? reason,
     String? effectiveDate,
+    String? appliedAt,
     String? status,
     String? note,
     String? requesterName,
@@ -64,10 +73,12 @@ class ClassTransfer {
       studentId: studentId ?? this.studentId,
       studentName: studentName ?? this.studentName,
       fromClassName: fromClassName ?? this.fromClassName,
+      fromClassId: fromClassId ?? this.fromClassId,
       toClassId: toClassId ?? this.toClassId,
       toClassName: toClassName ?? this.toClassName,
       reason: reason ?? this.reason,
       effectiveDate: effectiveDate ?? this.effectiveDate,
+      appliedAt: appliedAt ?? this.appliedAt,
       status: status ?? this.status,
       note: note ?? this.note,
       requesterName: requesterName ?? this.requesterName,
@@ -88,6 +99,14 @@ class ClassTransfer {
       return fromClass['class_name'] ?? '';
     }
     return json[key] ?? '';
+  }
+
+  static Object? _readFromClassId(Map<dynamic, dynamic> json, String key) {
+    final fromClass = json['from_class'];
+    if (fromClass is Map) {
+      return fromClass['class_id'] ?? 0;
+    }
+    return json[key] ?? 0;
   }
 
   static Object? _readToClassName(Map<dynamic, dynamic> json, String key) {

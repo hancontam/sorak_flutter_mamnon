@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/services/academic_data_refresh_service.dart';
+import '../../../core/utils/class_sort.dart';
+import '../../../core/utils/student_enrollment.dart';
+
 import '../../../core/constants/app_options.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -101,6 +105,10 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
       'reason': _reasonController.text.trim(),
       'effective_date': _effectiveDateController.text.trim(),
     });
+
+    if (success && mounted) {
+      await AcademicDataRefreshService.afterEnrollmentMutation(context);
+    }
 
     if (!mounted) {
       return;
@@ -304,7 +312,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
   }
 
   List<AppOption<String>> _classOptions(List<SchoolClass> classes) {
-    return classes
+    return sortedClassesByGrade(classes)
         .map(
           (schoolClass) => AppOption(
             value: '${schoolClass.id}',
@@ -326,6 +334,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
         .where(
           (student) =>
               allowedClassIds.contains(student.classId) &&
+              isStudentCurrentlyEnrolled(student) &&
               (classId == null || student.classId == classId),
         )
         .map(
@@ -343,7 +352,7 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
       return const [];
     }
 
-    return scopedClasses
+    return sortedClassesByGrade(scopedClasses)
         .where((schoolClass) {
           return schoolClass.id != fromClass.id &&
               schoolClass.schoolYearId == fromClass.schoolYearId &&

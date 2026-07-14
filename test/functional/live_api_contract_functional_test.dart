@@ -16,6 +16,7 @@ import 'package:sorak_flutter_mamnon/modules/health/repositories/health_assessme
 import 'package:sorak_flutter_mamnon/modules/health/repositories/nutrition_assessment_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/incoming_transfers/repositories/incoming_transfer_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/parent/repositories/parent_health_history_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
@@ -257,6 +258,10 @@ void main() {
         await growth.getHistory(studentId: 9, role: 'TEACHER', schoolYearId: 2);
         await growth.getWhoCurves(indicator: 'bmi', gender: 'Nam');
         await growth.getLatest(role: 'TEACHER', schoolYearId: 2);
+        final parentHistory = await ParentHealthHistoryRepository(
+          apiClient: apiClient,
+        ).getHealthHistory();
+        expect(parentHistory.student.id, 9);
 
         expect(adapter.query('/health-assessments/by-class-date'), {
           'class_id': '5',
@@ -300,6 +305,7 @@ void main() {
         });
         expect(adapter.query('/health-assessments')['latest'], 'true');
         expect(adapter.query('/health-assessments')['school_year_id'], '2');
+        expect(adapter.query('/parent/health-history'), isEmpty);
       },
       skip: _runLiveContract
           ? false
@@ -424,6 +430,30 @@ class _ContractAdapter implements HttpClientAdapter {
         'success': true,
         'data': {
           'student': {'student_id': 9, 'full_name': 'Bé An', 'gender': 'Nam'},
+          'records': [
+            {
+              'assessment_id': 1,
+              'student_id': 9,
+              'school_year_id': 2,
+              'assessment_date': '2026-07-10',
+              'height_cm': 100.5,
+              'weight_kg': 16.2,
+              'bmi': 16.0,
+            },
+          ],
+        },
+      };
+    }
+    if (path == '/parent/health-history') {
+      return {
+        'success': true,
+        'data': {
+          'student': {
+            'student_id': 9,
+            'full_name': 'Bé An',
+            'date_of_birth': '2021-01-01',
+            'gender': 'Nam',
+          },
           'records': [
             {
               'assessment_id': 1,

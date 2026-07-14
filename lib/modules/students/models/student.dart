@@ -17,6 +17,7 @@ class Student {
     this.studentIdCardNumber = '',
     this.gradeLevel = '',
     this.enrollmentDate = '',
+    this.currentEnrollmentLeftDate = '',
     this.ethnicity = '',
     this.nationality = '',
     this.religion = '',
@@ -48,6 +49,8 @@ class Student {
   final String gradeLevel;
   @JsonKey(defaultValue: '')
   final String enrollmentDate;
+  @JsonKey(readValue: _readCurrentEnrollmentLeftDate, defaultValue: '')
+  final String currentEnrollmentLeftDate;
   @JsonKey(defaultValue: '')
   final String ethnicity;
   @JsonKey(defaultValue: '')
@@ -86,6 +89,7 @@ class Student {
     List<StudentParent>? parents,
     String? gradeLevel,
     String? enrollmentDate,
+    String? currentEnrollmentLeftDate,
     String? ethnicity,
     String? nationality,
     String? religion,
@@ -108,6 +112,8 @@ class Student {
       studentIdCardNumber: studentIdCardNumber ?? this.studentIdCardNumber,
       gradeLevel: gradeLevel ?? this.gradeLevel,
       enrollmentDate: enrollmentDate ?? this.enrollmentDate,
+      currentEnrollmentLeftDate:
+          currentEnrollmentLeftDate ?? this.currentEnrollmentLeftDate,
       ethnicity: ethnicity ?? this.ethnicity,
       nationality: nationality ?? this.nationality,
       religion: religion ?? this.religion,
@@ -139,6 +145,20 @@ class Student {
       }
     }
     return json[key] ?? '';
+  }
+
+  static Object? _readCurrentEnrollmentLeftDate(
+    Map<dynamic, dynamic> json,
+    String key,
+  ) {
+    final enrollments = json['enrollments'];
+    if (enrollments is List && enrollments.isNotEmpty) {
+      final first = enrollments.first;
+      if (first is Map) {
+        return first['left_date']?.toString() ?? '';
+      }
+    }
+    return json[key]?.toString() ?? '';
   }
 
   static Object? _readIsActive(Map<dynamic, dynamic> json, String key) {

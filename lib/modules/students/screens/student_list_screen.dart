@@ -6,8 +6,10 @@ import '../../../core/constants/app_options.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/text_normalizer.dart';
+import '../../../core/utils/class_sort.dart';
 import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
+import '../../../core/widgets/academic_year_app_bar_selector.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/confirm_archive_dialog.dart';
 import '../../../core/widgets/empty_view.dart';
@@ -125,7 +127,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
   List<AppOption<String>> _classOptions(List<SchoolClass> classes) {
     return [
       const AppOption(value: '', label: 'Tất cả lớp'),
-      ...classes.map(
+      ...sortedClassesByGrade(classes).map(
         (schoolClass) => AppOption(
           value: '${schoolClass.id}',
           label: schoolClass.room.isEmpty
@@ -164,6 +166,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
           ? AppBar(
               title: const Text('Học sinh'),
               actions: [
+                const AcademicYearAppBarSelector(),
                 IconButton(
                   tooltip: 'Làm mới',
                   onPressed: isLoading ? null : _loadStudentsForCurrentYear,

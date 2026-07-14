@@ -52,6 +52,11 @@ class SchoolTransferCard extends StatelessWidget {
     final statusLabel = schoolTransferStatusLabel(status);
     final statusTone = schoolTransferStatusTone(status);
     final hasActions = showEdit || showCancel || showDelete;
+    final transferDay = DateTime.tryParse(transferDate);
+    final isFutureTransfer =
+        status == 'Recorded' &&
+        transferDay != null &&
+        transferDay.isAfter(DateTime.now());
 
     return Card(
       child: Padding(
@@ -93,10 +98,7 @@ class SchoolTransferCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: AppSpacing.xs),
-                      _CompactStatusBadge(
-                        label: statusLabel,
-                        tone: statusTone,
-                      ),
+                      _CompactStatusBadge(label: statusLabel, tone: statusTone),
                     ],
                   ),
                 ),
@@ -163,9 +165,13 @@ class SchoolTransferCard extends StatelessWidget {
                   ),
                   _InfoLine(
                     label: 'Ngày chuyển',
-                    value: formatTransferDate(transferDate),
+                    value: isFutureTransfer
+                        ? 'Chưa tới ngày (${formatTransferDate(transferDate)})'
+                        : formatTransferDate(transferDate),
+                    isMissing: isFutureTransfer,
                   ),
-                  if (reason.isNotEmpty) _InfoLine(label: 'Lý do', value: reason),
+                  if (reason.isNotEmpty)
+                    _InfoLine(label: 'Lý do', value: reason),
                   if (note.isNotEmpty) _InfoLine(label: 'Ghi chú', value: note),
                   _InfoLine(label: 'Trạng thái', value: statusLabel),
                 ],
@@ -231,10 +237,15 @@ class _CompactStatusBadge extends StatelessWidget {
 }
 
 class _InfoLine extends StatelessWidget {
-  const _InfoLine({required this.label, required this.value});
+  const _InfoLine({
+    required this.label,
+    required this.value,
+    this.isMissing = false,
+  });
 
   final String label;
   final String value;
+  final bool isMissing;
 
   @override
   Widget build(BuildContext context) {
@@ -260,8 +271,9 @@ class _InfoLine extends StatelessWidget {
               textAlign: TextAlign.right,
               softWrap: true,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.foreground,
-                fontWeight: FontWeight.w700,
+                color: isMissing ? AppColors.primary : AppColors.foreground,
+                fontWeight: isMissing ? FontWeight.w600 : FontWeight.w700,
+                fontStyle: isMissing ? FontStyle.italic : FontStyle.normal,
               ),
             ),
           ),

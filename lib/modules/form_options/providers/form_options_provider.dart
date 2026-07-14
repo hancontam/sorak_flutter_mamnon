@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/app_options.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/class_sort.dart';
+import '../../../core/utils/student_enrollment.dart';
 import '../../academic_years/models/academic_year.dart';
 import '../../classes/models/school_class.dart';
 import '../../students/models/student.dart';
@@ -176,7 +178,7 @@ class FormOptionsProvider extends ChangeNotifier {
     );
     _classes
       ..clear()
-      ..addAll(classes);
+      ..addAll(sortedClassesByGrade(classes));
 
     if (!_classes.any((schoolClass) => schoolClass.id == _selectedClassId)) {
       _selectedClassId = _classes.isEmpty ? null : _classes.first.id;
@@ -200,7 +202,11 @@ class FormOptionsProvider extends ChangeNotifier {
     final students = _selectedClassId == null
         ? _allStudents
         : _allStudents
-              .where((student) => student.classId == _selectedClassId)
+              .where(
+                (student) =>
+                    student.classId == _selectedClassId &&
+                    isStudentCurrentlyEnrolled(student),
+              )
               .toList();
     _students
       ..clear()
