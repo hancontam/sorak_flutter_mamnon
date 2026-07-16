@@ -946,6 +946,39 @@ class MockApiBackend implements HttpClientAdapter {
         'records': records,
       });
     }
+    // Optional WHO curves (unused by current health roster UI).
+    if (path == '/health-assessments/who-curves' && method == 'GET') {
+      if (!['height', 'weight', 'bmi'].contains(query['indicator']) ||
+          !['Nam', 'Nữ'].contains(query['gender'])) {
+        throw const _MockApiFailure(400, 'Chỉ số hoặc giới tính không hợp lệ');
+      }
+      return _list([
+        {
+          'month': 24,
+          'sd3neg': 78,
+          'sd2neg': 81,
+          'median': 86,
+          'sd2': 91,
+          'sd3': 94,
+        },
+        {
+          'month': 36,
+          'sd3neg': 85,
+          'sd2neg': 88,
+          'median': 94,
+          'sd2': 100,
+          'sd3': 103,
+        },
+        {
+          'month': 48,
+          'sd3neg': 90,
+          'sd2neg': 94,
+          'median': 101,
+          'sd2': 108,
+          'sd3': 111,
+        },
+      ]);
+    }
     if (path == '/health-assessments/bulk' && method == 'POST') {
       _requireFields(body, [
         'school_year_id',

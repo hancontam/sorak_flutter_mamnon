@@ -54,7 +54,7 @@ class HealthAssessmentProvider extends CrudProvider<HealthAssessment> {
     );
   }
 
-  /// Load latest assessment per student for the history list screen.
+  /// Latest assessment per student (list "Xem đánh giá sức khỏe").
   Future<void> loadLatest({int? schoolYearId}) async {
     _isLoadingLatest = true;
     notifyListeners();
@@ -70,6 +70,7 @@ class HealthAssessmentProvider extends CrudProvider<HealthAssessment> {
     }
   }
 
+  /// Student history for roster "Số đo gần nhất" / history sheet.
   Future<List<HealthAssessment>> getStudentHistory({
     required int studentId,
     int? schoolYearId,

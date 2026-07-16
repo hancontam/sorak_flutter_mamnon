@@ -74,6 +74,7 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
   /// Latest assessment per student.
   /// Live: GET /health-assessments?latest=true&school_year_id=
+  /// (Same contract as pre-clean GrowthWhoRepository.getLatest.)
   Future<List<HealthAssessment>> getLatest({int? schoolYearId}) async {
     final response = await _apiClient.dio.get(
       ApiEndpoints.healthAssessments,
@@ -89,6 +90,8 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
 
   /// Student health history.
   /// Live: GET /health-assessments/history?student_id=&school_year_id=
+  /// Response shape: { student, records }
+  /// (Same contract as pre-clean GrowthWhoRepository.getHistory.)
   Future<List<HealthAssessment>> getHistory({
     required int studentId,
     int? schoolYearId,

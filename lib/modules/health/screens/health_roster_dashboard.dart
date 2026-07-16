@@ -345,14 +345,81 @@ class HealthRosterDashboardState extends State<HealthRosterDashboard> {
     return matches.isEmpty ? null : matches.first;
   }
 
+  /// Load history for "Số đo gần nhất" without wiping same-day fallback
+  /// when history/latest returns empty (pre-clean bug + live empty year).
   Future<void> _openStudentPreview(
     Student student,
     List<HealthAssessment> healthItems,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
-    final studentHealthHistory = healthItems
-        .where((item) => item.studentId == student.id)
-        .toList();
+    final healthProvider = context.read<HealthAssessmentProvider>();
+    final academicYearId = context
+        .read<ActiveAcademicYearProvider>()
+        .selectedYearId;
+
+    final merged = <HealthAssessment>[];
+
+    void addAll(Iterable<HealthAssessment> items) {
+      for (final item in items) {
+        if (item.studentId != student.id) {
+          continue;
+        }
+        final duplicate = merged.any((existing) {
+          if (item.id != 0 && existing.id == item.id) {
+            return true;
+          }
+          return existing.assessmentDate == item.assessmentDate &&
+              existing.heightCm == item.heightCm &&
+              existing.weightKg == item.weightKg;
+        });
+        if (!duplicate) {
+          merged.add(item);
+        }
+      }
+    }
+
+    // 1) Same-day roster rows (by-class-date)
+    addAll(healthItems.where((item) => item.studentId == student.id));
+
+    // 2) History endpoint (pre-clean path; only merge when non-empty)
+    try {
+      var history = await healthProvider.getStudentHistory(
+        studentId: student.id,
+        schoolYearId: academicYearId,
+      );
+      if (history.isEmpty && academicYearId != null) {
+        history = await healthProvider.getStudentHistory(
+          studentId: student.id,
+        );
+      }
+      if (history.isNotEmpty) {
+        addAll(history);
+      }
+    } catch (_) {
+      // Keep by-class-date / latest fallbacks.
+    }
+
+    // 3) Latest-per-student if still nothing useful for prior measures
+    try {
+      if (healthProvider.latestByStudent.isEmpty) {
+        await healthProvider.loadLatest(schoolYearId: academicYearId);
+      }
+      addAll(
+        healthProvider.latestByStudent.where(
+          (item) => item.studentId == student.id,
+        ),
+      );
+    } catch (_) {
+      // Keep what we have.
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    final studentHealthHistory = merged
+      ..sort((a, b) => b.assessmentDate.compareTo(a.assessmentDate));
+
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -697,8 +764,10 @@ class _StudentPreviewSheetState extends State<_StudentPreviewSheet> {
   }
 
   HealthAssessment? get _latestHealth {
-    final items = List<HealthAssessment>.of(widget.history);
-    items.sort((a, b) => b.assessmentDate.compareTo(a.assessmentDate));
+    final items = widget.history
+        .where((item) => item.heightCm > 0 && item.weightKg > 0)
+        .toList()
+      ..sort((a, b) => b.assessmentDate.compareTo(a.assessmentDate));
     return items.isEmpty ? null : items.first;
   }
 
@@ -1374,9 +1443,25 @@ class _PreviewSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final healthItem = health;
-    final text = healthItem == null
-        ? 'Chưa có dữ liệu sức khỏe'
-        : 'BMI ${healthItem.bmi.toStringAsFixed(1)} · ${healthItem.bmiStatus}';
+    final String text;
+    if (healthItem == null) {
+      text = 'Chưa có dữ liệu sức khỏe';
+    } else {
+      final date = healthItem.assessmentDate.length >= 10
+          ? healthItem.assessmentDate.substring(0, 10)
+          : healthItem.assessmentDate;
+      final height = _formatMeasure(healthItem.heightCm);
+      final weight = _formatMeasure(healthItem.weightKg);
+      final parts = <String>[
+        if (date.isNotEmpty) date,
+        '$height cm',
+        '$weight kg',
+        if (healthItem.bmi > 0)
+          'BMI ${healthItem.bmi.toStringAsFixed(1)}',
+        if (healthItem.bmiStatus.isNotEmpty) healthItem.bmiStatus,
+      ];
+      text = parts.join(' · ');
+    }
 
     return Container(
       width: double.infinity,

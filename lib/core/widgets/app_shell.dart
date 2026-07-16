@@ -138,6 +138,9 @@ class _AppShellState extends State<AppShell> {
       context.read<HealthAssessmentProvider>().loadForAcademicYear(
         academicYearId,
       ),
+      context.read<HealthAssessmentProvider>().loadLatest(
+        schoolYearId: academicYearId,
+      ),
     ]);
 
     if (mounted) {

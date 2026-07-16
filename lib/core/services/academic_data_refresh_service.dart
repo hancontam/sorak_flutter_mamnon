@@ -45,6 +45,7 @@ class AcademicDataRefreshService {
         incomingTransfers.loadItems(),
         outgoingTransfers.loadItems(),
         health.loadItems(),
+        health.loadLatest(),
       ] else ...[
         students.loadForAcademicYear(yearId),
         classes.loadForAcademicYear(yearId),
@@ -52,6 +53,7 @@ class AcademicDataRefreshService {
         incomingTransfers.loadForAcademicYear(yearId),
         outgoingTransfers.loadForAcademicYear(yearId),
         health.loadForAcademicYear(yearId),
+        health.loadLatest(schoolYearId: yearId),
       ],
       if (refreshAccounts && role == 'PRINCIPAL')
         accounts.loadAccountManagement(),
