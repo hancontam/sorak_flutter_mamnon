@@ -751,7 +751,7 @@ class _StudentAccountCard extends StatelessWidget {
   }
 }
 
-/// Compact text badge using Claude semantic success/warning/error tokens.
+/// Compact text badge using semantic success/warning/error tokens.
 class _CompactStatusBadge extends StatelessWidget {
   const _CompactStatusBadge({required this.label, required this.tone});
 

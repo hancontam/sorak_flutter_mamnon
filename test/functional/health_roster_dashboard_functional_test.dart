@@ -18,7 +18,7 @@ void main() {
         expect(find.text('Đánh giá sức khỏe'), findsWidgets);
         expect(find.text('Lớp'), findsOneWidget);
         expect(find.text('Ngày đánh giá'), findsOneWidget);
-        // Current product scope: health entry only (no nutrition/growth toggle).
+        // Health roster supports class + date entry.
         expect(find.text('Nuôi dưỡng'), findsNothing);
         expect(find.text('Tăng trưởng'), findsNothing);
         await _selectMam1A(tester);

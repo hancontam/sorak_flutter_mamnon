@@ -10,9 +10,7 @@ import 'package:sorak_flutter_mamnon/modules/academic_years/repositories/academi
 import 'package:sorak_flutter_mamnon/modules/classes/providers/class_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/class_transfers/providers/class_transfer_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/form_options/providers/form_options_provider.dart';
-import 'package:sorak_flutter_mamnon/modules/health/providers/growth_who_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/health/providers/health_assessment_provider.dart';
-import 'package:sorak_flutter_mamnon/modules/health/providers/nutrition_assessment_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/incoming_transfers/providers/incoming_transfer_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/students/providers/student_provider.dart';
@@ -82,8 +80,6 @@ void main() {
       expect(shellContext.read<IncomingTransferProvider>().items, isEmpty);
       expect(shellContext.read<OutgoingTransferProvider>().items, isEmpty);
       expect(shellContext.read<HealthAssessmentProvider>().items, isEmpty);
-      expect(shellContext.read<NutritionAssessmentProvider>().items, isEmpty);
-      expect(shellContext.read<GrowthWhoProvider>().students, isEmpty);
     });
   });
 }

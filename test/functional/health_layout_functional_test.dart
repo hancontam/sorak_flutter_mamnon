@@ -6,7 +6,7 @@ import 'package:sorak_flutter_mamnon/modules/health/screens/health_screen.dart';
 import 'helpers/test_app.dart';
 
 void main() {
-  group('Health layout regression (Goal 37)', () {
+  group('Health layout regression', () {
     testWidgets(
       'small viewport: Health uses SafeArea and scroll padding for roster',
       (tester) async {
@@ -22,7 +22,7 @@ void main() {
 
         expect(find.byType(HealthScreen), findsOneWidget);
         expect(find.byType(SafeArea), findsWidgets);
-        // Nutrition / Growth toggles are out of current Health UI scope.
+        // Health screen shows roster entry only.
         expect(find.text('Nuôi dưỡng'), findsNothing);
         expect(find.text('Tăng trưởng'), findsNothing);
 

@@ -2,40 +2,42 @@
 
 [![Flutter CI](https://github.com/hancontam/sorak_flutter_mamnon/actions/workflows/flutter_ci.yml/badge.svg?branch=master)](https://github.com/hancontam/sorak_flutter_mamnon/actions/workflows/flutter_ci.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-stable-02569B?logo=flutter)](https://flutter.dev)
-[![PRM393](https://img.shields.io/badge/FPT-PRM393-1a2845)](https://github.com/hancontam/sorak_flutter_mamnon)
+[![PRM393](https://img.shields.io/badge/FPT-PRM393-C96442)](https://github.com/hancontam/sorak_flutter_mamnon)
 
-Ứng dụng mobile cho hệ thống theo dõi sức khỏe và phát triển của trẻ mầm non. Dự án được xây dựng cho môn PRM393, ưu tiên code đơn giản, dễ đọc và dễ mở rộng cho team newbie.
+Ứng dụng mobile **Sorak Mầm non** — quản lý vận hành trường mầm non trên thiết bị Android, xây dựng cho môn **PRM393**.
+
+App hỗ trợ ba vai trò: **Ban Giám Hiệu**, **Giáo viên** và **Phụ huynh**, đồng bộ với backend Sorak qua API `/api`.
 
 ## Tính năng
 
-- Đăng nhập cán bộ và phụ huynh bằng session cookie.
-- Dashboard theo vai trò Hiệu trưởng, Giáo viên và Phụ huynh.
-- Quản lý năm học, lớp học, giáo viên, học sinh và tài khoản.
-- Chuyển lớp, chuyển trường đi và chuyển trường đến.
-- Đánh giá sức khỏe, dinh dưỡng và tăng trưởng WHO.
-- Chọn năm học dùng chung toàn app.
-- Delete trên UI tuân theo soft archive của backend.
+- Đăng nhập cán bộ (email) và phụ huynh (mã thẻ học sinh) bằng session cookie.
+- Điều hướng theo vai trò (Bottom navigation + Drawer).
+- Năm học dùng chung toàn app (chọn và lưu trạng thái).
+- Quản lý năm học, lớp học, cán bộ, học sinh, tài khoản.
+- Chuyển lớp, chuyển trường đi / đến (duyệt, hủy, soft archive).
+- Đánh giá sức khỏe theo lớp (roster) và xem lịch sử đánh giá.
+- Cổng phụ huynh: hồ sơ trẻ + lịch sử khám (chỉ xem).
+- Delete trên UI gọi soft archive theo contract backend.
 
 ## Công nghệ
 
-- Flutter stable và Material 3.
-- Provider + ChangeNotifier quản lý state.
-- Dio, `cookie_jar` và `dio_cookie_manager` gọi API/session.
-- SharedPreferences qua `LocalStorage` lưu metadata và năm học đã chọn.
-- `json_serializable` + `build_runner` cho model API.
-- Google Fonts Poppins, Lottie cho loading/empty/success state.
+| Thành phần | Lựa chọn |
+| --- | --- |
+| Framework | Flutter stable, Material 3 |
+| State | Provider + `ChangeNotifier` |
+| HTTP | Dio + `cookie_jar` / `dio_cookie_manager` |
+| Local | SharedPreferences (`LocalStorage`) |
+| Model | `json_serializable` + `build_runner` |
+| UI | Montserrat (`google_fonts`), Lucide icons, Lottie (loading/empty) |
 
-## Cài đặt
+## Chạy project
 
 ### Yêu cầu
 
-```text
-Flutter stable
-Dart SDK theo Flutter
-Android Studio hoặc thiết bị Android/emulator
-```
+- Flutter stable
+- Android Studio hoặc thiết bị / emulator Android
 
-### Chạy local với mock API
+### Chạy app (mặc định = **Live API**)
 
 ```powershell
 git clone https://github.com/hancontam/sorak_flutter_mamnon.git
@@ -44,103 +46,78 @@ flutter pub get
 flutter run
 ```
 
-Mock API là mặc định, phù hợp để làm UI và chạy functional test không phụ thuộc server.
+`flutter run` và Run/Debug `main.dart` mặc định nối backend live:
 
-### Chạy với live API
-
-```powershell
-flutter run --dart-define=USE_MOCK_API=false --dart-define=API_BASE_URL=http://103.69.191.210:8082/api
+```text
+http://103.69.191.210:8082/api
 ```
 
-Không đưa mật khẩu, token hoặc cookie vào source code, README hay commit.
+Không cần thêm `--dart-define` khi demo / nộp bài.
+
+### Mock API (chỉ khi dev offline / test thủ công)
+
+```powershell
+flutter run --dart-define=USE_MOCK_API=true
+```
+
+`flutter test` luôn dùng mock (cấu hình trong `test/flutter_test_config.dart`).
+
+Không đưa mật khẩu, token hoặc cookie vào source code hay commit.
+
+## Build APK (live)
+
+```powershell
+flutter build apk --debug
+```
+
+APK: `build/app/outputs/flutter-apk/app-debug.apk` (cũng mặc định live API).
+
+GitHub Actions (nhánh `master`) chạy `flutter analyze`, `flutter test` (mock) và upload artifact APK **live**.
+
+## Cấu trúc
+
+```text
+lib/
+  app.dart / main.dart
+  core/           # network, theme, storage, widgets dùng chung
+  modules/        # theo domain: models, repositories, providers, screens
+test/
+  functional/     # functional test với mock API
+docs/             # kiến trúc, API, UI, test, deploy
+```
+
+Luồng module: `model` → `repository` → `provider` → `screen`.
+
+## Design (UI final)
+
+- Font: **Montserrat**
+- Primary: `#C96442`
+- Background / card: `#FAF9F5`
+- Radius: **8px**
+- Spacing: 8 / 12 / 16
+
+Chi tiết: [docs/UI.md](docs/UI.md).
+
+## Tài liệu
+
+| Tài liệu | Nội dung |
+| --- | --- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Kiến trúc, module, auth, năm học |
+| [docs/API.md](docs/API.md) | Endpoint và envelope response |
+| [docs/UI.md](docs/UI.md) | Design system và điều hướng theo role |
+| [docs/TESTING.md](docs/TESTING.md) | Functional test mock |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Live run, build APK, CI |
 
 ## Lệnh thường dùng
 
 ```powershell
-# Sinh lại file .g.dart sau khi sửa model json_serializable
-dart run build_runner build
-
-# Kiểm tra code và test UI/mock API
+dart run build_runner build   # sau khi sửa model json_serializable
 flutter analyze
 flutter test
-
-# Kiểm tra contract của live branch bằng adapter, không gọi server thật
-flutter test --dart-define=USE_MOCK_API=false test/functional/live_api_contract_functional_test.dart
-
-# Build APK debug local
-flutter build apk --debug
 ```
 
-## Cấu trúc project
+## Ghi chú
 
-```text
-lib/
-  app.dart
-  main.dart
-  core/
-    constants/       # AppConfig, API endpoint, storage key
-    network/         # ApiClient, ApiResponse, ApiPage
-    storage/         # SharedPreferences wrapper
-    theme/           # Material 3 theme, color, spacing
-    widgets/         # Widget dùng chung, AppShell
-  modules/
-    [module_name]/
-      models/        # json_serializable model
-      providers/     # ChangeNotifier
-      repositories/  # Mock/live Dio API
-      screens/       # List, form, detail
-      widgets/       # Widget riêng của module
-test/
-  functional/        # Functional and API contract tests
-```
-
-Luồng code cho module mới:
-
-```text
-model -> dart run build_runner build -> repository -> provider -> screen -> test
-```
-
-## Design system
-
-| Thành phần | Quy ước |
-| --- | --- |
-| UI | Material 3, Poppins |
-| Primary | `#1a2845` |
-| Accent | `#f5a623` |
-| Success / Error | `#4ade80` / `#ef4444` |
-| Spacing | 8, 12, 16 px |
-| Card | Flat, radius 16 px |
-| State | Provider + ChangeNotifier |
-
-Mobile ưu tiên `ListTile` hoặc `Card + ListTile`. Không dùng Excel import/export trong app. Các field có giá trị cố định nên dùng dropdown, không nhập text tự do.
-
-## Tải APK preview từ GitHub Actions
-
-1. Push code lên nhánh `master` hoặc tạo Pull Request vào `master`.
-2. Mở tab **Actions** trên GitHub và chọn workflow **Flutter CI**.
-3. Mở lần chạy có dấu tick xanh.
-4. Ở cuối trang, tải artifact **sorak-mam-non-debug-apk**.
-5. Giải nén artifact để lấy file `app-debug.apk` và cài lên thiết bị Android test.
-
-APK CI chỉ dùng để preview/test nội bộ. Không dùng APK debug để phát hành production.
-
-## Contribute
-
-1. Tạo branch từ `master`: `feature/ten-chuc-nang` hoặc `fix/ten-loi`.
-2. Giữ module theo cấu trúc `models -> repositories -> providers -> screens`.
-3. Nếu sửa model API, chạy `dart run build_runner build`.
-4. Trước khi tạo Pull Request, chạy:
-
-   ```powershell
-   flutter analyze
-   flutter test
-   ```
-
-5. Pull Request cần mô tả ngắn: màn hình/flow thay đổi, cách test và ảnh chụp nếu có UI.
-
-## Lưu ý API
-
-- Luôn đối chiếu backend route + validator và web flow trước khi thêm endpoint live.
-- Năm học là state global, không hard-code `school_year_id`.
+- Năm học là state global — không hard-code `school_year_id`.
+- Archive = soft delete theo backend; không hard-delete dữ liệu từ app (trừ endpoint health DELETE nếu backend yêu cầu).
 - Không log password, JWT, Cookie hay Set-Cookie.
-- Archive là soft delete theo contract backend.

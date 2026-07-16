@@ -23,7 +23,6 @@ import '../../form_options/providers/form_options_provider.dart';
 import '../../students/models/student.dart';
 import '../../students/providers/student_provider.dart';
 import '../models/health_assessment.dart';
-import '../providers/growth_who_provider.dart';
 import '../providers/health_assessment_provider.dart';
 
 /// One latest-assessment card per student. Tapping a card opens that student's
@@ -63,24 +62,19 @@ class _HealthAssessmentListScreenState
 
   Future<void> _loadStudentsAndLatest() async {
     final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
-    final role =
-        context.read<AuthProvider>().currentUser?.role.toUpperCase() ??
-        'TEACHER';
+    final health = context.read<HealthAssessmentProvider>();
     if (yearId == null) {
       await Future.wait([
         context.read<StudentProvider>().loadItems(),
-        context.read<GrowthWhoProvider>().load(role: role),
-        context.read<HealthAssessmentProvider>().loadItems(),
+        health.loadLatest(),
+        health.loadItems(),
       ]);
       return;
     }
     await Future.wait([
       context.read<StudentProvider>().loadForAcademicYear(yearId),
-      context.read<GrowthWhoProvider>().load(
-        role: role,
-        academicYearId: yearId,
-      ),
-      context.read<HealthAssessmentProvider>().loadForAcademicYear(yearId),
+      health.loadLatest(schoolYearId: yearId),
+      health.loadForAcademicYear(yearId),
     ]);
   }
 
@@ -171,11 +165,10 @@ class _HealthAssessmentListScreenState
     ];
   }
 
-  void _openHistorySheet(Student student, String role, int? academicYearId) {
-    final history = context.read<GrowthWhoProvider>().getStudentHistory(
+  void _openHistorySheet(Student student, int? academicYearId) {
+    final history = context.read<HealthAssessmentProvider>().getStudentHistory(
       studentId: student.id,
-      role: role,
-      academicYearId: academicYearId,
+      schoolYearId: academicYearId,
     );
 
     showModalBottomSheet<void>(
@@ -214,7 +207,6 @@ class _HealthAssessmentListScreenState
   Widget build(BuildContext context) {
     final optionsProvider = context.watch<FormOptionsProvider>();
     final studentProvider = context.watch<StudentProvider>();
-    final growthProvider = context.watch<GrowthWhoProvider>();
     final healthProvider = context.watch<HealthAssessmentProvider>();
     final role = context.watch<AuthProvider>().currentUser?.role.toUpperCase();
     final isTeacher = role == 'TEACHER';
@@ -229,7 +221,7 @@ class _HealthAssessmentListScreenState
         : null;
     final items = _filtered(studentProvider.items, allowedClassIds);
     final latestByStudent = {
-      for (final item in growthProvider.students) item.studentId: item,
+      for (final item in healthProvider.latestByStudent) item.studentId: item,
     };
     final selectedDate = _dateController.text.trim();
     final selectedDateByStudent = <int, HealthAssessment>{};
@@ -246,12 +238,11 @@ class _HealthAssessmentListScreenState
         .selectedYearId;
     final isLoading =
         studentProvider.isLoading ||
-        growthProvider.isLoading ||
         healthProvider.isLoading ||
+        healthProvider.isLoadingLatest ||
         optionsProvider.isLoading ||
         isClassScopeLoading;
-    final errorMessage =
-        studentProvider.errorMessage ?? growthProvider.errorMessage;
+    final errorMessage = studentProvider.errorMessage ?? healthProvider.errorMessage;
 
     return Scaffold(
       appBar: AppBar(
@@ -371,11 +362,7 @@ class _HealthAssessmentListScreenState
                   dateFiltered: isDateFiltered,
                   onTap: isDateFiltered
                       ? null
-                      : () => _openHistorySheet(
-                          items[index],
-                          role ?? 'TEACHER',
-                          academicYearId,
-                        ),
+                      : () => _openHistorySheet(items[index], academicYearId),
                 ),
                 const SizedBox(height: AppSpacing.sm),
               ],

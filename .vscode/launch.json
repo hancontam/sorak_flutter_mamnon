@@ -2,24 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Sorak (Live API)",
+      "name": "main.dart",
       "request": "launch",
       "type": "dart",
-      "program": "lib/main.dart",
-      "args": [
-        "--dart-define=USE_MOCK_API=false",
-        "--dart-define=API_BASE_URL=http://103.69.191.210:8082/api"
-      ]
-    },
-    {
-      "name": "Sorak (Mock API)",
-      "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "args": [
-        "--dart-define=USE_MOCK_API=true",
-        "--dart-define=API_BASE_URL=http://localhost:3000/api"
-      ]
+      "program": "lib/main.dart"
     }
   ]
 }

@@ -1,13 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sorak_flutter_mamnon/core/network/api_client.dart';
 import 'package:sorak_flutter_mamnon/modules/class_transfers/repositories/class_transfer_repository.dart';
-import 'package:sorak_flutter_mamnon/modules/health/repositories/growth_who_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/health/repositories/health_assessment_repository.dart';
-import 'package:sorak_flutter_mamnon/modules/health/repositories/nutrition_assessment_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 
 void main() {
-  group('Health, nutrition and growth data journeys', () {
+  group('Health data journeys', () {
     late ApiClient client;
 
     setUp(() {
@@ -50,67 +48,17 @@ void main() {
       expect(reloaded.single.note, 'MOBILE_TEST_Sức khỏe ổn định');
     });
 
-    test(
-      'nutrition grid exposes missing row then persists bulk values',
-      () async {
-        final repository = NutritionAssessmentRepository(apiClient: client);
-        final emptyPeriod = await repository.getGrid(
-          classId: 301,
-          schoolYearId: 101,
-          period: 'giua_nam',
-        );
-        expect(emptyPeriod.single.studentId, 401);
-        expect(emptyPeriod.single.weightChannel, isEmpty);
-
-        final result = await repository.bulkSave(
-          classId: 301,
-          schoolYearId: 101,
-          period: 'giua_nam',
-          rows: [
-            {
-              'student_id': 401,
-              'weight_channel': 'Bình thường',
-              'is_stunting': false,
-              'is_severe_stunting': false,
-              'is_obese': true,
-              'note': 'MOBILE_TEST_Theo dõi thêm',
-            },
-          ],
-        );
-        expect(result['saved'], 1);
-
-        final reloaded = await repository.getGrid(
-          classId: 301,
-          schoolYearId: 101,
-          period: 'giua_nam',
-        );
-        expect(reloaded.single.isObese, isTrue);
-        expect(reloaded.single.weightChannel, 'Bình thường');
-        expect(reloaded.single.note, 'MOBILE_TEST_Theo dõi thêm');
-      },
-    );
-
-    test('growth history and WHO curves match selected student', () async {
-      final repository = GrowthWhoRepository(apiClient: client);
-      final latest = await repository.getLatest(
-        role: 'PRINCIPAL',
-        schoolYearId: 101,
-      );
+    test('latest and history endpoints return student health records', () async {
+      final repository = HealthAssessmentRepository(apiClient: client);
+      final latest = await repository.getLatest(schoolYearId: 101);
       final history = await repository.getHistory(
         studentId: 401,
-        role: 'PRINCIPAL',
         schoolYearId: 101,
-      );
-      final curves = await repository.getWhoCurves(
-        indicator: 'bmi',
-        gender: 'Nam',
       );
 
       expect(latest.any((item) => item.studentId == 401), isTrue);
       expect(history.map((item) => item.studentId).toSet(), {401});
       expect(history, hasLength(2));
-      expect(curves, hasLength(3));
-      expect(curves.first.month, 24);
     });
 
     test(

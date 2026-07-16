@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   quality-and-apk:
-    name: Analyze, test, and build APK
+    name: Analyze, test, and build live APK
     runs-on: ubuntu-latest
 
     steps:
@@ -37,25 +37,17 @@ jobs:
       - name: Analyze source
         run: flutter analyze
 
-      - name: Run tests
+      - name: Run mock functional tests
         run: flutter test
 
-      - name: Verify live API contract
-        run: >-
-          flutter test
-          --dart-define=USE_MOCK_API=false
-          test/functional/live_api_contract_functional_test.dart
-
       - name: Build live debug APK
-        run: >-
-          flutter build apk --debug
-          --dart-define=USE_MOCK_API=false
-          --dart-define=API_BASE_URL=http://103.69.191.210:8082/api
+        # App defaults to live API; no dart-define required.
+        run: flutter build apk --debug
 
       - name: Upload live debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: sorak-mam-non-live-debug-apk
+          name: sorak-flutter-live-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 14

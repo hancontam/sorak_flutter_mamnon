@@ -28,7 +28,7 @@ class AppColors {
   static const Color textGray = mutedForeground;
   static const Color surface = card;
 
-  // Compatibility aliases. Semantic state colors still stay inside Claude.
+  // Semantic aliases used across status chips and legacy call sites.
   static const Color success = secondary;
   static const Color warning = chartNeutral;
   static const Color error = destructive;

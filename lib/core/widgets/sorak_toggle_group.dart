@@ -96,7 +96,7 @@ class _ToggleButton<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Selected uses primary Claude so the active segment is obvious.
+    // Selected segment uses primary for clear contrast.
     final foreground = selected
         ? AppColors.primaryForeground
         : AppColors.mutedForeground;

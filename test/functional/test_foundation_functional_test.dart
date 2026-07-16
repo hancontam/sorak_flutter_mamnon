@@ -9,7 +9,7 @@ import 'helpers/test_app.dart';
 import 'helpers/test_data.dart';
 
 void main() {
-  group('Goal 1 functional test foundation', () {
+  group('Test foundation', () {
     testWidgets('can pump Sorak app without saved user', (tester) async {
       await tester.pumpSorakApp();
 

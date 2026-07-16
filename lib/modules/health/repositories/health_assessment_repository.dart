@@ -72,6 +72,44 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
     return ApiResponse.object(response.data);
   }
 
+  /// Latest assessment per student.
+  /// Live: GET /health-assessments?latest=true&school_year_id=
+  Future<List<HealthAssessment>> getLatest({int? schoolYearId}) async {
+    final response = await _apiClient.dio.get(
+      ApiEndpoints.healthAssessments,
+      queryParameters: {
+        'latest': 'true',
+        'school_year_id': ?schoolYearId,
+      },
+    );
+    return _readList(response.data)
+        .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Student health history.
+  /// Live: GET /health-assessments/history?student_id=&school_year_id=
+  Future<List<HealthAssessment>> getHistory({
+    required int studentId,
+    int? schoolYearId,
+  }) async {
+    final response = await _apiClient.dio.get(
+      '${ApiEndpoints.healthAssessments}/history',
+      queryParameters: {
+        'student_id': studentId,
+        'school_year_id': ?schoolYearId,
+      },
+    );
+    final object = ApiResponse.object(response.data);
+    final records = object['records'];
+    if (records is! List) {
+      return const [];
+    }
+    return records
+        .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   @override
   Future<HealthAssessment?> getById(int id) async {
     final response = await _apiClient.dio.get(

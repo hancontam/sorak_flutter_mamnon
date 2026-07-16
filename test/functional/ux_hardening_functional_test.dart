@@ -8,7 +8,7 @@ import 'package:sorak_flutter_mamnon/core/widgets/error_view.dart';
 import 'helpers/test_app.dart';
 
 void main() {
-  group('Goal 50 UI/UX hardening', () {
+  group('UI/UX hardening', () {
     testWidgets(
       'shared states are Vietnamese, semantic and usable at 2x text',
       (tester) async {

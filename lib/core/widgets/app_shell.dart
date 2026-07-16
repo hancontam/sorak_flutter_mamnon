@@ -11,9 +11,7 @@ import '../../modules/class_transfers/providers/class_transfer_provider.dart';
 import '../../modules/classes/providers/class_provider.dart';
 import '../../modules/classes/screens/class_list_screen.dart';
 import '../../modules/form_options/providers/form_options_provider.dart';
-import '../../modules/health/providers/growth_who_provider.dart';
 import '../../modules/health/providers/health_assessment_provider.dart';
-import '../../modules/health/providers/nutrition_assessment_provider.dart';
 import '../../modules/incoming_transfers/providers/incoming_transfer_provider.dart';
 import '../../modules/outgoing_transfers/providers/outgoing_transfer_provider.dart';
 import '../../modules/parent/screens/parent_portal_screen.dart';
@@ -139,13 +137,6 @@ class _AppShellState extends State<AppShell> {
       ),
       context.read<HealthAssessmentProvider>().loadForAcademicYear(
         academicYearId,
-      ),
-      context.read<NutritionAssessmentProvider>().loadForAcademicYear(
-        academicYearId,
-      ),
-      context.read<GrowthWhoProvider>().load(
-        role: role,
-        academicYearId: academicYearId,
       ),
     ]);
 

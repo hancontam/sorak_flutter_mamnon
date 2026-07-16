@@ -4,14 +4,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_spacing.dart';
 import 'health_roster_dashboard.dart';
 
-/// Staff health entry screen. Nutrition / Growth are out of current UI scope.
+/// Màn nhập đánh giá sức khỏe theo lớp (roster).
 class HealthScreen extends StatefulWidget {
   const HealthScreen({
     super.key,
     this.showAppBar = true,
   });
 
-  /// When false, only body is rendered (embedded layouts).
+  /// Khi false chỉ render body (layout nhúng).
   final bool showAppBar;
 
   @override
@@ -25,7 +25,6 @@ class _HealthScreenState extends State<HealthScreen> {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    // Bottom clearance for system inset + NavigationBar so last items scroll up.
     final bottomPadding =
         AppSpacing.md +
         media.padding.bottom +
@@ -43,10 +42,7 @@ class _HealthScreenState extends State<HealthScreen> {
           bottomPadding,
         ),
         children: [
-          HealthRosterDashboard(
-            key: _dashboardKey,
-            mode: HealthRosterMode.health,
-          ),
+          HealthRosterDashboard(key: _dashboardKey),
         ],
       ),
     );

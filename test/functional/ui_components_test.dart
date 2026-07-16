@@ -11,8 +11,8 @@ import 'helpers/test_app.dart';
 import 'helpers/test_data.dart';
 
 void main() {
-  group('Claude UI component regression', () {
-    testWidgets('locks Claude theme tokens and Montserrat radius', (
+  group('UI component regression', () {
+    testWidgets('locks theme tokens and Montserrat radius', (
       tester,
     ) async {
       await tester.pumpWidget(

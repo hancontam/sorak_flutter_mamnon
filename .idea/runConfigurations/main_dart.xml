@@ -1,7 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="main.dart (Live API)" type="FlutterRunConfigurationType" factoryName="Flutter">
+  <configuration default="true" name="main.dart" type="FlutterRunConfigurationType" factoryName="Flutter">
     <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
-    <option name="additionalArgs" value="--dart-define=USE_MOCK_API=false --dart-define=API_BASE_URL=http://103.69.191.210:8082/api" />
     <method v="2" />
   </configuration>
 </component>

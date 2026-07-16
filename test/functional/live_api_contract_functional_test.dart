@@ -11,9 +11,7 @@ import 'package:sorak_flutter_mamnon/modules/academic_years/repositories/academi
 import 'package:sorak_flutter_mamnon/modules/class_transfers/repositories/class_transfer_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/providers/class_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/repositories/class_repository.dart';
-import 'package:sorak_flutter_mamnon/modules/health/repositories/growth_who_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/health/repositories/health_assessment_repository.dart';
-import 'package:sorak_flutter_mamnon/modules/health/repositories/nutrition_assessment_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/incoming_transfers/repositories/incoming_transfer_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/parent/repositories/parent_health_history_repository.dart';
@@ -211,7 +209,7 @@ void main() {
     );
 
     test(
-      'health nutrition growth repositories use by-class-date bulk grid history who-curves',
+      'health repositories use by-class-date bulk history and latest',
       () async {
         final apiClient = ApiClient.memory();
         final adapter = _ContractAdapter();
@@ -232,32 +230,8 @@ void main() {
             },
           ],
         );
-
-        final nutrition = NutritionAssessmentRepository(apiClient: apiClient);
-        await nutrition.getGrid(classId: 5, schoolYearId: 2, period: 'dau_nam');
-        await nutrition.bulkSave(
-          classId: 5,
-          schoolYearId: 2,
-          period: 'dau_nam',
-          rows: [
-            {
-              'student_id': 9,
-              'weight_channel': '',
-              'is_stunting': false,
-              'is_severe_stunting': false,
-              'is_obese': false,
-              'note': '',
-            },
-          ],
-        );
-
-        // Live archive must not invent DELETE or fake bulk-clear.
-        await expectLater(nutrition.archive(9), throwsA(isA<StateError>()));
-
-        final growth = GrowthWhoRepository(apiClient: apiClient);
-        await growth.getHistory(studentId: 9, role: 'TEACHER', schoolYearId: 2);
-        await growth.getWhoCurves(indicator: 'bmi', gender: 'Nam');
-        await growth.getLatest(role: 'TEACHER', schoolYearId: 2);
+        await health.getHistory(studentId: 9, schoolYearId: 2);
+        await health.getLatest(schoolYearId: 2);
         final parentHistory = await ParentHealthHistoryRepository(
           apiClient: apiClient,
         ).getHealthHistory();
@@ -280,28 +254,9 @@ void main() {
             },
           ],
         });
-        expect(adapter.query('/nutrition-assessments/grid'), {
-          'class_id': '5',
-          'school_year_id': '2',
-          'period': 'dau_nam',
-        });
-        final nutritionBulk =
-            adapter.request('POST', '/nutrition-assessments/bulk').body as Map;
-        expect(nutritionBulk['class_id'], 5);
-        expect(nutritionBulk['school_year_id'], 2);
-        expect(nutritionBulk['period'], 'dau_nam');
-        expect(nutritionBulk['rows'], isA<List>());
-        expect((nutritionBulk['rows'] as List).first['student_id'], 9);
-        // Live nutrition must never invent a DELETE route.
-        expect(adapter.hasDeleteFor('nutrition-assessments'), isFalse);
-
         expect(adapter.query('/health-assessments/history'), {
           'student_id': '9',
           'school_year_id': '2',
-        });
-        expect(adapter.query('/health-assessments/who-curves'), {
-          'indicator': 'bmi',
-          'gender': 'Nam',
         });
         expect(adapter.query('/health-assessments')['latest'], 'true');
         expect(adapter.query('/health-assessments')['school_year_id'], '2');
@@ -402,29 +357,6 @@ class _ContractAdapter implements HttpClientAdapter {
         },
       };
     }
-    if (path == '/nutrition-assessments/grid') {
-      return {
-        'success': true,
-        'data': [
-          {
-            'student_id': 9,
-            'full_name': 'Bé An',
-            'nutrition_id': 3,
-            'weight_channel': null,
-            'is_stunting': false,
-            'is_severe_stunting': false,
-            'is_obese': false,
-            'latest_bmi': 15.5,
-          },
-        ],
-      };
-    }
-    if (path == '/nutrition-assessments/bulk' && method == 'POST') {
-      return {
-        'success': true,
-        'data': {'saved': 1, 'cleared': 0, 'skipped': 0},
-      };
-    }
     if (path == '/health-assessments/history') {
       return {
         'success': true,
@@ -466,21 +398,6 @@ class _ContractAdapter implements HttpClientAdapter {
             },
           ],
         },
-      };
-    }
-    if (path == '/health-assessments/who-curves') {
-      return {
-        'success': true,
-        'data': [
-          {
-            'month': 24,
-            'sd3neg': 78.0,
-            'sd2neg': 81.0,
-            'median': 86.0,
-            'sd2': 91.0,
-            'sd3': 94.0,
-          },
-        ],
       };
     }
     if (path == '/health-assessments') {

@@ -14,7 +14,6 @@ class ApiEndpoints {
   static const teachers = '/teachers';
   static const students = '/students';
   static const healthAssessments = '/health-assessments';
-  static const nutritionAssessments = '/nutrition-assessments';
   static const classTransfers = '/class-transfers';
   static const outgoingTransfers = '/outgoing-transfers';
   static const incomingTransfers = '/incoming-transfers';

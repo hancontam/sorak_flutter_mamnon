@@ -23,7 +23,6 @@ class MockApiBackend implements HttpClientAdapter {
   late List<Map<String, dynamic>> incomingTransfers;
   late List<Map<String, dynamic>> outgoingTransfers;
   late List<Map<String, dynamic>> healthAssessments;
-  late List<Map<String, dynamic>> nutritionAssessments;
 
   void configureSession({
     required String role,
@@ -188,11 +187,6 @@ class MockApiBackend implements HttpClientAdapter {
       _health(602, 401, 301, 101, '2026-01-10', 100, 15.8),
       _health(603, 402, 302, 101, '2026-05-10', 109, 18.2),
       _health(604, 403, 303, 102, '2025-05-10', 112, 19.1),
-    ];
-    nutritionAssessments = [
-      _nutrition(611, 401, 301, 101, 'dau_nam'),
-      _nutrition(612, 402, 302, 101, 'dau_nam', isObese: true),
-      _nutrition(613, 403, 303, 102, 'cuoi_nam'),
     ];
   }
 
@@ -868,8 +862,6 @@ class MockApiBackend implements HttpClientAdapter {
 
     final healthResult = _healthRoute(method, path, query, body);
     if (healthResult != null) return healthResult;
-    final nutritionResult = _nutritionRoute(method, path, query, body);
-    if (nutritionResult != null) return nutritionResult;
 
     throw _MockApiFailure(
       404,
@@ -953,38 +945,6 @@ class MockApiBackend implements HttpClientAdapter {
         'student': _studentSummary(_find(students, 'student_id', studentId)),
         'records': records,
       });
-    }
-    if (path == '/health-assessments/who-curves' && method == 'GET') {
-      if (!['height', 'weight', 'bmi'].contains(query['indicator']) ||
-          !['Nam', 'Nữ'].contains(query['gender'])) {
-        throw const _MockApiFailure(400, 'Chỉ số hoặc giới tính không hợp lệ');
-      }
-      return _list([
-        {
-          'month': 24,
-          'sd3neg': 78,
-          'sd2neg': 81,
-          'median': 86,
-          'sd2': 91,
-          'sd3': 94,
-        },
-        {
-          'month': 36,
-          'sd3neg': 85,
-          'sd2neg': 88,
-          'median': 94,
-          'sd2': 100,
-          'sd3': 103,
-        },
-        {
-          'month': 48,
-          'sd3neg': 90,
-          'sd2neg': 94,
-          'median': 101,
-          'sd2': 108,
-          'sd3': 111,
-        },
-      ]);
     }
     if (path == '/health-assessments/bulk' && method == 'POST') {
       _requireFields(body, [
@@ -1081,89 +1041,6 @@ class MockApiBackend implements HttpClientAdapter {
       );
       healthAssessments.add(item);
       return _object(item);
-    }
-    return null;
-  }
-
-  _MockResult? _nutritionRoute(
-    String method,
-    String path,
-    Map<String, String> query,
-    Map<String, dynamic> body,
-  ) {
-    if (!path.startsWith('/nutrition-assessments')) return null;
-    _requireStaff();
-    if ((path.endsWith('/grid') || path.endsWith('/grid-all')) &&
-        method == 'GET') {
-      final yearId = int.tryParse(query['school_year_id'] ?? '');
-      final classId = int.tryParse(query['class_id'] ?? '');
-      final period = query['period'];
-      if (yearId == null ||
-          period == null ||
-          (path.endsWith('/grid') && classId == null)) {
-        throw const _MockApiFailure(400, 'Thiếu bộ lọc lưới dinh dưỡng');
-      }
-      var roster = students
-          .where((item) => _studentYear(item) == yearId)
-          .toList();
-      if (classId != null) {
-        roster = roster
-            .where((item) => _studentClass(item) == classId)
-            .toList();
-      }
-      if (_role == 'TEACHER') {
-        final allowed = classes
-            .where(_isAssignedClass)
-            .map((item) => item['class_id'])
-            .toSet();
-        roster = roster
-            .where((item) => allowed.contains(_studentClass(item)))
-            .toList();
-      }
-      final rows = roster.map((student) {
-        final assessment = nutritionAssessments.firstWhere(
-          (item) =>
-              item['student_id'] == student['student_id'] &&
-              item['period'] == period,
-          orElse: () => <String, dynamic>{},
-        );
-        return {
-          'student_id': student['student_id'],
-          'student_name': student['full_name'],
-          'student_id_card_number': student['student_id_card_number'],
-          'class_name': _className(_studentClass(student)),
-          ...assessment,
-        };
-      }).toList();
-      return _list(rows);
-    }
-    if (path.endsWith('/bulk') && method == 'POST') {
-      _requireFields(body, ['class_id', 'school_year_id', 'period', 'rows']);
-      final rows = body['rows'] as List? ?? const [];
-      for (final raw in rows.whereType<Map>()) {
-        final row = Map<String, dynamic>.from(raw);
-        final existing = nutritionAssessments.indexWhere(
-          (item) =>
-              item['student_id'] == _asInt(row['student_id']) &&
-              item['period'] == body['period'],
-        );
-        final item = _nutrition(
-          existing < 0
-              ? _nextId(nutritionAssessments, 'nutrition_id')
-              : (nutritionAssessments[existing]['nutrition_id'] as num).toInt(),
-          _asInt(row['student_id'])!,
-          _asInt(body['class_id'])!,
-          _asInt(body['school_year_id'])!,
-          '${body['period']}',
-          isObese: row['is_obese'] == true,
-        )..addAll(row);
-        if (existing < 0) {
-          nutritionAssessments.add(item);
-        } else {
-          nutritionAssessments[existing] = item;
-        }
-      }
-      return _object({'saved': rows.length, 'cleared': 0, 'skipped': 0});
     }
     return null;
   }
@@ -1593,27 +1470,6 @@ class MockApiBackend implements HttpClientAdapter {
     };
   }
 
-  Map<String, dynamic> _nutrition(
-    int id,
-    int studentId,
-    int classId,
-    int yearId,
-    String period, {
-    bool isObese = false,
-  }) => {
-    'nutrition_id': id,
-    'student_id': studentId,
-    'class_id': classId,
-    'school_year_id': yearId,
-    'period': period,
-    'weight_channel': '',
-    'is_stunting': false,
-    'is_severe_stunting': false,
-    'is_obese': isObese,
-    'latest_bmi': 15.8,
-    'latest_bmi_status': 'Bình thường',
-    'note': '',
-  };
 }
 
 class _MockResult {

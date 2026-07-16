@@ -216,7 +216,6 @@ class _HomeBody extends StatelessWidget {
                 onOpenClasses ?? () => Navigator.pushNamed(context, '/classes'),
             onOpenHealth:
                 onOpenHealth ?? () => Navigator.pushNamed(context, '/health'),
-            onOpenNutrition: () => Navigator.pushNamed(context, '/nutrition'),
           ),
           const SizedBox(height: AppSpacing.lg),
         ],
@@ -290,7 +289,7 @@ class _RoleDashboardBanner extends StatelessWidget {
       'TEACHER' => (
         title: 'Công việc giáo viên',
         message:
-            'Lớp được phân công: $classCount. Có thể nhập nhanh sức khỏe và dinh dưỡng hằng ngày.',
+            'Lớp được phân công: $classCount. Có thể nhập nhanh sức khỏe hằng ngày.',
         icon: LucideIcons.school,
       ),
       _ => (
@@ -389,14 +388,12 @@ class _TeacherDashboardSection extends StatelessWidget {
     required this.studentCount,
     required this.onOpenClasses,
     required this.onOpenHealth,
-    required this.onOpenNutrition,
   });
 
   final int classCount;
   final int studentCount;
   final VoidCallback onOpenClasses;
   final VoidCallback onOpenHealth;
-  final VoidCallback onOpenNutrition;
 
   @override
   Widget build(BuildContext context) {
@@ -427,13 +424,6 @@ class _TeacherDashboardSection extends StatelessWidget {
           subtitle: 'Nhập chiều cao, cân nặng và ghi chú sức khỏe',
           icon: LucideIcons.heartPulse,
           onTap: onOpenHealth,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        _QuickActionCard(
-          title: 'Nhập nhanh dinh dưỡng',
-          subtitle: 'Cập nhật tình trạng dinh dưỡng theo trẻ hoặc lớp',
-          icon: LucideIcons.utensils,
-          onTap: onOpenNutrition,
         ),
       ],
     );

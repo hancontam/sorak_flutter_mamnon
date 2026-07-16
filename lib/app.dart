@@ -24,16 +24,10 @@ import 'modules/classes/repositories/class_repository.dart';
 import 'modules/classes/screens/class_list_screen.dart';
 import 'modules/form_options/providers/form_options_provider.dart';
 import 'modules/form_options/repositories/form_options_repository.dart';
-import 'modules/health/providers/growth_who_provider.dart';
 import 'modules/health/screens/health_screen.dart';
 import 'modules/health/providers/health_assessment_provider.dart';
-import 'modules/health/providers/nutrition_assessment_provider.dart';
-import 'modules/health/repositories/growth_who_repository.dart';
 import 'modules/health/repositories/health_assessment_repository.dart';
-import 'modules/health/repositories/nutrition_assessment_repository.dart';
-import 'modules/health/screens/growth_who_screen.dart';
 import 'modules/health/screens/health_assessment_list_screen.dart';
-import 'modules/health/screens/nutrition_assessment_list_screen.dart';
 import 'modules/incoming_transfers/providers/incoming_transfer_provider.dart';
 import 'modules/incoming_transfers/repositories/incoming_transfer_repository.dart';
 import 'modules/incoming_transfers/screens/incoming_transfer_list_screen.dart';
@@ -184,20 +178,6 @@ class SorakApp extends StatelessWidget {
             ),
           ),
         ),
-        ChangeNotifierProvider<NutritionAssessmentProvider>(
-          create: (context) => NutritionAssessmentProvider(
-            nutritionAssessmentRepository: NutritionAssessmentRepository(
-              apiClient: context.read<ApiClient>(),
-            ),
-          ),
-        ),
-        ChangeNotifierProvider<GrowthWhoProvider>(
-          create: (context) => GrowthWhoProvider(
-            growthWhoRepository: GrowthWhoRepository(
-              apiClient: context.read<ApiClient>(),
-            ),
-          ),
-        ),
         ChangeNotifierProvider<ParentHealthHistoryProvider>(
           create: (context) => ParentHealthHistoryProvider(
             repository: ParentHealthHistoryRepository(
@@ -267,20 +247,6 @@ class SorakApp extends StatelessWidget {
           '/health-assessments': (_) => const RoleGuard(
             allowedRoles: _staffRoles,
             child: HealthAssessmentListScreen(),
-          ),
-          '/nutrition': (_) => const RoleGuard(
-            allowedRoles: _staffRoles,
-            child: NutritionAssessmentListScreen(),
-          ),
-          '/growth': (_) => RoleGuard(
-            allowedRoles: _allRoles,
-            child: Scaffold(
-              appBar: AppBar(title: Text('Tăng trưởng WHO')),
-              body: const Padding(
-                padding: EdgeInsets.all(16),
-                child: GrowthWhoScreen(),
-              ),
-            ),
           ),
           '/parent-portal': (_) => const RoleGuard(
             allowedRoles: _parentOnly,

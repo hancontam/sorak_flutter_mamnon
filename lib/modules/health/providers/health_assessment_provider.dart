@@ -13,9 +13,13 @@ class HealthAssessmentProvider extends CrudProvider<HealthAssessment> {
   int? _academicYearId;
   int? _rosterClassId;
   String? _rosterDate;
+  List<HealthAssessment> _latestByStudent = const [];
+  bool _isLoadingLatest = false;
 
   int? get rosterClassId => _rosterClassId;
   String? get rosterDate => _rosterDate;
+  List<HealthAssessment> get latestByStudent => _latestByStudent;
+  bool get isLoadingLatest => _isLoadingLatest;
 
   @override
   Future<void> loadItems() {
@@ -47,6 +51,32 @@ class HealthAssessmentProvider extends CrudProvider<HealthAssessment> {
         classId: classId,
         assessmentDate: assessmentDate,
       ),
+    );
+  }
+
+  /// Load latest assessment per student for the history list screen.
+  Future<void> loadLatest({int? schoolYearId}) async {
+    _isLoadingLatest = true;
+    notifyListeners();
+    try {
+      _latestByStudent = await _healthAssessmentRepository.getLatest(
+        schoolYearId: schoolYearId ?? _academicYearId,
+      );
+    } catch (_) {
+      _latestByStudent = const [];
+    } finally {
+      _isLoadingLatest = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<HealthAssessment>> getStudentHistory({
+    required int studentId,
+    int? schoolYearId,
+  }) {
+    return _healthAssessmentRepository.getHistory(
+      studentId: studentId,
+      schoolYearId: schoolYearId ?? _academicYearId,
     );
   }
 

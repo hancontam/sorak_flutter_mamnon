@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart';
 class AppConfig {
   const AppConfig._();
 
-  /// Live API is the default for `flutter run` / UI work.
-  /// Automated tests force mock via [forceMockApiForTests].
+  /// Live API is the app default: plain `flutter run` / Run-Debug open the
+  /// deployed backend. Automated tests force mock via [forceMockApiForTests].
+  /// Opt into mock for local offline work with:
+  /// `--dart-define=USE_MOCK_API=true`.
   static const bool _useMockApiFromEnvironment = bool.fromEnvironment(
     'USE_MOCK_API',
     defaultValue: false,
@@ -15,6 +17,7 @@ class AppConfig {
   static bool get useMockApi =>
       _useMockApiOverride ?? _useMockApiFromEnvironment;
 
+  /// Default base URL for the live demo backend.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://103.69.191.210:8082/api',
