@@ -46,11 +46,13 @@ flutter pub get
 flutter run
 ```
 
-`flutter run` và Run/Debug `main.dart` mặc định nối backend live:
+`flutter run` mặc định nối backend live (cấu hình trong `AppConfig`):
 
 ```text
 http://103.69.191.210:8082/api
 ```
+
+**Android Studio / IntelliJ:** mở folder project (có `pubspec.yaml`) → IDE tự tạo module + config `main.dart` (không commit `.idea` / `*.iml`). Chọn device rồi Run/Debug.
 
 Không cần thêm `--dart-define` khi demo / nộp bài.
 

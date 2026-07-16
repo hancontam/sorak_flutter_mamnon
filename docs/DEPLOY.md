@@ -16,7 +16,16 @@ flutter pub get
 flutter run
 ```
 
-IDE: run configuration `main.dart` (live mặc định theo `AppConfig`).
+### IDE (giống lab Flutter / practice)
+
+`.idea/` và `*.iml` **không** đưa vào git. Sau khi clone:
+
+1. `flutter pub get`
+2. Mở project bằng Android Studio (Open folder có `pubspec.yaml`)
+3. Flutter plugin tự tạo Dart SDK, device list và run config `main.dart`
+4. Run/Debug — app dùng **live API** nhờ `AppConfig` (không cần dart-define)
+
+Nếu IDE không nhận Flutter/Dart: **Settings → Languages & Frameworks → Flutter** trỏ đúng Flutter SDK, rồi **File → Invalidate Caches / Restart**.
 
 Chỉ bật mock khi cần offline:
 

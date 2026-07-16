@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/sorak_flutter_mamnon.iml" filepath="$PROJECT_DIR$/sorak_flutter_mamnon.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/sorak_flutter_mamnon_android.iml" filepath="$PROJECT_DIR$/android/sorak_flutter_mamnon_android.iml" />
-    </modules>
-  </component>
-</project>

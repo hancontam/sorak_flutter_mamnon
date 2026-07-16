@@ -26,22 +26,17 @@ macos/Flutter/ephemeral/
 linux/flutter/ephemeral/
 windows/flutter/ephemeral/
 
-# IDE - ignore personal state, keep shared Flutter run/module configs
-.idea/**
-!.idea/modules.xml
-!.idea/runConfigurations/
-!.idea/runConfigurations/**
-
+# IntelliJ / Android Studio (local only — like Flutter create / practice lab)
+# Do not commit .idea or *.iml; the IDE regenerates them on open.
 *.iml
-!sorak_flutter_mamnon.iml
-!android/sorak_flutter_mamnon_android.iml
 *.ipr
 *.iws
+.idea/
+.run/
 
-.vscode/**
-!.vscode/launch.json
-!.vscode/settings.json
-!.vscode/extensions.json
+# VS Code / Cursor (optional local); uncomment to stop tracking launch files
+# .vscode/
+
 .history/
 *.swp
 *.swo
