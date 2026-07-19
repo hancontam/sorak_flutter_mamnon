@@ -249,6 +249,14 @@ void main() {
         find.byKey(const ValueKey('drawer_class_transfers')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('drawer_incoming_transfers')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('drawer_outgoing_transfers')),
+        findsOneWidget,
+      );
       expect(find.byKey(const ValueKey('drawer_health')), findsOneWidget);
       expect(
         find.byKey(const ValueKey('drawer_student_accounts')),

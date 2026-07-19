@@ -132,21 +132,29 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
     setState(() => _isSaving = true);
 
     final provider = context.read<ClassProvider>();
-    final success = _isEditing
-        ? await provider.updateClassSetup(
-            classId: widget.schoolClass!.id,
-            room: _roomController.text.trim(),
-            teacherAccountIdsToAdd: _teacherAccountIdsToAdd.toList(),
-            teacherIdsToRemove: _teacherIdsToRemove.toList(),
-          )
-        : await provider.createItem({
-            'class_name': _classNameController.text.trim(),
-            'school_year_id': _selectedYearId ?? '',
-            'age_group': _selectedAgeGroup ?? '',
-            'room': _roomController.text.trim(),
-            if (_selectedTeacherAccountId != null)
-              'teacher_account_id': _selectedTeacherAccountId,
-          });
+    final ClassSetupResult? createResult;
+    final bool success;
+    if (_isEditing) {
+      createResult = null;
+      success = await provider.updateClassSetup(
+        classId: widget.schoolClass!.id,
+        room: _roomController.text.trim(),
+        teacherAccountIdsToAdd: _teacherAccountIdsToAdd.toList(),
+        teacherIdsToRemove: _teacherIdsToRemove.toList(),
+      );
+    } else {
+      final teacherAccountId = int.tryParse(_selectedTeacherAccountId ?? '');
+      createResult = await provider.createClassSetup(
+        classData: {
+          'class_name': _classNameController.text.trim(),
+          'school_year_id': _selectedYearId ?? '',
+          'age_group': _selectedAgeGroup ?? '',
+          'room': _roomController.text.trim(),
+        },
+        teacherAccountId: teacherAccountId,
+      );
+      success = createResult.isSuccess;
+    }
 
     if (!mounted) return;
     setState(() => _isSaving = false);
@@ -159,8 +167,26 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
       Navigator.pop(context);
       return;
     }
+    if (createResult?.isPartialSuccess == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Đã tạo lớp nhưng chưa phân công giáo viên: '
+            '${createResult?.errorMessage ?? 'Chưa xác định được lỗi'}',
+          ),
+        ),
+      );
+      Navigator.pop(context);
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chưa thể lưu. Vui lòng kiểm tra lại.')),
+      SnackBar(
+        content: Text(
+          provider.classSetupErrorMessage ??
+              provider.errorMessage ??
+              'Chưa thể lưu. Vui lòng kiểm tra lại.',
+        ),
+      ),
     );
   }
 

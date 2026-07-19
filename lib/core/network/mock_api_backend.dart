@@ -542,6 +542,42 @@ class MockApiBackend implements HttpClientAdapter {
       _requireStaff();
       final item = _find(students, 'student_id', studentId);
       if (method == 'GET') return _object(item);
+      if (path.endsWith('/parents') && method == 'PATCH') {
+        _requirePrincipal();
+        final rawParents = body['parents'];
+        if (rawParents is! List ||
+            rawParents.isEmpty ||
+            rawParents.length > 2) {
+          throw const _MockApiFailure(400, 'Cần từ 1 đến 2 phụ huynh');
+        }
+        final existingParents = (item['parents'] as List? ?? const [])
+            .whereType<Map>()
+            .map((parent) => Map<String, dynamic>.from(parent))
+            .toList();
+        final updatedParents = <Map<String, dynamic>>[];
+        for (final raw in rawParents.whereType<Map>()) {
+          final parent = Map<String, dynamic>.from(raw);
+          final parentId = _asInt(parent['parent_id']);
+          if ('${parent['full_name'] ?? ''}'.trim().isEmpty) {
+            throw const _MockApiFailure(400, 'Họ tên phụ huynh là bắt buộc');
+          }
+          if (parentId != null &&
+              !existingParents.any(
+                (existing) => _asInt(existing['parent_id']) == parentId,
+              )) {
+            throw const _MockApiFailure(
+              400,
+              'Phụ huynh không thuộc học sinh này',
+            );
+          }
+          updatedParents.add({
+            ...parent,
+            'parent_id': parentId ?? 9000 + updatedParents.length + studentId,
+          });
+        }
+        item['parents'] = updatedParents;
+        return _object(item);
+      }
       if (path.endsWith('/active') && method == 'PATCH') {
         _requirePrincipal();
         (item['account'] as Map<String, dynamic>)['is_active'] =
@@ -554,6 +590,7 @@ class MockApiBackend implements HttpClientAdapter {
         return _object(item);
       }
       if (method == 'PATCH') {
+        _requirePrincipal();
         _rejectUnknown(body, [
           'full_name',
           'student_status',
@@ -1021,9 +1058,37 @@ class MockApiBackend implements HttpClientAdapter {
     if (path == '/health-assessments' && method == 'GET') {
       var items = _scopeHealth(healthAssessments);
       final yearId = int.tryParse(query['school_year_id'] ?? '');
+      final classId = int.tryParse(query['class_id'] ?? '');
+      final dateFrom = query['date_from'];
+      final dateTo = query['date_to'];
       if (yearId != null) {
         items = items
             .where((item) => item['school_year_id'] == yearId)
+            .toList();
+      }
+      if (classId != null) {
+        items = items.where((item) => item['class_id'] == classId).toList();
+      }
+      if (dateFrom != null) {
+        items = items
+            .where(
+              (item) =>
+                  '${item['assessment_date']}'
+                      .substring(0, 10)
+                      .compareTo(dateFrom) >=
+                  0,
+            )
+            .toList();
+      }
+      if (dateTo != null) {
+        items = items
+            .where(
+              (item) =>
+                  '${item['assessment_date']}'
+                      .substring(0, 10)
+                      .compareTo(dateTo) <=
+                  0,
+            )
             .toList();
       }
       if (query['latest'] == 'true') {
@@ -1103,9 +1168,13 @@ class MockApiBackend implements HttpClientAdapter {
     List<Map<String, dynamic>> source,
   ) {
     if (_role != 'TEACHER') return _active(source);
+    final allowedClassIds = classes
+        .where(_isAssignedClass)
+        .map((item) => item['class_id'])
+        .toSet();
     return _active(
       source,
-    ).where((item) => item['created_by'] == _accountId).toList();
+    ).where((item) => allowedClassIds.contains(item['class_id'])).toList();
   }
 
   bool _isAssignedClass(Map<String, dynamic> item) {
@@ -1502,7 +1571,6 @@ class MockApiBackend implements HttpClientAdapter {
       },
     };
   }
-
 }
 
 class _MockResult {

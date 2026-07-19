@@ -112,7 +112,6 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
       'date_of_birth': _dateOfBirthController.text.trim(),
       'gender': _selectedGender ?? GenderOptions.male,
       'contact_phone': _contactPhoneController.text.trim(),
-      'student_status': _selectedStatus ?? StudentStatusOptions.studying,
       'enrollment_date': _enrollmentDateController.text.trim(),
       'birth_place': _birthPlaceController.text.trim(),
       'ethnicity': _ethnicityController.text.trim(),
@@ -128,6 +127,8 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         'class_id': _selectedClassId ?? '',
         'class_name': selectedClass?.className ?? '',
       });
+    } else {
+      data['student_status'] = _selectedStatus ?? StudentStatusOptions.studying;
     }
 
     final provider = context.read<StudentProvider>();
@@ -262,17 +263,19 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                     label: 'SĐT phụ huynh',
                     keyboardType: TextInputType.phone,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  AppDropdownField<String>(
-                    key: ValueKey('student_status_${_selectedStatus ?? ''}'),
-                    label: 'Tình trạng học vụ',
-                    options: StudentStatusOptions.all,
-                    value: _selectedStatus,
-                    hintText: 'Chọn tình trạng',
-                    onChanged: (value) {
-                      setState(() => _selectedStatus = value);
-                    },
-                  ),
+                  if (widget.student != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    AppDropdownField<String>(
+                      key: ValueKey('student_status_${_selectedStatus ?? ''}'),
+                      label: 'Tình trạng học vụ',
+                      options: StudentStatusOptions.all,
+                      value: _selectedStatus,
+                      hintText: 'Chọn tình trạng',
+                      onChanged: (value) {
+                        setState(() => _selectedStatus = value);
+                      },
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.lg),
                   const _SectionTitle(
                     title: 'Nhập học và liên hệ',

@@ -6,6 +6,9 @@ import 'package:sorak_flutter_mamnon/core/network/api_exception.dart';
 import 'package:sorak_flutter_mamnon/modules/accounts/repositories/account_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/auth/models/auth_user.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/repositories/class_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/incoming_transfers/repositories/incoming_transfer_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 
 import 'helpers/test_app.dart';
 
@@ -46,17 +49,22 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav_students')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('module_add_button')), findsNothing);
-    await tester.tap(find.byTooltip('Thao tác với học sinh').first);
-    await tester.pumpAndSettle();
-    expect(find.text('Cập nhật trẻ'), findsWidgets);
+    expect(find.byTooltip('Thao tác với học sinh'), findsNothing);
+    expect(find.text('Cập nhật trẻ'), findsNothing);
     expect(find.text('Xóa'), findsNothing);
-    await tester.tapAt(const Offset(10, 10));
-    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('open_drawer_button')));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('drawer_class_transfers')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('drawer_incoming_transfers')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('drawer_outgoing_transfers')),
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('drawer_staff_accounts')), findsNothing);
@@ -154,6 +162,32 @@ void main() {
     expect(find.textContaining('Chồi 2B'), findsNothing);
   });
 
+  testWidgets('teacher school-transfer routes are available and read-only', (
+    tester,
+  ) async {
+    await tester.pumpSorakApp(savedUser: _teacher);
+    final shellContext = tester.element(find.byType(NavigationBar));
+
+    for (final route in const [
+      '/transfers',
+      '/incoming-transfers',
+      '/outgoing-transfers',
+    ]) {
+      Navigator.of(shellContext).pushNamed(route);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('permission_denied_state')),
+        findsNothing,
+      );
+      if (route != '/transfers') {
+        expect(find.byType(FloatingActionButton), findsNothing);
+        expect(find.byTooltip('Thao tác khác'), findsNothing);
+      }
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+    }
+  });
+
   test('teacher API requests outside scope are rejected', () async {
     final client = ApiClient.memory();
     client.configureMockSession(
@@ -174,6 +208,36 @@ void main() {
       fail('Teacher must not archive a class');
     } on DioException catch (error) {
       expect(ApiException.from(error).statusCode, 403);
+    }
+
+    try {
+      await StudentRepository(
+        apiClient: client,
+      ).update(401, {'full_name': 'Không được sửa'});
+      fail('Teacher must not update a student');
+    } on DioException catch (error) {
+      expect(ApiException.from(error).statusCode, 403);
+    }
+
+    try {
+      await StudentRepository(apiClient: client).updateParents(401, [
+        {'full_name': 'Không được sửa'},
+      ]);
+      fail('Teacher must not update parents');
+    } on DioException catch (error) {
+      expect(ApiException.from(error).statusCode, 403);
+    }
+
+    for (final mutation in <Future<void> Function()>[
+      () => IncomingTransferRepository(apiClient: client).cancel(511),
+      () => OutgoingTransferRepository(apiClient: client).cancel(521),
+    ]) {
+      try {
+        await mutation();
+        fail('Teacher must not mutate school transfers');
+      } on DioException catch (error) {
+        expect(ApiException.from(error).statusCode, 403);
+      }
     }
   });
 

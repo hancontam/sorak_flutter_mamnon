@@ -231,6 +231,11 @@ void main() {
           ],
         );
         await health.getHistory(studentId: 9, schoolYearId: 2);
+        await health.getForDate(
+          assessmentDate: '2026-06-15',
+          schoolYearId: 2,
+          classId: 5,
+        );
         await health.getLatest(schoolYearId: 2);
         final parentHistory = await ParentHealthHistoryRepository(
           apiClient: apiClient,
@@ -258,8 +263,22 @@ void main() {
           'student_id': '9',
           'school_year_id': '2',
         });
-        expect(adapter.query('/health-assessments')['latest'], 'true');
-        expect(adapter.query('/health-assessments')['school_year_id'], '2');
+        expect(adapter.query('/health-assessments'), {
+          'latest': 'false',
+          'date_from': '2026-06-15',
+          'date_to': '2026-06-15',
+          'school_year_id': '2',
+          'class_id': '5',
+          'pageSize': '500',
+        });
+        expect(
+          adapter.query('/health-assessments', occurrence: 1)['latest'],
+          'true',
+        );
+        expect(
+          adapter.query('/health-assessments', occurrence: 1)['school_year_id'],
+          '2',
+        );
         expect(adapter.query('/parent/health-history'), isEmpty);
       },
       skip: _runLiveContract

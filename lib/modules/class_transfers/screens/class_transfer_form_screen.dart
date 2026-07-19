@@ -57,12 +57,12 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
   }
 
   Future<void> _loadOptionsAndClassScope() async {
+    final yearId = _activeAcademicYearId();
     final futures = <Future<void>>[
-      context.read<FormOptionsProvider>().loadInitialOptions(),
+      context.read<FormOptionsProvider>().refreshForAcademicYear(yearId),
     ];
     if (_isTeacher(context)) {
       final classProvider = context.read<ClassProvider>();
-      final yearId = context.read<ActiveAcademicYearProvider>().selectedYearId;
       futures.add(
         yearId == null
             ? classProvider.loadItems()
@@ -70,6 +70,14 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
       );
     }
     await Future.wait(futures);
+  }
+
+  int? _activeAcademicYearId() {
+    try {
+      return context.read<ActiveAcademicYearProvider>().selectedYearId;
+    } on ProviderNotFoundException {
+      return context.read<FormOptionsProvider>().selectedAcademicYearId;
+    }
   }
 
   @override
@@ -123,7 +131,11 @@ class _ClassTransferFormScreenState extends State<ClassTransferFormScreen> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chưa thể lưu. Vui lòng kiểm tra lại.')),
+        SnackBar(
+          content: Text(
+            provider.errorMessage ?? 'Chưa thể lưu. Vui lòng kiểm tra lại.',
+          ),
+        ),
       );
     }
   }

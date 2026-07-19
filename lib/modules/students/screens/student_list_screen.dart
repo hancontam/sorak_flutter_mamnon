@@ -73,33 +73,56 @@ class _StudentListScreenState extends State<StudentListScreen> {
   }
 
   void _openStudentForm([Student? student]) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => StudentFormScreen(student: student)),
-    );
-  }
-
-  void _openGuardianForm(Student student) {
+    if (!_isPrincipal()) {
+      return;
+    }
+    final currentStudent = student == null ? null : _currentStudent(student);
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => StudentGuardianFormScreen(student: student),
+        builder: (_) => StudentFormScreen(student: currentStudent),
       ),
     );
   }
 
+  void _openGuardianForm(Student student) {
+    if (!_isPrincipal()) {
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            StudentGuardianFormScreen(student: _currentStudent(student)),
+      ),
+    );
+  }
+
+  Student _currentStudent(Student fallback) {
+    for (final item in context.read<StudentProvider>().items) {
+      if (item.id == fallback.id) return item;
+    }
+    return fallback;
+  }
+
   void _openDetail(Student student, String grade) {
+    final canManage = _isPrincipal();
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => StudentDetailScreen(
           student: student,
           grade: grade,
-          onEditStudent: () => _openStudentForm(student),
-          onEditGuardian: () => _openGuardianForm(student),
+          onEditStudent: canManage ? () => _openStudentForm(student) : null,
+          onEditGuardian: canManage ? () => _openGuardianForm(student) : null,
         ),
       ),
     );
+  }
+
+  bool _isPrincipal() {
+    return context.read<AuthProvider>().currentUser?.role.toUpperCase() ==
+        'PRINCIPAL';
   }
 
   List<Student> _filteredStudents(List<Student> items) {
@@ -293,6 +316,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
           index: index + 1,
           student: students[index],
           grade: _gradeForStudent(students[index], classes),
+          canManage: isPrincipal,
           canArchive: isPrincipal,
           onTap: () => _openDetail(
             students[index],
@@ -360,6 +384,7 @@ class _StudentCard extends StatelessWidget {
     required this.index,
     required this.student,
     required this.grade,
+    required this.canManage,
     required this.canArchive,
     required this.onTap,
     required this.onEditStudent,
@@ -370,6 +395,7 @@ class _StudentCard extends StatelessWidget {
   final int index;
   final Student student;
   final String grade;
+  final bool canManage;
   final bool canArchive;
   final VoidCallback onTap;
   final VoidCallback onEditStudent;
@@ -430,38 +456,39 @@ class _StudentCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuButton<_StudentAction>(
-                    tooltip: 'Thao tác với học sinh',
-                    icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
-                    onSelected: (action) {
-                      switch (action) {
-                        case _StudentAction.editStudent:
-                          onEditStudent();
-                        case _StudentAction.editGuardian:
-                          onEditGuardian();
-                        case _StudentAction.archive:
-                          onArchive();
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: _StudentAction.editStudent,
-                        child: Text('Cập nhật trẻ'),
-                      ),
-                      const PopupMenuItem(
-                        value: _StudentAction.editGuardian,
-                        child: Text('Cập nhật phụ huynh'),
-                      ),
-                      if (canArchive)
+                  if (canManage)
+                    PopupMenuButton<_StudentAction>(
+                      tooltip: 'Thao tác với học sinh',
+                      icon: const Icon(LucideIcons.ellipsisVertical, size: 20),
+                      onSelected: (action) {
+                        switch (action) {
+                          case _StudentAction.editStudent:
+                            onEditStudent();
+                          case _StudentAction.editGuardian:
+                            onEditGuardian();
+                          case _StudentAction.archive:
+                            onArchive();
+                        }
+                      },
+                      itemBuilder: (context) => [
                         const PopupMenuItem(
-                          value: _StudentAction.archive,
-                          child: Text(
-                            'Xóa',
-                            style: TextStyle(color: AppColors.destructive),
-                          ),
+                          value: _StudentAction.editStudent,
+                          child: Text('Cập nhật trẻ'),
                         ),
-                    ],
-                  ),
+                        const PopupMenuItem(
+                          value: _StudentAction.editGuardian,
+                          child: Text('Cập nhật phụ huynh'),
+                        ),
+                        if (canArchive)
+                          const PopupMenuItem(
+                            value: _StudentAction.archive,
+                            child: Text(
+                              'Xóa',
+                              style: TextStyle(color: AppColors.destructive),
+                            ),
+                          ),
+                      ],
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),

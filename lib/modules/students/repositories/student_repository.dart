@@ -68,6 +68,16 @@ class StudentRepository implements CrudRepository<Student> {
     return Student.fromJson(ApiResponse.object(response.data));
   }
 
+  Future<void> updateParents(
+    int studentId,
+    List<Map<String, dynamic>> parents,
+  ) async {
+    await _apiClient.dio.patch(
+      '${ApiEndpoints.students}/$studentId/parents',
+      data: {'parents': parents},
+    );
+  }
+
   @override
   Future<void> archive(int id) async {
     await _apiClient.dio.delete('${ApiEndpoints.students}/$id');

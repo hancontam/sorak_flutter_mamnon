@@ -6,6 +6,7 @@ import 'package:sorak_flutter_mamnon/core/utils/class_sort.dart';
 import 'package:sorak_flutter_mamnon/core/utils/student_enrollment.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/models/school_class.dart';
 import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/health/repositories/health_assessment_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/parent/repositories/parent_health_history_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/students/models/student.dart';
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
@@ -155,5 +156,30 @@ void main() {
         throwsA(isA<DioException>()),
       );
     });
+  });
+
+  group('Health date filter contract', () {
+    test(
+      'loads an older exact-date record instead of latest-only data',
+      () async {
+        final client = ApiClient.memory();
+        client.configureMockSession(role: 'PRINCIPAL', accountId: 1001);
+        final repository = HealthAssessmentRepository(apiClient: client);
+
+        final latest = await repository.getLatest(schoolYearId: 101);
+        final exactDate = await repository.getForDate(
+          assessmentDate: '2026-01-10',
+          schoolYearId: 101,
+          classId: 301,
+        );
+
+        expect(
+          latest.firstWhere((item) => item.studentId == 401).assessmentDate,
+          '2026-05-10',
+        );
+        expect(exactDate.single.assessmentDate, '2026-01-10');
+        expect(exactDate.single.studentId, 401);
+      },
+    );
   });
 }

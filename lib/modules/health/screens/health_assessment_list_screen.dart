@@ -105,7 +105,22 @@ class _HealthAssessmentListScreenState
   void _onDateFilterChanged() {
     if (mounted) {
       setState(() {});
+      _loadSelectedDate();
     }
+  }
+
+  Future<void> _loadSelectedDate() async {
+    final date = _dateController.text.trim();
+    final health = context.read<HealthAssessmentProvider>();
+    if (date.isEmpty) {
+      health.clearDateFilter();
+      return;
+    }
+    await health.loadForDate(
+      assessmentDate: date,
+      schoolYearId: context.read<ActiveAcademicYearProvider>().selectedYearId,
+      classId: int.tryParse(_selectedClassId ?? ''),
+    );
   }
 
   Future<void> _reload() async {
@@ -114,6 +129,9 @@ class _HealthAssessmentListScreenState
       _loadRoleScopedClasses(),
       _loadStudentsAndLatest(),
     ]);
+    if (_dateController.text.trim().isNotEmpty) {
+      await _loadSelectedDate();
+    }
   }
 
   List<Student> _filtered(List<Student> source, Set<int>? allowedClassIds) {
@@ -226,7 +244,7 @@ class _HealthAssessmentListScreenState
     final selectedDate = _dateController.text.trim();
     final selectedDateByStudent = <int, HealthAssessment>{};
     if (selectedDate.isNotEmpty) {
-      for (final item in healthProvider.items) {
+      for (final item in healthProvider.dateFilteredItems) {
         if (item.assessmentDate.startsWith(selectedDate)) {
           selectedDateByStudent[item.studentId] = item;
         }
@@ -240,9 +258,13 @@ class _HealthAssessmentListScreenState
         studentProvider.isLoading ||
         healthProvider.isLoading ||
         healthProvider.isLoadingLatest ||
+        healthProvider.isLoadingDateFilter ||
         optionsProvider.isLoading ||
         isClassScopeLoading;
-    final errorMessage = studentProvider.errorMessage ?? healthProvider.errorMessage;
+    final errorMessage =
+        studentProvider.errorMessage ??
+        healthProvider.dateFilterErrorMessage ??
+        healthProvider.errorMessage;
 
     return Scaffold(
       appBar: AppBar(
@@ -282,6 +304,9 @@ class _HealthAssessmentListScreenState
                       ? null
                       : value;
                 });
+                if (_dateController.text.trim().isNotEmpty) {
+                  _loadSelectedDate();
+                }
               },
             ),
             if (!isClassScopeLoading && scopedClasses.isEmpty) ...[

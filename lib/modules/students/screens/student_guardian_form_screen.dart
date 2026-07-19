@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/sorak_avatar.dart';
 import '../models/student.dart';
+import '../providers/student_provider.dart';
 
-/// Presentation-only guardian editor. The existing Student repository has no
-/// parents endpoint method, so this screen intentionally does not fake a save.
 class StudentGuardianFormScreen extends StatefulWidget {
   const StudentGuardianFormScreen({super.key, required this.student});
 
@@ -26,7 +26,12 @@ class _StudentGuardianFormScreenState extends State<StudentGuardianFormScreen> {
   @override
   void initState() {
     super.initState();
-    _guardians = [_GuardianDraft(phone: widget.student.contactPhone)];
+    _guardians = widget.student.parents.isEmpty
+        ? [_GuardianDraft(phone: widget.student.contactPhone)]
+        : widget.student.parents
+              .take(2)
+              .map(_GuardianDraft.fromParent)
+              .toList();
   }
 
   @override
@@ -45,7 +50,7 @@ class _StudentGuardianFormScreenState extends State<StudentGuardianFormScreen> {
   }
 
   void _removeGuardian(int index) {
-    if (_guardians.length <= 1) {
+    if (_guardians.length <= 1 || _guardians[index].parentId != null) {
       return;
     }
     setState(() {
@@ -54,13 +59,37 @@ class _StudentGuardianFormScreenState extends State<StudentGuardianFormScreen> {
     });
   }
 
-  void _showUnavailableMessage() {
+  Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
+
+    final parents = _guardians
+        .where((guardian) => guardian.hasEnteredData)
+        .map((guardian) => guardian.toJson())
+        .toList();
+    if (parents.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cần nhập ít nhất một phụ huynh.')),
+      );
+      return;
+    }
+
+    final provider = context.read<StudentProvider>();
+    final saved = await provider.updateParents(widget.student.id, parents);
+    if (!mounted) return;
+    if (saved) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã cập nhật phụ huynh')));
+      Navigator.pop(context, true);
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Chưa thể lưu phụ huynh vì luồng API này chưa được nối.'),
+      SnackBar(
+        content: Text(
+          provider.parentsErrorMessage ?? 'Chưa thể cập nhật phụ huynh.',
+        ),
       ),
     );
   }
@@ -100,7 +129,8 @@ class _StudentGuardianFormScreenState extends State<StudentGuardianFormScreen> {
               _GuardianEditorCard(
                 index: index,
                 draft: _guardians[index],
-                canRemove: _guardians.length > 1,
+                canRemove:
+                    _guardians.length > 1 && _guardians[index].parentId == null,
                 onChanged: () => setState(() {}),
                 onRemove: () => _removeGuardian(index),
               ),
@@ -113,8 +143,6 @@ class _StudentGuardianFormScreenState extends State<StudentGuardianFormScreen> {
                 icon: const Icon(LucideIcons.plus, size: 18),
                 label: const Text('Thêm phụ huynh'),
               ),
-            const SizedBox(height: AppSpacing.md),
-            _ApiNotice(),
           ],
         ),
       ),
@@ -130,15 +158,28 @@ class _StudentGuardianFormScreenState extends State<StudentGuardianFormScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: context.watch<StudentProvider>().isSavingParents
+                      ? null
+                      : () => Navigator.pop(context),
                   child: const Text('Hủy'),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: FilledButton(
-                  onPressed: _showUnavailableMessage,
-                  child: const Text('Lưu'),
+                  onPressed: context.watch<StudentProvider>().isSavingParents
+                      ? null
+                      : _save,
+                  child: context.watch<StudentProvider>().isSavingParents
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primaryForeground,
+                          ),
+                        )
+                      : const Text('Lưu'),
                 ),
               ),
             ],
@@ -301,6 +342,13 @@ class _GuardianEditorCard extends StatelessWidget {
               AppTextField(
                 controller: draft.customRelationshipController,
                 label: 'Nhập quan hệ',
+                validator: (value) {
+                  if (draft.relationship == 'Khác' &&
+                      (value == null || value.trim().isEmpty)) {
+                    return 'Vui lòng nhập quan hệ';
+                  }
+                  return null;
+                },
               ),
             ],
           ],
@@ -333,42 +381,32 @@ class _GuardianEditorCard extends StatelessWidget {
   }
 }
 
-class _ApiNotice extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.muted,
-        borderRadius: BorderRadius.circular(AppSpacing.radius),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(LucideIcons.info, size: 18),
-          const SizedBox(width: AppSpacing.xs),
-          Expanded(
-            child: Text(
-              'Thông tin phụ huynh sẽ được lưu khi luồng API phụ huynh được nối.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.secondaryForeground,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _GuardianDraft {
-  _GuardianDraft({String phone = ''})
-    : fullNameController = TextEditingController(),
+  _GuardianDraft({this.parentId, String fullName = '', String phone = ''})
+    : fullNameController = TextEditingController(text: fullName),
       phoneController = TextEditingController(text: phone),
       customRelationshipController = TextEditingController();
 
+  factory _GuardianDraft.fromParent(StudentParent parent) {
+    final relationship = parent.relationship.trim();
+    final isKnown = _knownRelationships.contains(relationship);
+    final draft = _GuardianDraft(
+      parentId: parent.id,
+      fullName: parent.fullName,
+      phone: parent.phone,
+    );
+    draft.relationship = relationship.isEmpty
+        ? ''
+        : isKnown
+        ? relationship
+        : 'Khác';
+    if (!isKnown && relationship.isNotEmpty) {
+      draft.customRelationshipController.text = relationship;
+    }
+    return draft;
+  }
+
+  final int? parentId;
   final TextEditingController fullNameController;
   final TextEditingController phoneController;
   final TextEditingController customRelationshipController;
@@ -380,9 +418,32 @@ class _GuardianDraft {
       relationship.isNotEmpty ||
       customRelationshipController.text.trim().isNotEmpty;
 
+  Map<String, dynamic> toJson() {
+    final customRelationship = customRelationshipController.text.trim();
+    return {
+      if (parentId != null) 'parent_id': parentId,
+      'full_name': fullNameController.text.trim(),
+      'phone': phoneController.text.trim(),
+      if (relationship.isNotEmpty)
+        'relationship': relationship == 'Khác'
+            ? customRelationship
+            : relationship,
+    };
+  }
+
   void dispose() {
     fullNameController.dispose();
     phoneController.dispose();
     customRelationshipController.dispose();
   }
 }
+
+const _knownRelationships = {
+  'Cha',
+  'Mẹ',
+  'Ông nội',
+  'Bà nội',
+  'Ông ngoại',
+  'Bà ngoại',
+  'Người giám hộ',
+};

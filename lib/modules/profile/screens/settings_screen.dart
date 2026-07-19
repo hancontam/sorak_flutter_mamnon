@@ -19,6 +19,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  bool _showOldPassword = false;
+  bool _showNewPassword = false;
+  bool _showConfirmPassword = false;
 
   @override
   void dispose() {
@@ -91,9 +94,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     TextFormField(
                       key: const ValueKey('old_password_field'),
                       controller: _oldPasswordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: !_showOldPassword,
+                      decoration: InputDecoration(
                         labelText: 'Mật khẩu hiện tại',
+                        suffixIcon: IconButton(
+                          key: const ValueKey('toggle_old_password'),
+                          tooltip: _showOldPassword
+                              ? 'Ẩn mật khẩu'
+                              : 'Hiện mật khẩu',
+                          onPressed: () => setState(
+                            () => _showOldPassword = !_showOldPassword,
+                          ),
+                          icon: Icon(
+                            _showOldPassword
+                                ? LucideIcons.eyeOff
+                                : LucideIcons.eye,
+                            color: AppColors.mutedForeground,
+                          ),
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -106,9 +124,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     TextFormField(
                       key: const ValueKey('new_password_field'),
                       controller: _newPasswordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: !_showNewPassword,
+                      decoration: InputDecoration(
                         labelText: 'Mật khẩu mới',
+                        suffixIcon: IconButton(
+                          key: const ValueKey('toggle_new_password'),
+                          tooltip: _showNewPassword
+                              ? 'Ẩn mật khẩu'
+                              : 'Hiện mật khẩu',
+                          onPressed: () => setState(
+                            () => _showNewPassword = !_showNewPassword,
+                          ),
+                          icon: Icon(
+                            _showNewPassword
+                                ? LucideIcons.eyeOff
+                                : LucideIcons.eye,
+                            color: AppColors.mutedForeground,
+                          ),
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().length < 6) {
@@ -121,9 +154,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     TextFormField(
                       key: const ValueKey('confirm_password_field'),
                       controller: _confirmPasswordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: !_showConfirmPassword,
+                      decoration: InputDecoration(
                         labelText: 'Xác nhận mật khẩu mới',
+                        suffixIcon: IconButton(
+                          key: const ValueKey('toggle_confirm_password'),
+                          tooltip: _showConfirmPassword
+                              ? 'Ẩn mật khẩu'
+                              : 'Hiện mật khẩu',
+                          onPressed: () => setState(
+                            () => _showConfirmPassword = !_showConfirmPassword,
+                          ),
+                          icon: Icon(
+                            _showConfirmPassword
+                                ? LucideIcons.eyeOff
+                                : LucideIcons.eye,
+                            color: AppColors.mutedForeground,
+                          ),
+                        ),
                       ),
                       validator: (value) {
                         if (value != _newPasswordController.text) {

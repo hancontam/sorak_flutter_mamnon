@@ -47,13 +47,7 @@ class ClassRepository implements CrudRepository<SchoolClass> {
       ApiEndpoints.classes,
       data: _createPayload(data),
     );
-    var item = SchoolClass.fromJson(ApiResponse.object(response.data));
-    final accountId = int.tryParse('${data['teacher_account_id'] ?? ''}');
-    if (accountId != null && accountId > 0) {
-      await assignTeacher(classId: item.id, accountId: accountId);
-      item = (await getById(item.id)) ?? item;
-    }
-    return item;
+    return SchoolClass.fromJson(ApiResponse.object(response.data));
   }
 
   @override
@@ -62,13 +56,7 @@ class ClassRepository implements CrudRepository<SchoolClass> {
       '${ApiEndpoints.classes}/$id',
       data: _updatePayload(data),
     );
-    var item = SchoolClass.fromJson(ApiResponse.object(response.data));
-    final accountId = int.tryParse('${data['teacher_account_id'] ?? ''}');
-    if (accountId != null && accountId > 0) {
-      await assignTeacher(classId: id, accountId: accountId);
-      item = (await getById(id)) ?? item;
-    }
-    return item;
+    return SchoolClass.fromJson(ApiResponse.object(response.data));
   }
 
   @override

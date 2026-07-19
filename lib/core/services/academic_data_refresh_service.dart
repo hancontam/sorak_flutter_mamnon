@@ -32,9 +32,10 @@ class AcademicDataRefreshService {
     final health = context.read<HealthAssessmentProvider>();
     final accounts = context.read<AccountProvider>();
 
-    await options.refreshOptions();
-    if (yearId != null) {
-      await options.applyGlobalAcademicYear(yearId);
+    if (yearId == null) {
+      await options.refreshOptions();
+    } else {
+      await options.refreshForAcademicYear(yearId);
     }
 
     final refreshes = <Future<void>>[

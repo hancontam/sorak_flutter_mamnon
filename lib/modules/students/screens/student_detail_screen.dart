@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -7,6 +8,7 @@ import '../../../core/utils/ui_labels.dart';
 import '../../../core/widgets/sorak_avatar.dart';
 import '../../../core/widgets/sorak_status_badge.dart';
 import '../models/student.dart';
+import '../providers/student_provider.dart';
 
 class StudentDetailScreen extends StatelessWidget {
   const StudentDetailScreen({
@@ -24,6 +26,14 @@ class StudentDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final providerStudents = context.watch<StudentProvider>().items;
+    var displayedStudent = student;
+    for (final item in providerStudents) {
+      if (item.id == student.id) {
+        displayedStudent = item;
+        break;
+      }
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Hồ sơ trẻ')),
       body: ListView(
@@ -34,7 +44,7 @@ class StudentDetailScreen extends StatelessWidget {
           104,
         ),
         children: [
-          _StudentHero(student: student),
+          _StudentHero(student: displayedStudent),
           const SizedBox(height: AppSpacing.md),
           _DetailSection(
             title: 'Thông tin cơ bản',
@@ -42,14 +52,29 @@ class StudentDetailScreen extends StatelessWidget {
             rows: [
               _DetailRowData(
                 'Mã thẻ',
-                _valueOrMissing(student.studentIdCardNumber),
+                _valueOrMissing(displayedStudent.studentIdCardNumber),
               ),
-              _DetailRowData('Họ tên', _valueOrMissing(student.fullName)),
-              _DetailRowData('Ngày sinh', _formatDateOnly(student.dateOfBirth)),
-              _DetailRowData('Giới tính', UiLabels.gender(student.gender)),
+              _DetailRowData(
+                'Họ tên',
+                _valueOrMissing(displayedStudent.fullName),
+              ),
+              _DetailRowData(
+                'Ngày sinh',
+                _formatDateOnly(displayedStudent.dateOfBirth),
+              ),
+              _DetailRowData(
+                'Giới tính',
+                UiLabels.gender(displayedStudent.gender),
+              ),
               _DetailRowData('Khối', _valueOrMissing(grade)),
-              _DetailRowData('Lớp', _valueOrMissing(student.className)),
-              _DetailRowData('Học vụ', UiLabels.status(student.studentStatus)),
+              _DetailRowData(
+                'Lớp',
+                _valueOrMissing(displayedStudent.className),
+              ),
+              _DetailRowData(
+                'Học vụ',
+                UiLabels.status(displayedStudent.studentStatus),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -59,57 +84,74 @@ class StudentDetailScreen extends StatelessWidget {
             rows: [
               _DetailRowData(
                 'Ngày nhập học',
-                _formatDateOnly(student.enrollmentDate),
+                _formatDateOnly(displayedStudent.enrollmentDate),
               ),
-              _DetailRowData('Nơi sinh', _valueOrMissing(student.birthPlace)),
+              _DetailRowData(
+                'Nơi sinh',
+                _valueOrMissing(displayedStudent.birthPlace),
+              ),
               _DetailRowData(
                 'Địa chỉ hiện tại',
-                _valueOrMissing(student.currentAddress),
+                _valueOrMissing(displayedStudent.currentAddress),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          _ParentContactSection(parents: student.parents),
+          _ParentContactSection(parents: displayedStudent.parents),
           const SizedBox(height: AppSpacing.sm),
           _DetailSection(
             title: 'Thông tin bổ sung',
             icon: LucideIcons.notebookTabs,
             rows: [
-              _DetailRowData('Dân tộc', _valueOrMissing(student.ethnicity)),
-              _DetailRowData('Quốc tịch', _valueOrMissing(student.nationality)),
-              _DetailRowData('Tôn giáo', _valueOrMissing(student.religion)),
-              _DetailRowData('Nhóm máu', _valueOrMissing(student.bloodType)),
+              _DetailRowData(
+                'Dân tộc',
+                _valueOrMissing(displayedStudent.ethnicity),
+              ),
+              _DetailRowData(
+                'Quốc tịch',
+                _valueOrMissing(displayedStudent.nationality),
+              ),
+              _DetailRowData(
+                'Tôn giáo',
+                _valueOrMissing(displayedStudent.religion),
+              ),
+              _DetailRowData(
+                'Nhóm máu',
+                _valueOrMissing(displayedStudent.bloodType),
+              ),
             ],
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: const BoxDecoration(
-            color: AppColors.background,
-            border: Border(top: BorderSide(color: AppColors.border)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onEditGuardian,
-                  child: const Text('Phụ huynh'),
+      bottomNavigationBar: onEditStudent == null && onEditGuardian == null
+          ? null
+          : SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: const BoxDecoration(
+                  color: AppColors.background,
+                  border: Border(top: BorderSide(color: AppColors.border)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: onEditGuardian,
+                        child: const Text('Phụ huynh'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: onEditStudent,
+                        child: const Text('Cập nhật trẻ'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: FilledButton(
-                  onPressed: onEditStudent,
-                  child: const Text('Cập nhật trẻ'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

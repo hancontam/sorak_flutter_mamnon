@@ -4,6 +4,7 @@ import 'package:sorak_flutter_mamnon/core/network/mock_api_backend.dart';
 import 'package:sorak_flutter_mamnon/modules/accounts/repositories/account_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/class_transfers/repositories/class_transfer_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/repositories/class_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/classes/providers/class_provider.dart';
 import 'package:sorak_flutter_mamnon/modules/incoming_transfers/repositories/incoming_transfer_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
@@ -45,6 +46,13 @@ void main() {
         });
         expect(
           backend.requests.any(
+            (item) => item.path == '/classes/${created.id}/teachers',
+          ),
+          isFalse,
+        );
+        await repository.assignTeacher(classId: created.id, accountId: 1002);
+        expect(
+          backend.requests.any(
             (item) =>
                 item.path == '/classes/${created.id}/teachers' &&
                 item.body['account_id'] == 1002,
@@ -63,7 +71,8 @@ void main() {
         );
         expect(update.body, {'class_name': 'MOBILE_TEST_Mầm 1C mới'});
 
-        final assignedTeacherId = created.assignedTeachers.single.id;
+        final afterAssignment = await repository.getById(created.id);
+        final assignedTeacherId = afterAssignment!.assignedTeachers.single.id;
         await repository.removeTeacher(
           classId: created.id,
           teacherId: assignedTeacherId,
@@ -79,6 +88,76 @@ void main() {
         );
         final afterRemoval = await repository.getById(created.id);
         expect(afterRemoval?.assignedTeachers, isEmpty);
+      },
+    );
+
+    test(
+      'class provider reports partial success without creating twice',
+      () async {
+        final provider = ClassProvider(
+          classRepository: ClassRepository(apiClient: client),
+        );
+        final result = await provider.createClassSetup(
+          classData: {
+            'class_name': 'MOBILE_TEST_Lớp phân công lỗi',
+            'school_year_id': 101,
+            'age_group': 'Mầm',
+            'room': 'A104',
+          },
+          teacherAccountId: 999999,
+        );
+
+        expect(result.isPartialSuccess, isTrue);
+        expect(
+          backend.requests
+              .where(
+                (request) =>
+                    request.method == 'POST' && request.path == '/classes',
+              )
+              .length,
+          1,
+        );
+      },
+    );
+
+    test(
+      'student create omits status and parent batch keeps parent id',
+      () async {
+        final repository = StudentRepository(apiClient: client);
+        await repository.create({
+          'full_name': 'MOBILE_TEST_Bé mới',
+          'date_of_birth': '2022-01-01',
+          'gender': 'Nữ',
+          'class_id': 301,
+          'grade_level': 'Mầm',
+          'student_status': 'Đã chuyển trường',
+        });
+        final createRequest = backend.requests.lastWhere(
+          (request) => request.method == 'POST' && request.path == '/students',
+        );
+        expect(createRequest.body.containsKey('student_status'), isFalse);
+
+        await repository.updateParents(401, [
+          {
+            'parent_id': 2401,
+            'full_name': 'Phụ huynh cập nhật',
+            'relationship': 'Mẹ',
+            'phone': '0987654321',
+          },
+        ]);
+        final parentRequest = backend.requests.lastWhere(
+          (request) =>
+              request.method == 'PATCH' &&
+              request.path == '/students/401/parents',
+        );
+        expect(parentRequest.body['parents'], [
+          {
+            'parent_id': 2401,
+            'full_name': 'Phụ huynh cập nhật',
+            'relationship': 'Mẹ',
+            'phone': '0987654321',
+          },
+        ]);
       },
     );
 

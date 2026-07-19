@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/test_app.dart';
@@ -39,6 +39,22 @@ void main() {
         find.text(
           'Tính năng dùng endpoint POST /auth/change-password khi backend hỗ trợ.',
         ),
+        findsOneWidget,
+      );
+
+      EditableText oldPasswordField() => tester.widget<EditableText>(
+        find.descendant(
+          of: find.byKey(const ValueKey('old_password_field')),
+          matching: find.byType(EditableText),
+        ),
+      );
+      expect(oldPasswordField().obscureText, isTrue);
+      await tester.tap(find.byKey(const ValueKey('toggle_old_password')));
+      await tester.pump();
+      expect(oldPasswordField().obscureText, isFalse);
+      expect(find.byKey(const ValueKey('toggle_new_password')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('toggle_confirm_password')),
         findsOneWidget,
       );
 

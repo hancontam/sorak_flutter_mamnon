@@ -78,9 +78,27 @@ class HealthAssessmentRepository implements CrudRepository<HealthAssessment> {
   Future<List<HealthAssessment>> getLatest({int? schoolYearId}) async {
     final response = await _apiClient.dio.get(
       ApiEndpoints.healthAssessments,
+      queryParameters: {'latest': 'true', 'school_year_id': ?schoolYearId},
+    );
+    return _readList(response.data)
+        .map((json) => HealthAssessment.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<HealthAssessment>> getForDate({
+    required String assessmentDate,
+    int? schoolYearId,
+    int? classId,
+  }) async {
+    final response = await _apiClient.dio.get(
+      ApiEndpoints.healthAssessments,
       queryParameters: {
-        'latest': 'true',
+        'latest': 'false',
+        'date_from': assessmentDate,
+        'date_to': assessmentDate,
         'school_year_id': ?schoolYearId,
+        'class_id': ?classId,
+        'pageSize': 500,
       },
     );
     return _readList(response.data)

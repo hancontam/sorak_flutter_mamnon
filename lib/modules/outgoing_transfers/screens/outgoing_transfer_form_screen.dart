@@ -27,6 +27,7 @@ class OutgoingTransferFormScreen extends StatelessWidget {
       initialReason: outgoingTransfer?.reason ?? '',
       initialNote: outgoingTransfer?.note ?? '',
       initialStatus: outgoingTransfer?.status,
+      errorMessage: () => context.read<OutgoingTransferProvider>().errorMessage,
       onSave: (formData) async {
         final provider = context.read<OutgoingTransferProvider>();
         final data = formData.toJson('destination_school');

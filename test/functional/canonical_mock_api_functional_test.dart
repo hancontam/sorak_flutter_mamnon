@@ -6,6 +6,8 @@ import 'package:sorak_flutter_mamnon/core/network/api_response.dart';
 import 'package:sorak_flutter_mamnon/modules/accounts/repositories/account_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/academic_years/repositories/academic_year_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/classes/repositories/class_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/incoming_transfers/repositories/incoming_transfer_repository.dart';
+import 'package:sorak_flutter_mamnon/modules/outgoing_transfers/repositories/outgoing_transfer_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/students/repositories/student_repository.dart';
 import 'package:sorak_flutter_mamnon/modules/teachers/repositories/teacher_repository.dart';
 
@@ -43,6 +45,7 @@ void main() {
         expect(apiError.message, 'Thiếu dữ liệu bắt buộc');
         expect(apiError.errors, contains('school_year_id'));
         expect(apiError.traceId, startsWith('MOCK-400-POST'));
+        expect(apiError.displayMessage, contains('school_year_id'));
       }
     });
 
@@ -108,6 +111,25 @@ void main() {
       expect(students.any((item) => item.id == 402), isFalse);
     });
 
+    test('teacher school transfers are scoped by assigned class', () async {
+      client.configureMockSession(
+        role: 'TEACHER',
+        accountId: 1002,
+        teacherId: 202,
+      );
+      client.mockBackend!.outgoingTransfers.first['created_by'] = 1002;
+
+      final incoming = await IncomingTransferRepository(
+        apiClient: client,
+      ).getAll(schoolYearId: 101);
+      final outgoing = await OutgoingTransferRepository(
+        apiClient: client,
+      ).getAll(schoolYearId: 101);
+
+      expect(incoming.map((item) => item.id), [511]);
+      expect(outgoing, isEmpty);
+    });
+
     test('ApiResponse rejects unsuccessful fixture envelope', () {
       expect(
         () => ApiResponse.object({
@@ -117,6 +139,20 @@ void main() {
           'traceId': 'MOCK-400',
         }),
         throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('validation errors use readable field messages', () {
+      const error = ApiException(
+        message: 'Validation failed',
+        errors: [
+          {'path': 'student_id', 'message': 'Học sinh không hợp lệ'},
+          {'path': 'transfer_date', 'message': 'Ngày chuyển không hợp lệ'},
+        ],
+      );
+      expect(
+        error.displayMessage,
+        'Học sinh không hợp lệ; Ngày chuyển không hợp lệ',
       );
     });
   });

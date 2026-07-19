@@ -93,6 +93,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Nguyễn Thị Lan'), findsWidgets);
+      expect(find.textContaining('Phan Thị Hòa'), findsNothing);
     });
 
     testWidgets('editing a class locks its name and grade', (tester) async {

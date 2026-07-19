@@ -28,6 +28,7 @@ class IncomingTransferFormScreen extends StatelessWidget {
       initialNote: incomingTransfer?.note ?? '',
       initialStatus: incomingTransfer?.status,
       allowInactiveStudents: true,
+      errorMessage: () => context.read<IncomingTransferProvider>().errorMessage,
       onSave: (formData) async {
         final provider = context.read<IncomingTransferProvider>();
         final data = formData.toJson('previous_school');

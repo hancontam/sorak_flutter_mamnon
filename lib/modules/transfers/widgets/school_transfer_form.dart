@@ -10,6 +10,7 @@ import '../../../core/widgets/app_date_field.dart';
 import '../../../core/widgets/app_dropdown_field.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../classes/models/school_class.dart';
+import '../../academic_years/providers/active_academic_year_provider.dart';
 import '../../form_options/providers/form_options_provider.dart';
 import '../../students/models/student.dart';
 
@@ -51,6 +52,7 @@ class SchoolTransferForm extends StatefulWidget {
     required this.schoolField,
     required this.defaultStatus,
     required this.onSave,
+    this.errorMessage,
     this.initialStudentId,
     this.initialSchool = '',
     this.initialTransferDate = '',
@@ -65,6 +67,7 @@ class SchoolTransferForm extends StatefulWidget {
   final String schoolField;
   final String defaultStatus;
   final Future<bool> Function(SchoolTransferFormData data) onSave;
+  final String? Function()? errorMessage;
   final int? initialStudentId;
   final String initialSchool;
   final String initialTransferDate;
@@ -103,8 +106,17 @@ class _SchoolTransferFormState extends State<SchoolTransferForm> {
     _selectedStatus = widget.initialStatus ?? widget.defaultStatus;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FormOptionsProvider>().loadInitialOptions();
+      final yearId = _activeAcademicYearId();
+      context.read<FormOptionsProvider>().refreshForAcademicYear(yearId);
     });
+  }
+
+  int? _activeAcademicYearId() {
+    try {
+      return context.read<ActiveAcademicYearProvider>().selectedYearId;
+    } on ProviderNotFoundException {
+      return context.read<FormOptionsProvider>().selectedAcademicYearId;
+    }
   }
 
   @override
@@ -154,7 +166,12 @@ class _SchoolTransferFormState extends State<SchoolTransferForm> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chưa thể lưu. Vui lòng kiểm tra lại.')),
+        SnackBar(
+          content: Text(
+            widget.errorMessage?.call() ??
+                'Chưa thể lưu. Vui lòng kiểm tra lại.',
+          ),
+        ),
       );
     }
   }

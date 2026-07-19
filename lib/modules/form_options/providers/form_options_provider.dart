@@ -121,6 +121,34 @@ class FormOptionsProvider extends ChangeNotifier {
     await loadInitialOptions();
   }
 
+  Future<void> refreshForAcademicYear(int? academicYearId) async {
+    if (_isLoading) return;
+
+    _setLoading(true);
+    try {
+      if (_academicYears.isEmpty) {
+        final years = await _formOptionsRepository.getAcademicYears();
+        _academicYears
+          ..clear()
+          ..addAll(years);
+      }
+      _selectedAcademicYearId =
+          academicYearId ??
+          _selectedAcademicYearId ??
+          _defaultAcademicYearId(_academicYears);
+      _selectedClassId = null;
+      await _loadClassesForSelectedYear();
+      await _loadWorkingTeachers();
+      await _loadAllStudents();
+      await _loadStudentsForSelectedClass();
+      _errorMessage = null;
+    } catch (error) {
+      _errorMessage = apiErrorMessage(error);
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> selectAcademicYear(int? academicYearId) async {
     if (_selectedAcademicYearId == academicYearId) {
       return;

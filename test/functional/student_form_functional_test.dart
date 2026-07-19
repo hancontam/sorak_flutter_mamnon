@@ -27,10 +27,10 @@ void main() {
       expect(find.text('Giới tính *'), findsOneWidget);
       expect(find.text('Khối'), findsOneWidget);
       expect(find.text('Lớp (tùy chọn)'), findsOneWidget);
-      expect(find.text('Tình trạng học vụ'), findsOneWidget);
+      expect(find.text('Tình trạng học vụ'), findsNothing);
 
       final dropdowns = find.byType(DropdownButtonFormField<String>);
-      expect(dropdowns, findsNWidgets(4));
+      expect(dropdowns, findsNWidgets(3));
 
       await tester.tap(dropdowns.at(1));
       await tester.pumpAndSettle();
@@ -65,15 +65,21 @@ void main() {
     testWidgets('guardian flow offers predefined relationship chips', (
       tester,
     ) async {
+      final apiClient = ApiClient.memory();
       await tester.pumpWidget(
-        const MaterialApp(
-          home: StudentGuardianFormScreen(
-            student: Student(
-              id: 401,
-              fullName: 'Nguyễn Minh An',
-              dateOfBirth: '2021-03-10',
-              gender: 'Nam',
-              contactPhone: '0900000401',
+        ChangeNotifierProvider(
+          create: (_) => StudentProvider(
+            studentRepository: StudentRepository(apiClient: apiClient),
+          ),
+          child: const MaterialApp(
+            home: StudentGuardianFormScreen(
+              student: Student(
+                id: 401,
+                fullName: 'Nguyễn Minh An',
+                dateOfBirth: '2021-03-10',
+                gender: 'Nam',
+                contactPhone: '0900000401',
+              ),
             ),
           ),
         ),
@@ -86,6 +92,53 @@ void main() {
       expect(find.text('Họ tên phụ huynh *'), findsOneWidget);
       expect(find.text('Số điện thoại *'), findsOneWidget);
       expect(find.text('Quan hệ với trẻ'), findsOneWidget);
+    });
+
+    testWidgets('guardian flow prefills and saves existing parents', (
+      tester,
+    ) async {
+      final apiClient = ApiClient.memory();
+      final provider = StudentProvider(
+        studentRepository: StudentRepository(apiClient: apiClient),
+      );
+      await tester.pumpWidget(
+        ChangeNotifierProvider.value(
+          value: provider,
+          child: const MaterialApp(
+            home: StudentGuardianFormScreen(
+              student: Student(
+                id: 401,
+                fullName: 'Nguyễn Minh An',
+                dateOfBirth: '2021-03-10',
+                gender: 'Nam',
+                parents: [
+                  StudentParent(
+                    id: 2401,
+                    fullName: 'Nguyễn Văn Nam',
+                    relationship: 'Cha',
+                    phone: '0900000401',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Nguyễn Văn Nam'), findsOneWidget);
+      expect(find.text('0900000401'), findsOneWidget);
+      await tester.tap(find.text('Lưu'));
+      await tester.pumpAndSettle();
+      expect(provider.parentsErrorMessage, isNull);
+      expect(find.byType(StudentGuardianFormScreen), findsNothing);
+      expect(
+        provider.items
+            .firstWhere((student) => student.id == 401)
+            .parents
+            .single
+            .fullName,
+        'Nguyễn Văn Nam',
+      );
     });
   });
 }

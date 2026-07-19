@@ -51,8 +51,25 @@ class ApiException implements Exception {
   }
 
   String get displayMessage {
+    final details = errors
+        .map((error) {
+          if (error is Map) {
+            return '${error['message'] ?? ''}'.trim();
+          }
+          return '$error'.trim();
+        })
+        .where((message) => message.isNotEmpty)
+        .toSet()
+        .join('; ');
+    final readableMessage = details.isEmpty
+        ? message
+        : message.trim().toLowerCase() == 'validation failed'
+        ? details
+        : '$message: $details';
     final id = traceId;
-    return id == null || id.isEmpty ? message : '$message (Mã: $id)';
+    return id == null || id.isEmpty
+        ? readableMessage
+        : '$readableMessage (Mã: $id)';
   }
 
   @override

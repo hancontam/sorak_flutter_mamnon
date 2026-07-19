@@ -15,11 +15,18 @@ class HealthAssessmentProvider extends CrudProvider<HealthAssessment> {
   String? _rosterDate;
   List<HealthAssessment> _latestByStudent = const [];
   bool _isLoadingLatest = false;
+  List<HealthAssessment> _dateFilteredItems = const [];
+  bool _isLoadingDateFilter = false;
+  String? _dateFilterErrorMessage;
+  int _dateFilterRevision = 0;
 
   int? get rosterClassId => _rosterClassId;
   String? get rosterDate => _rosterDate;
   List<HealthAssessment> get latestByStudent => _latestByStudent;
   bool get isLoadingLatest => _isLoadingLatest;
+  List<HealthAssessment> get dateFilteredItems => _dateFilteredItems;
+  bool get isLoadingDateFilter => _isLoadingDateFilter;
+  String? get dateFilterErrorMessage => _dateFilterErrorMessage;
 
   @override
   Future<void> loadItems() {
@@ -68,6 +75,43 @@ class HealthAssessmentProvider extends CrudProvider<HealthAssessment> {
       _isLoadingLatest = false;
       notifyListeners();
     }
+  }
+
+  Future<void> loadForDate({
+    required String assessmentDate,
+    int? schoolYearId,
+    int? classId,
+  }) async {
+    final revision = ++_dateFilterRevision;
+    _isLoadingDateFilter = true;
+    _dateFilterErrorMessage = null;
+    notifyListeners();
+    try {
+      final items = await _healthAssessmentRepository.getForDate(
+        assessmentDate: assessmentDate,
+        schoolYearId: schoolYearId ?? _academicYearId,
+        classId: classId,
+      );
+      if (revision != _dateFilterRevision) return;
+      _dateFilteredItems = items;
+    } catch (error) {
+      if (revision != _dateFilterRevision) return;
+      _dateFilteredItems = const [];
+      _dateFilterErrorMessage = apiErrorMessage(error);
+    } finally {
+      if (revision == _dateFilterRevision) {
+        _isLoadingDateFilter = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  void clearDateFilter() {
+    _dateFilterRevision++;
+    _dateFilteredItems = const [];
+    _dateFilterErrorMessage = null;
+    _isLoadingDateFilter = false;
+    notifyListeners();
   }
 
   /// Student history for roster "Số đo gần nhất" / history sheet.

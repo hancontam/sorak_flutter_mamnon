@@ -1,4 +1,5 @@
 import '../../../core/constants/app_options.dart';
+import '../../../core/network/api_page.dart';
 import '../../academic_years/models/academic_year.dart';
 import '../../academic_years/repositories/academic_year_repository.dart';
 import '../../classes/models/school_class.dart';
@@ -48,11 +49,16 @@ class FormOptionsRepository {
   }
 
   Future<List<Teacher>> getWorkingTeachers(int? schoolYearId) async {
-    final teachers = await _teacherRepository.getAll(
+    final teachers = (await _teacherRepository.getPage(
+      query: const ApiListQuery(pageSize: 500),
       schoolYearId: schoolYearId,
-    );
+      position: 'Giáo viên',
+      workStatus: TeacherWorkStatusOptions.working,
+    )).items;
     final visibleTeachers = teachers.where((teacher) {
-      return !teacher.isDeleted && _isWorkingStatus(teacher.workStatus);
+      return !teacher.isDeleted &&
+          _isWorkingStatus(teacher.workStatus) &&
+          _isTeacherPosition(teacher.position);
     }).toList();
 
     visibleTeachers.sort((a, b) => a.fullName.compareTo(b.fullName));
@@ -85,5 +91,10 @@ class FormOptionsRepository {
     final normalized = value.trim().toLowerCase();
     return normalized == TeacherWorkStatusOptions.working.toLowerCase() ||
         normalized == 'dang lam viec';
+  }
+
+  bool _isTeacherPosition(String value) {
+    final normalized = value.trim().toLowerCase();
+    return normalized == 'giáo viên' || normalized == 'giao vien';
   }
 }
