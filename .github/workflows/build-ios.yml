@@ -25,17 +25,40 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Prefer CocoaPods over experimental SPM
+        run: flutter config --no-enable-swift-package-manager
+
       - name: Get packages
         run: flutter pub get
 
-      - name: Build release IPA (unsigned)
-        # No Apple Developer cert in CI yet — unsigned IPA for sideload/re-sign later.
-        run: flutter build ipa --release --no-codesign
+      - name: Build iOS release (unsigned)
+        # No Apple Developer cert in CI yet — unsigned build for sideload/re-sign later.
+        run: flutter build ios --release --no-codesign
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/ios -name 'Runner.app' -type d | head -n 1)"
+          if [ -z "$APP_PATH" ]; then
+            echo "Runner.app not found under build/ios"
+            find build/ios -maxdepth 4 -type d || true
+            exit 1
+          fi
+          echo "Packaging: $APP_PATH"
+          STAGE="$(mktemp -d)"
+          mkdir -p "$STAGE/Payload"
+          cp -R "$APP_PATH" "$STAGE/Payload/"
+          mkdir -p build/ios/ipa
+          (
+            cd "$STAGE"
+            zip -qry "$GITHUB_WORKSPACE/build/ios/ipa/Runner.ipa" Payload
+          )
+          ls -lh build/ios/ipa/Runner.ipa
 
       - name: Upload release IPA
         uses: actions/upload-artifact@v4
         with:
           name: sorak-flutter-ios-ipa
-          path: build/ios/ipa/**
+          path: build/ios/ipa/Runner.ipa
           if-no-files-found: error
           retention-days: 14
