@@ -132,10 +132,8 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
     setState(() => _isSaving = true);
 
     final provider = context.read<ClassProvider>();
-    final ClassSetupResult? createResult;
     final bool success;
     if (_isEditing) {
-      createResult = null;
       success = await provider.updateClassSetup(
         classId: widget.schoolClass!.id,
         room: _roomController.text.trim(),
@@ -143,17 +141,12 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
         teacherIdsToRemove: _teacherIdsToRemove.toList(),
       );
     } else {
-      final teacherAccountId = int.tryParse(_selectedTeacherAccountId ?? '');
-      createResult = await provider.createClassSetup(
-        classData: {
-          'class_name': _classNameController.text.trim(),
-          'school_year_id': _selectedYearId ?? '',
-          'age_group': _selectedAgeGroup ?? '',
-          'room': _roomController.text.trim(),
-        },
-        teacherAccountId: teacherAccountId,
-      );
-      success = createResult.isSuccess;
+      success = await provider.createItem({
+        'class_name': _classNameController.text.trim(),
+        'school_year_id': _selectedYearId ?? '',
+        'age_group': _selectedAgeGroup ?? '',
+        'room': _roomController.text.trim(),
+      });
     }
 
     if (!mounted) return;
@@ -167,23 +160,12 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
       Navigator.pop(context);
       return;
     }
-    if (createResult?.isPartialSuccess == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Đã tạo lớp nhưng chưa phân công giáo viên: '
-            '${createResult?.errorMessage ?? 'Chưa xác định được lỗi'}',
-          ),
-        ),
-      );
-      Navigator.pop(context);
-      return;
-    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          provider.classSetupErrorMessage ??
-              provider.errorMessage ??
+          (_isEditing
+                  ? provider.classSetupErrorMessage ?? provider.errorMessage
+                  : provider.errorMessage) ??
               'Chưa thể lưu. Vui lòng kiểm tra lại.',
         ),
       ),
@@ -273,45 +255,38 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
                 const SizedBox(height: AppSpacing.sm),
                 AppTextField(controller: _roomController, label: 'Phòng'),
                 const SizedBox(height: AppSpacing.lg),
-                _SectionTitle(
-                  title: _isEditing
-                      ? 'Phân công giáo viên'
-                      : 'Giáo viên phụ trách',
-                  subtitle: _isEditing
-                      ? 'Có thể thêm hoặc hủy phân công giáo viên của lớp.'
-                      : 'Có thể phân công sau khi tạo lớp.',
-                ),
-                const SizedBox(height: AppSpacing.sm),
                 if (_isEditing) ...[
+                  const _SectionTitle(
+                    title: 'Phân công giáo viên',
+                    subtitle:
+                        'Có thể thêm hoặc hủy phân công giáo viên của lớp.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   _AssignedTeacherList(
                     teachers: _assignedTeachers,
                     onRemove: _isSaving ? null : _removeTeacher,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                ],
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: AppDropdownField<String>(
-                        key: ValueKey(
-                          'class_teacher_${_selectedTeacherAccountId ?? ''}',
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: AppDropdownField<String>(
+                          key: ValueKey(
+                            'class_teacher_${_selectedTeacherAccountId ?? ''}',
+                          ),
+                          label: 'Thêm giáo viên',
+                          options: teacherOptions,
+                          value: _selectedTeacherAccountId,
+                          hintText: optionsProvider.isLoading
+                              ? 'Đang tải...'
+                              : teacherOptions.isEmpty
+                              ? 'Không còn giáo viên để phân công'
+                              : 'Chọn giáo viên đang làm việc',
+                          onChanged: (value) =>
+                              setState(() => _selectedTeacherAccountId = value),
                         ),
-                        label: _isEditing
-                            ? 'Thêm giáo viên'
-                            : 'Giáo viên phụ trách',
-                        options: teacherOptions,
-                        value: _selectedTeacherAccountId,
-                        hintText: optionsProvider.isLoading
-                            ? 'Đang tải...'
-                            : teacherOptions.isEmpty
-                            ? 'Không còn giáo viên để phân công'
-                            : 'Chọn giáo viên đang làm việc',
-                        onChanged: (value) =>
-                            setState(() => _selectedTeacherAccountId = value),
                       ),
-                    ),
-                    if (_isEditing) ...[
                       const SizedBox(width: AppSpacing.xs),
                       IconButton.filledTonal(
                         tooltip: 'Thêm giáo viên vào lớp',
@@ -322,8 +297,14 @@ class _ClassFormScreenState extends State<ClassFormScreen> {
                         icon: const Icon(LucideIcons.plus, size: 20),
                       ),
                     ],
-                  ],
-                ),
+                  ),
+                ] else
+                  Text(
+                    'Phân công giáo viên sau khi tạo lớp xong.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.mutedForeground,
+                    ),
+                  ),
               ],
             ),
           ),

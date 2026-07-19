@@ -91,34 +91,41 @@ void main() {
       },
     );
 
-    test(
-      'class provider reports partial success without creating twice',
-      () async {
-        final provider = ClassProvider(
-          classRepository: ClassRepository(apiClient: client),
-        );
-        final result = await provider.createClassSetup(
-          classData: {
-            'class_name': 'MOBILE_TEST_Lớp phân công lỗi',
-            'school_year_id': 101,
-            'age_group': 'Mầm',
-            'room': 'A104',
-          },
-          teacherAccountId: 999999,
-        );
+    test('class provider creates without assigning a teacher', () async {
+      final provider = ClassProvider(
+        classRepository: ClassRepository(apiClient: client),
+      );
+      final success = await provider.createItem({
+        'class_name': 'MOBILE_TEST_Lớp chưa phân công',
+        'school_year_id': 101,
+        'age_group': 'Mầm',
+        'room': 'A104',
+      });
 
-        expect(result.isPartialSuccess, isTrue);
-        expect(
-          backend.requests
-              .where(
-                (request) =>
-                    request.method == 'POST' && request.path == '/classes',
-              )
-              .length,
-          1,
-        );
-      },
-    );
+      expect(success, isTrue);
+      expect(
+        backend.requests
+            .where(
+              (request) =>
+                  request.method == 'POST' && request.path == '/classes',
+            )
+            .length,
+        1,
+      );
+      expect(
+        backend.requests.any(
+          (request) =>
+              request.method == 'POST' &&
+              request.path.startsWith('/classes/') &&
+              request.path.endsWith('/teachers'),
+        ),
+        isFalse,
+      );
+      final created = provider.items.singleWhere(
+        (item) => item.className == 'MOBILE_TEST_Lớp chưa phân công',
+      );
+      expect(created.assignedTeachers, isEmpty);
+    });
 
     test(
       'student create omits status and parent batch keeps parent id',

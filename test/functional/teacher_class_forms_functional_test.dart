@@ -53,7 +53,7 @@ void main() {
       expect(find.text('Đang làm việc'), findsWidgets);
     });
 
-    testWidgets('class form uses year grade and teacher dropdowns', (
+    testWidgets('class create defers teacher assignment until update', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -65,10 +65,15 @@ void main() {
       expect(find.text('Tên lớp *'), findsOneWidget);
       expect(find.text('Năm học *'), findsOneWidget);
       expect(find.text('Khối'), findsOneWidget);
-      expect(find.text('Giáo viên phụ trách'), findsWidgets);
+      expect(find.text('Giáo viên phụ trách'), findsNothing);
+      expect(find.byKey(const ValueKey('class_teacher_')), findsNothing);
+      expect(
+        find.text('Phân công giáo viên sau khi tạo lớp xong.'),
+        findsOneWidget,
+      );
 
       final dropdowns = find.byType(DropdownButtonFormField<String>);
-      expect(dropdowns, findsNWidgets(3));
+      expect(dropdowns, findsNWidgets(2));
 
       await tester.tap(dropdowns.at(0));
       await tester.pumpAndSettle();
@@ -88,12 +93,6 @@ void main() {
 
       await tester.tap(find.text('Mầm').last);
       await tester.pumpAndSettle();
-
-      await tester.tap(dropdowns.at(2));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Nguyễn Thị Lan'), findsWidgets);
-      expect(find.textContaining('Phan Thị Hòa'), findsNothing);
     });
 
     testWidgets('editing a class locks its name and grade', (tester) async {
